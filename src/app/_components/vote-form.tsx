@@ -115,8 +115,14 @@ export function VoteForm({
                 : "border-white/10 bg-white/5 hover:border-emerald-500/50 hover:bg-white/10"
             }`}
           >
-            <div className="text-2xl font-bold">{outcomeShort(outcome)}</div>
-            <div className="mt-1 text-xs text-white/60">{label(outcome)}</div>
+            {outcome === "DRAW" ? (
+              <>
+                <div className="text-2xl font-bold">{outcomeShort(outcome)}</div>
+                <div className="mt-1 text-xs text-white/60">{label(outcome)}</div>
+              </>
+            ) : (
+              <div className="font-semibold">{label(outcome)}</div>
+            )}
           </button>
         ))}
       </div>
