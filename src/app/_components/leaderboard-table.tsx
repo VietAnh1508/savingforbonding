@@ -2,9 +2,7 @@ import Image from "next/image";
 
 import { type RouterOutputs } from "~/trpc/react";
 
-type Entry =
-  | RouterOutputs["leaderboard"]["global"][number]
-  | RouterOutputs["leaderboard"]["weekly"][number];
+type Entry = RouterOutputs["leaderboard"]["global"][number];
 
 export function LeaderboardTable({
   entries,
@@ -16,7 +14,7 @@ export function LeaderboardTable({
   if (entries.length === 0) {
     return (
       <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center text-white/50">
-        No donations yet. Place your first bet to get on the board!
+        No registered users yet.
       </div>
     );
   }

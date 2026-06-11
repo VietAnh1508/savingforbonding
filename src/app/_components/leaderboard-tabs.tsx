@@ -6,24 +6,21 @@ import { LeaderboardTable } from "~/app/_components/leaderboard-table";
 import { formatBeers } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
-type TabId = "weekly" | "allTime" | "beerPool";
+type TabId = "allTime" | "beerPool";
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: "weekly", label: "This Week" },
   { id: "allTime", label: "All Time" },
   { id: "beerPool", label: "Total Beer Pool" },
 ];
 
 export function LeaderboardTabs({
-  weekly,
   global,
   beerPool,
 }: {
-  weekly: RouterOutputs["leaderboard"]["weekly"];
   global: RouterOutputs["leaderboard"]["global"];
   beerPool: RouterOutputs["leaderboard"]["totalBeerPool"];
 }) {
-  const [activeTab, setActiveTab] = useState<TabId>("weekly");
+  const [activeTab, setActiveTab] = useState<TabId>("allTime");
 
   return (
     <div>
@@ -43,10 +40,6 @@ export function LeaderboardTabs({
           </button>
         ))}
       </div>
-
-      {activeTab === "weekly" && (
-        <LeaderboardTable entries={weekly} beersLabel="Weekly Beers" />
-      )}
 
       {activeTab === "allTime" && (
         <LeaderboardTable entries={global} beersLabel="Total Beers" />
