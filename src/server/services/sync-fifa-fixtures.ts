@@ -6,6 +6,7 @@ import {
   fifaTeamName,
   fifaTournamentName,
   mapFifaMatchStatus,
+  parseFifaKickoffToUtc,
 } from "~/server/services/fifa-api";
 import { resolveMatchVotes } from "~/server/services/resolve-votes";
 
@@ -35,7 +36,7 @@ export async function syncFifaFixtures(
     const fifaStatus = mapFifaMatchStatus(fixture);
     const fifaHome = fifaTeamName(fixture.Home, fixture.PlaceHolderA);
     const fifaAway = fifaTeamName(fixture.Away, fixture.PlaceHolderB);
-    const fifaKickoff = new Date(fixture.Date);
+    const fifaKickoff = parseFifaKickoffToUtc(fixture.Date);
     const tournament = fifaTournamentName(fixture);
 
     const fifaHomeScore =

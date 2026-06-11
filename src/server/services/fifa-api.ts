@@ -1,6 +1,41 @@
 const FIFA_API_BASE = "https://api.fifa.com/api/v3";
 const FIFA_WORLD_CUP_COMPETITION_ID = "17";
 
+/** Matches fifa.com with timezone preset to Vietnam (UTC+7). */
+export const FIFA_VIETNAM_UTC_OFFSET_HOURS = 7;
+
+/**
+ * FIFA `Date` uses Vietnam wall-clock components with a misleading `Z` suffix.
+ * Example: `2026-06-12T02:00:00Z` is 02:00 in Vietnam, not 02:00 UTC.
+ */
+export function parseFifaKickoffToUtc(iso: string): Date {
+  const match = iso.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/,
+  );
+
+  if (!match) {
+    return new Date(iso);
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = Number(match[4]);
+  const minute = Number(match[5]);
+  const second = Number(match[6] ?? 0);
+
+  return new Date(
+    Date.UTC(
+      year,
+      month - 1,
+      day,
+      hour - FIFA_VIETNAM_UTC_OFFSET_HOURS,
+      minute,
+      second,
+    ),
+  );
+}
+
 type FifaLocalizedText = {
   Locale: string;
   Description: string;

@@ -6,6 +6,7 @@ export type MatchVoteCounts = {
   away: number;
 };
 
+/** Vietnam time — matches fifa.com with timezone preset to Vietnam. */
 export const MATCH_DISPLAY_TIMEZONE = "Asia/Ho_Chi_Minh";
 
 export const VOTE_LOCK_MINUTES = 5;
