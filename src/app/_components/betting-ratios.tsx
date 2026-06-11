@@ -1,6 +1,8 @@
-function formatRatioValue(n: number): string {
-  return Number.isInteger(n) ? String(n) : String(n);
-}
+import {
+  describeHandicapRule,
+  formatRatioValue,
+  hasBettingHandicap,
+} from "~/lib/match";
 
 export function BettingRatios({
   homeCountry,
@@ -14,6 +16,12 @@ export function BettingRatios({
   awayRatio: number;
 }) {
   const ratioDisplay = `${formatRatioValue(homeRatio)}/${formatRatioValue(awayRatio)}`;
+  const handicapRule = describeHandicapRule(
+    homeCountry,
+    awayCountry,
+    homeRatio,
+    awayRatio,
+  );
 
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
@@ -27,6 +35,18 @@ export function BettingRatios({
         </span>
         <span className="text-sm font-medium">{awayCountry}</span>
       </div>
+      {handicapRule ? (
+        <p className="mt-4 text-sm text-white/50">{handicapRule}</p>
+      ) : (
+        <p className="mt-4 text-sm text-white/40">
+          No handicap set — result uses the raw scoreline.
+        </p>
+      )}
+      {hasBettingHandicap(homeRatio, awayRatio) && (
+        <p className="mt-2 text-xs text-white/30">
+          Decimal lines (e.g. 1.5, 2.25) are applied to adjusted scores.
+        </p>
+      )}
     </div>
   );
 }

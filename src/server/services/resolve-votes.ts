@@ -3,6 +3,7 @@ import {
   BEER_NO_BET,
   beerCostForVote,
   deriveResult,
+  isVoteCorrect,
 } from "~/lib/match";
 
 export async function resolveMatchVotes(
@@ -52,7 +53,13 @@ export async function resolveMatchVotes(
   let beersCharged = 0;
 
   for (const vote of unresolvedVotes) {
-    const isCorrect = vote.outcome === result;
+    const isCorrect = isVoteCorrect(
+      vote.outcome,
+      homeScore,
+      awayScore,
+      match.homeRatio,
+      match.awayRatio,
+    );
     const beers = beerCostForVote(isCorrect);
 
     await db.vote.update({

@@ -85,6 +85,82 @@ export function deriveResult(
   return "DRAW";
 }
 
+export function hasBettingHandicap(
+  homeRatio: number,
+  awayRatio: number,
+): boolean {
+  return homeRatio > 0 || awayRatio > 0;
+}
+
+export function adjustedScores(
+  homeScore: number,
+  awayScore: number,
+  homeRatio: number,
+  awayRatio: number,
+): { home: number; away: number } {
+  return {
+    home: homeRatio > 0 ? homeScore - homeRatio : homeScore,
+    away: awayRatio > 0 ? awayScore + awayRatio : awayScore,
+  };
+}
+
+/** Settlement result after applying the match handicap (falls back to raw score if no ratio). */
+export function deriveEffectiveResult(
+  homeScore: number,
+  awayScore: number,
+  homeRatio: number,
+  awayRatio: number,
+): VoteOutcome {
+  if (!hasBettingHandicap(homeRatio, awayRatio)) {
+    return deriveResult(homeScore, awayScore);
+  }
+
+  const { home, away } = adjustedScores(
+    homeScore,
+    awayScore,
+    homeRatio,
+    awayRatio,
+  );
+
+  if (home > away) return "HOME_WIN";
+  if (home < away) return "AWAY_WIN";
+  return "DRAW";
+}
+
+export function isVoteCorrect(
+  voteOutcome: VoteOutcome,
+  homeScore: number,
+  awayScore: number,
+  homeRatio: number,
+  awayRatio: number,
+): boolean {
+  return (
+    voteOutcome ===
+    deriveEffectiveResult(homeScore, awayScore, homeRatio, awayRatio)
+  );
+}
+
+export function formatRatioValue(n: number): string {
+  return Number.isInteger(n) ? String(n) : String(n);
+}
+
+export function describeHandicapRule(
+  homeCountry: string,
+  awayCountry: string,
+  homeRatio: number,
+  awayRatio: number,
+): string | null {
+  if (!hasBettingHandicap(homeRatio, awayRatio)) {
+    return null;
+  }
+
+  if (homeRatio > 0) {
+    return `${homeCountry} -${formatRatioValue(homeRatio)} handicap. (1) wins only if home beats the line; (X) on a tie after handicap; (2) if away covers.`;
+  }
+
+  return `${awayCountry} +${formatRatioValue(awayRatio)} handicap. (2) wins unless home overcomes the line; (X) on a tie after handicap; (1) if home covers.`;
+}
+
 export function outcomeLabel(outcome: VoteOutcome): string {
   switch (outcome) {
     case "HOME_WIN":
