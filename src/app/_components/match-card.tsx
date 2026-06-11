@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
 import { formatKickoffTime } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
@@ -57,6 +58,14 @@ export function MatchCard({ match }: { match: Match }) {
           <span className="text-2xl">🏳️</span>
           <span className="text-sm font-medium">{match.awayCountry}</span>
         </div>
+      </div>
+
+      <div className="mt-4 border-t border-white/10 pt-3">
+        <MatchVoteCounts
+          homeCountry={match.homeCountry}
+          awayCountry={match.awayCountry}
+          voteCounts={match.voteCounts}
+        />
       </div>
     </Link>
   );

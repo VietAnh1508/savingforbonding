@@ -5,6 +5,10 @@ import {
   createTRPCRouter,
   publicProcedure,
 } from "~/server/api/trpc";
+import {
+  emptyMatchVoteCounts,
+  getVoteCountsByMatchId,
+} from "~/server/services/match-vote-counts";
 
 export const matchRouter = createTRPCRouter({
   listUpcoming: publicProcedure
@@ -18,13 +22,24 @@ export const matchRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const limit = input?.limit ?? 50;
 
-      return ctx.db.match.findMany({
+      const matches = await ctx.db.match.findMany({
         where: {
           status: { in: ["SCHEDULED", "LIVE", "POSTPONED"] },
         },
         orderBy: { kickoffAt: "asc" },
         take: limit,
       });
+
+      const voteCountsByMatchId = await getVoteCountsByMatchId(
+        ctx.db,
+        matches.map((match) => match.id),
+      );
+
+      return matches.map((match) => ({
+        ...match,
+        voteCounts:
+          voteCountsByMatchId.get(match.id) ?? emptyMatchVoteCounts(),
+      }));
     }),
 
   getById: publicProcedure
@@ -47,10 +62,16 @@ export const matchRouter = createTRPCRouter({
           })
         : null;
 
+      const voteCountsByMatchId = await getVoteCountsByMatchId(ctx.db, [
+        match.id,
+      ]);
+
       return {
         ...match,
         votingOpen: isVotingOpen(match.kickoffAt, match.status),
         userVote,
+        voteCounts:
+          voteCountsByMatchId.get(match.id) ?? emptyMatchVoteCounts(),
       };
     }),
 });

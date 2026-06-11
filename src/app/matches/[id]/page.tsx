@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { BeerStakes } from "~/app/_components/beer-stakes";
 import { BettingRatios } from "~/app/_components/betting-ratios";
+import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
 import { Nav } from "~/app/_components/nav";
 import { VoteForm } from "~/app/_components/vote-form";
 import { auth } from "~/server/auth";
@@ -70,6 +71,14 @@ export default async function MatchPage({
                 <span className="text-4xl">🏳️</span>
                 <h2 className="text-lg font-bold">{match.awayCountry}</h2>
               </div>
+            </div>
+
+            <div className="mt-6 border-t border-white/10 pt-6">
+              <MatchVoteCounts
+                homeCountry={match.homeCountry}
+                awayCountry={match.awayCountry}
+                voteCounts={match.voteCounts}
+              />
             </div>
           </div>
 

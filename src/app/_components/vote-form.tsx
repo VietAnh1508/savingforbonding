@@ -67,6 +67,7 @@ export function VoteForm({
     },
     onSettled: () => {
       void utils.match.getById.invalidate({ id: matchId });
+      void utils.match.listUpcoming.invalidate();
     },
   });
 

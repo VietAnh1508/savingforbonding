@@ -1,5 +1,11 @@
 import { type MatchStatus, type VoteOutcome } from "../../generated/prisma";
 
+export type MatchVoteCounts = {
+  home: number;
+  draw: number;
+  away: number;
+};
+
 export const VOTE_LOCK_MINUTES = 5;
 
 /** Platform fee — paid on every bet (win or lose). */
