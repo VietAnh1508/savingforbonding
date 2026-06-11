@@ -66,9 +66,6 @@ export function MatchCard({ match }: { match: Match }) {
         >
           <TeamFlag country={match.homeCountry} size="sm" />
           <span className="text-sm font-medium">{match.homeCountry}</span>
-          <span className="font-mono text-xs text-emerald-400/90">
-            1: {formatRatioValue(match.homeRatio)}
-          </span>
           {predictsHomeWin && (
             <span className="text-xs font-medium text-emerald-400">
               predict win
@@ -103,9 +100,6 @@ export function MatchCard({ match }: { match: Match }) {
         >
           <TeamFlag country={match.awayCountry} size="sm" />
           <span className="text-sm font-medium">{match.awayCountry}</span>
-          <span className="font-mono text-xs text-emerald-400/90">
-            2: {formatRatioValue(match.awayRatio)}
-          </span>
           {predictsAwayWin && (
             <span className="text-xs font-medium text-emerald-400">
               predict win
