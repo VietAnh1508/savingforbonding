@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
+import { TeamFlag } from "~/app/_components/team-flag";
 import { formatKickoffTime } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
@@ -37,7 +38,7 @@ export function MatchCard({ match }: { match: Match }) {
 
       <div className="flex items-center justify-between gap-4">
         <div className="flex flex-1 flex-col items-center gap-2 text-center">
-          <span className="text-2xl">🏳️</span>
+          <TeamFlag country={match.homeCountry} size="sm" />
           <span className="text-sm font-medium">{match.homeCountry}</span>
         </div>
 
@@ -55,7 +56,7 @@ export function MatchCard({ match }: { match: Match }) {
         </div>
 
         <div className="flex flex-1 flex-col items-center gap-2 text-center">
-          <span className="text-2xl">🏳️</span>
+          <TeamFlag country={match.awayCountry} size="sm" />
           <span className="text-sm font-medium">{match.awayCountry}</span>
         </div>
       </div>

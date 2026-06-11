@@ -4,6 +4,7 @@ import { BeerStakes } from "~/app/_components/beer-stakes";
 import { BettingRatios } from "~/app/_components/betting-ratios";
 import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
 import { Nav } from "~/app/_components/nav";
+import { TeamFlag } from "~/app/_components/team-flag";
 import { VoteForm } from "~/app/_components/vote-form";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
@@ -29,7 +30,7 @@ export default async function MatchPage({
           <div className="rounded-xl border border-white/10 bg-white/5 p-8">
             <div className="flex items-center justify-between gap-6">
               <div className="flex flex-1 flex-col items-center gap-3 text-center">
-                <span className="text-4xl">🏳️</span>
+                <TeamFlag country={match.homeCountry} size="md" />
                 <h2 className="text-lg font-bold">{match.homeCountry}</h2>
               </div>
 
@@ -68,7 +69,7 @@ export default async function MatchPage({
               </div>
 
               <div className="flex flex-1 flex-col items-center gap-3 text-center">
-                <span className="text-4xl">🏳️</span>
+                <TeamFlag country={match.awayCountry} size="md" />
                 <h2 className="text-lg font-bold">{match.awayCountry}</h2>
               </div>
             </div>
