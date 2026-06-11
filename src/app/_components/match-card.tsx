@@ -1,0 +1,63 @@
+import Link from "next/link";
+
+import { formatKickoffTime } from "~/lib/match";
+import { type RouterOutputs } from "~/trpc/react";
+
+type Match = RouterOutputs["match"]["listUpcoming"][number];
+
+function statusBadge(status: Match["status"]) {
+  const styles: Record<Match["status"], string> = {
+    SCHEDULED: "bg-blue-500/20 text-blue-300",
+    LIVE: "bg-red-500/20 text-red-300 animate-pulse",
+    COMPLETED: "bg-gray-500/20 text-gray-300",
+    POSTPONED: "bg-yellow-500/20 text-yellow-300",
+    CANCELLED: "bg-gray-500/20 text-gray-400",
+  };
+
+  return (
+    <span
+      className={`rounded-full px-2 py-0.5 text-xs font-medium ${styles[status]}`}
+    >
+      {status}
+    </span>
+  );
+}
+
+export function MatchCard({ match }: { match: Match }) {
+  return (
+    <Link
+      href={`/matches/${match.id}`}
+      className="block rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-emerald-500/30 hover:bg-white/10"
+    >
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-xs text-white/50">{match.tournament}</span>
+        {statusBadge(match.status)}
+      </div>
+
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-1 flex-col items-center gap-2 text-center">
+          <span className="text-2xl">🏳️</span>
+          <span className="text-sm font-medium">{match.homeCountry}</span>
+        </div>
+
+        <div className="flex flex-col items-center gap-1">
+          {match.homeScore !== null && match.awayScore !== null ? (
+            <span className="text-2xl font-bold">
+              {match.homeScore} - {match.awayScore}
+            </span>
+          ) : (
+            <span className="text-lg font-bold text-white/40">vs</span>
+          )}
+          <span className="text-xs text-white/50">
+            {formatKickoffTime(match.kickoffAt)}
+          </span>
+        </div>
+
+        <div className="flex flex-1 flex-col items-center gap-2 text-center">
+          <span className="text-2xl">🏳️</span>
+          <span className="text-sm font-medium">{match.awayCountry}</span>
+        </div>
+      </div>
+    </Link>
+  );
+}
