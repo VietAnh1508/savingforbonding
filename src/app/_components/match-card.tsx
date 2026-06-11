@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
 import { TeamFlag } from "~/app/_components/team-flag";
-import { formatKickoffTime } from "~/lib/match";
+import { formatKickoffTime, formatRatioValue } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listUpcoming"][number];
@@ -31,11 +31,24 @@ function statusBadge(status: Match["status"]) {
   );
 }
 
+function formatMatchScore(match: Match): string {
+  if (
+    match.homeScore !== null &&
+    match.awayScore !== null &&
+    (match.status === "LIVE" || match.status === "COMPLETED")
+  ) {
+    return `${match.homeScore} - ${match.awayScore}`;
+  }
+
+  return "TBD - TBD";
+}
+
 export function MatchCard({ match }: { match: Match }) {
   const prediction = match.userVoteOutcome;
   const predictsHomeWin = prediction === "HOME_WIN";
   const predictsAwayWin = prediction === "AWAY_WIN";
   const predictsDraw = prediction === "DRAW";
+  const scoreIsTbd = formatMatchScore(match) === "TBD - TBD";
 
   return (
     <Link
@@ -49,10 +62,13 @@ export function MatchCard({ match }: { match: Match }) {
 
       <div className="flex items-center justify-between gap-4">
         <div
-          className={`flex flex-1 flex-col items-center gap-2 text-center ${predictedTeamClass(predictsHomeWin)}`}
+          className={`flex flex-1 flex-col items-center gap-1 text-center ${predictedTeamClass(predictsHomeWin)}`}
         >
           <TeamFlag country={match.homeCountry} size="sm" />
           <span className="text-sm font-medium">{match.homeCountry}</span>
+          <span className="font-mono text-xs text-emerald-400/90">
+            1: {formatRatioValue(match.homeRatio)}
+          </span>
           {predictsHomeWin && (
             <span className="text-xs font-medium text-emerald-400">
               predict win
@@ -60,14 +76,18 @@ export function MatchCard({ match }: { match: Match }) {
           )}
         </div>
 
-        <div className="flex flex-col items-center gap-1">
-          {match.homeScore !== null && match.awayScore !== null ? (
-            <span className="text-2xl font-bold">
-              {match.homeScore} - {match.awayScore}
-            </span>
-          ) : (
-            <span className="text-lg font-bold text-white/40">vs</span>
-          )}
+        <div className="flex min-w-[6.5rem] flex-col items-center gap-1">
+          <span
+            className={`text-xl font-bold ${
+              scoreIsTbd ? "text-white/40" : "text-white"
+            }`}
+          >
+            {formatMatchScore(match)}
+          </span>
+          <span className="font-mono text-xs text-emerald-400/80">
+            {formatRatioValue(match.homeRatio)}/
+            {formatRatioValue(match.awayRatio)}
+          </span>
           {predictsDraw && (
             <span className="text-xs font-medium text-emerald-400">
               predict draw
@@ -79,10 +99,13 @@ export function MatchCard({ match }: { match: Match }) {
         </div>
 
         <div
-          className={`flex flex-1 flex-col items-center gap-2 text-center ${predictedTeamClass(predictsAwayWin)}`}
+          className={`flex flex-1 flex-col items-center gap-1 text-center ${predictedTeamClass(predictsAwayWin)}`}
         >
           <TeamFlag country={match.awayCountry} size="sm" />
           <span className="text-sm font-medium">{match.awayCountry}</span>
+          <span className="font-mono text-xs text-emerald-400/90">
+            2: {formatRatioValue(match.awayRatio)}
+          </span>
           {predictsAwayWin && (
             <span className="text-xs font-medium text-emerald-400">
               predict win
