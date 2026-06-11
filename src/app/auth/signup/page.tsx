@@ -25,7 +25,7 @@ export default async function SignUpPage({
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#0a1f0a] to-[#0d1117] text-white">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-8">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-emerald-400">⚽ FootyPredict</h1>
+          <h1 className="text-3xl font-bold text-emerald-400">⚽ SavingforBonding</h1>
           <p className="mt-2 text-white/60">Create your account</p>
         </div>
 

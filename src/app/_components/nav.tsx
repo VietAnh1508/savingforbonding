@@ -10,7 +10,7 @@ export async function Nav() {
     <nav className="border-b border-white/10 bg-black/20 backdrop-blur-sm">
       <div className="container mx-auto flex items-center justify-between px-4 py-4">
         <Link href="/" className="text-xl font-bold text-emerald-400">
-          ⚽ FootyPredict
+          ⚽ SavingforBonding
         </Link>
         <div className="flex items-center gap-6">
           <Link

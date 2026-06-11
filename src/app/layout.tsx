@@ -6,7 +6,7 @@ import { Geist } from "next/font/google";
 import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
-  title: "FootyPredict — Football Prediction App",
+  title: "SavingforBonding — Football Prediction App",
   description:
     "Predict football match outcomes, track your accuracy, and see who tops the beer donation board.",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
