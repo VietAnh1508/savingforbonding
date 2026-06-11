@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { env } from "~/env";
+import { logDatabaseInit } from "~/server/db-diagnostics";
 import { PrismaClient, type Prisma } from "../../generated/prisma";
 
 const require = createRequire(import.meta.url);
@@ -87,7 +88,13 @@ if (
   globalForPrisma.prisma = undefined;
 }
 
-export const db = globalForPrisma.prisma ?? createPrismaClient();
+const prismaClient = globalForPrisma.prisma ?? createPrismaClient();
+
+if (env.NODE_ENV === "production") {
+  logDatabaseInit();
+}
+
+export const db = prismaClient;
 
 if (env.NODE_ENV !== "production") {
   globalForPrisma.prisma = db;
