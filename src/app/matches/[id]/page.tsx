@@ -88,8 +88,7 @@ export default async function MatchPage({
                 matchId={match.id}
                 homeCountry={match.homeCountry}
                 awayCountry={match.awayCountry}
-                currentVote={match.userVote?.outcome}
-                votingOpen={match.votingOpen}
+                initialMatch={match}
               />
             ) : (
               <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">

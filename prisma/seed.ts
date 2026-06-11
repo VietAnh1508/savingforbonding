@@ -1,4 +1,4 @@
-import { createPrismaClient } from "../src/server/db";
+import { createPrismaClient } from "../src/server/create-prisma-client";
 import { syncFifaFixtures } from "../src/server/services/sync-fifa-fixtures";
 
 const db = createPrismaClient();

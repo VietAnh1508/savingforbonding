@@ -2,27 +2,70 @@
 
 import { type VoteOutcome } from "../../../generated/prisma";
 import { BEER_NO_BET, formatBeers, outcomeShort } from "~/lib/match";
+import { type RouterOutputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
 
 const OUTCOMES: VoteOutcome[] = ["HOME_WIN", "DRAW", "AWAY_WIN"];
+
+type MatchDetail = NonNullable<RouterOutputs["match"]["getById"]>;
 
 export function VoteForm({
   matchId,
   homeCountry,
   awayCountry,
-  currentVote,
-  votingOpen,
+  initialMatch,
 }: {
   matchId: string;
   homeCountry: string;
   awayCountry: string;
-  currentVote?: VoteOutcome | null;
-  votingOpen: boolean;
+  initialMatch: MatchDetail;
 }) {
   const utils = api.useUtils();
 
+  const { data: match } = api.match.getById.useQuery(
+    { id: matchId },
+    { initialData: initialMatch },
+  );
+
+  const currentVote = match?.userVote?.outcome;
+  const votingOpen = match?.votingOpen ?? false;
+
   const castVote = api.vote.cast.useMutation({
-    onSuccess: () => {
+    onMutate: async ({ outcome }) => {
+      await utils.match.getById.cancel({ id: matchId });
+
+      const previous = utils.match.getById.getData({ id: matchId });
+
+      utils.match.getById.setData({ id: matchId }, (old) => {
+        if (!old) return old;
+
+        const existingVote = old.userVote;
+
+        return {
+          ...old,
+          userVote: existingVote
+            ? { ...existingVote, outcome }
+            : {
+                id: "optimistic",
+                userId: "",
+                matchId,
+                outcome,
+                isCorrect: null,
+                points: 0,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              },
+        };
+      });
+
+      return { previous };
+    },
+    onError: (_error, _input, context) => {
+      if (context?.previous) {
+        utils.match.getById.setData({ id: matchId }, context.previous);
+      }
+    },
+    onSettled: () => {
       void utils.match.getById.invalidate({ id: matchId });
     },
   });
