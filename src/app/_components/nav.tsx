@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { UserMenu } from "~/app/_components/user-menu";
 import { auth } from "~/server/auth";
 
 export async function Nav() {
@@ -22,13 +23,7 @@ export async function Nav() {
             href="/leaderboard"
             className="text-sm font-medium text-white/80 transition hover:text-white"
           >
-            Leaderboard
-          </Link>
-          <Link
-            href="/admin"
-            className="text-sm font-medium text-white/80 transition hover:text-white"
-          >
-            Admin
+            Top Donator
           </Link>
           {session?.user && (
             <Link
@@ -38,12 +33,19 @@ export async function Nav() {
               Profile
             </Link>
           )}
-          <Link
-            href={session ? "/api/auth/signout" : "/auth/signin"}
-            className="rounded-full bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/30"
-          >
-            {session ? "Sign out" : "Sign in"}
-          </Link>
+          {session?.user ? (
+            <UserMenu
+              name={session.user.name}
+              email={session.user.email}
+            />
+          ) : (
+            <Link
+              href="/auth/signin"
+              className="rounded-full bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/30"
+            >
+              Sign in
+            </Link>
+          )}
         </div>
       </div>
     </nav>

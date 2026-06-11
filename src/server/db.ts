@@ -1,7 +1,18 @@
+import fs from "node:fs";
 import path from "node:path";
 
 import { env } from "~/env";
 import { PrismaClient } from "../../generated/prisma";
+
+function getGeneratedClientMtime() {
+  try {
+    return fs.statSync(
+      path.join(process.cwd(), "generated/prisma/index.js"),
+    ).mtimeMs;
+  } catch {
+    return 0;
+  }
+}
 
 /**
  * Prisma CLI resolves `file:./db.sqlite` relative to prisma/schema.prisma,
@@ -34,8 +45,23 @@ const createPrismaClient = () =>
 
 const globalForPrisma = globalThis as unknown as {
   prisma: ReturnType<typeof createPrismaClient> | undefined;
+  prismaMtime: number | undefined;
 };
+
+const generatedClientMtime = getGeneratedClientMtime();
+
+if (
+  env.NODE_ENV !== "production" &&
+  globalForPrisma.prisma &&
+  globalForPrisma.prismaMtime !== generatedClientMtime
+) {
+  void globalForPrisma.prisma.$disconnect();
+  globalForPrisma.prisma = undefined;
+}
 
 export const db = globalForPrisma.prisma ?? createPrismaClient();
 
-if (env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+if (env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = db;
+  globalForPrisma.prismaMtime = generatedClientMtime;
+}

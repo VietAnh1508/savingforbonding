@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { BeerStakes } from "~/app/_components/beer-stakes";
 import { BettingRatios } from "~/app/_components/betting-ratios";
 import { Nav } from "~/app/_components/nav";
 import { VoteForm } from "~/app/_components/vote-form";
@@ -73,6 +74,8 @@ export default async function MatchPage({
           </div>
 
           <div className="mt-8 space-y-8">
+            <BeerStakes />
+
             <BettingRatios
               homeCountry={match.homeCountry}
               awayCountry={match.awayCountry}

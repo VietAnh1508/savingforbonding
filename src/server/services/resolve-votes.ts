@@ -1,5 +1,9 @@
 import { type PrismaClient } from "../../../generated/prisma";
-import { CORRECT_PREDICTION_POINTS, deriveResult } from "~/lib/match";
+import {
+  BEER_NO_BET,
+  beerCostForVote,
+  deriveResult,
+} from "~/lib/match";
 
 export async function resolveMatchVotes(
   db: PrismaClient,
@@ -23,28 +27,51 @@ export async function resolveMatchVotes(
     where: { matchId, isCorrect: null },
   });
 
-  let pointsAwarded = 0;
+  let beersCharged = 0;
 
   for (const vote of unresolvedVotes) {
     const isCorrect = vote.outcome === result;
-    const points = isCorrect ? CORRECT_PREDICTION_POINTS : 0;
+    const beers = beerCostForVote(isCorrect);
 
     await db.vote.update({
       where: { id: vote.id },
-      data: { isCorrect, points },
+      data: { isCorrect, points: beers },
     });
 
-    if (isCorrect) {
-      await db.user.update({
-        where: { id: vote.userId },
-        data: {
-          totalPoints: { increment: points },
-          weeklyPoints: { increment: points },
-        },
-      });
-      pointsAwarded += points;
-    }
+    await db.user.update({
+      where: { id: vote.userId },
+      data: {
+        totalPoints: { increment: beers },
+        weeklyPoints: { increment: beers },
+      },
+    });
+    beersCharged += beers;
   }
 
-  return { result, pointsAwarded };
+  const votedUserIds = new Set(
+    (
+      await db.vote.findMany({
+        where: { matchId },
+        select: { userId: true },
+      })
+    ).map((v) => v.userId),
+  );
+
+  const nonVoters = await db.user.findMany({
+    where: { id: { notIn: [...votedUserIds] } },
+    select: { id: true },
+  });
+
+  for (const user of nonVoters) {
+    await db.user.update({
+      where: { id: user.id },
+      data: {
+        totalPoints: { increment: BEER_NO_BET },
+        weeklyPoints: { increment: BEER_NO_BET },
+      },
+    });
+    beersCharged += BEER_NO_BET;
+  }
+
+  return { result, beersCharged, noBetPenalties: nonVoters.length };
 }

@@ -8,7 +8,7 @@ import { TRPCReactProvider } from "~/trpc/react";
 export const metadata: Metadata = {
   title: "FootyPredict — Football Prediction App",
   description:
-    "Predict football match outcomes, track your accuracy, and compete on the global leaderboard.",
+    "Predict football match outcomes, track your accuracy, and see who tops the beer donation board.",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 

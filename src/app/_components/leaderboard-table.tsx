@@ -8,15 +8,15 @@ type Entry =
 
 export function LeaderboardTable({
   entries,
-  pointsLabel = "Points",
+  beersLabel = "Beers",
 }: {
   entries: Entry[];
-  pointsLabel?: string;
+  beersLabel?: string;
 }) {
   if (entries.length === 0) {
     return (
       <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center text-white/50">
-        No rankings yet. Be the first to make a correct prediction!
+        No donations yet. Place your first bet to get on the board!
       </div>
     );
   }
@@ -28,7 +28,7 @@ export function LeaderboardTable({
           <tr className="border-b border-white/10 bg-white/5 text-left text-sm text-white/60">
             <th className="px-4 py-3 font-medium">Rank</th>
             <th className="px-4 py-3 font-medium">Player</th>
-            <th className="px-4 py-3 text-right font-medium">{pointsLabel}</th>
+            <th className="px-4 py-3 text-right font-medium">{beersLabel}</th>
           </tr>
         </thead>
         <tbody>
@@ -72,8 +72,8 @@ export function LeaderboardTable({
                   </span>
                 </div>
               </td>
-              <td className="px-4 py-3 text-right font-bold text-emerald-400">
-                {entry.points}
+              <td className="px-4 py-3 text-right font-bold text-amber-400">
+                🍺 {entry.beers}
               </td>
             </tr>
           ))}

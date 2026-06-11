@@ -2,7 +2,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 
 import { Nav } from "~/app/_components/nav";
-import { outcomeShort } from "~/lib/match";
+import { formatBeers, outcomeShort } from "~/lib/match";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -44,8 +44,8 @@ export default async function ProfilePage() {
 
           <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[
-              { label: "Total Points", value: stats.totalPoints },
-              { label: "Weekly Points", value: stats.weeklyPoints },
+              { label: "Total Beers", value: `🍺 ${stats.totalBeers}` },
+              { label: "Weekly Beers", value: `🍺 ${stats.weeklyBeers}` },
               { label: "Accuracy", value: `${stats.accuracy}%` },
               {
                 label: "Correct",
@@ -92,13 +92,15 @@ export default async function ProfilePage() {
                     <div>
                       {vote.isCorrect === null ? (
                         <span className="text-sm text-white/40">Pending</span>
-                      ) : vote.isCorrect ? (
-                        <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-sm text-emerald-300">
-                          +{vote.points} pts
-                        </span>
                       ) : (
-                        <span className="rounded-full bg-red-500/20 px-3 py-1 text-sm text-red-300">
-                          Incorrect
+                        <span
+                          className={`rounded-full px-3 py-1 text-sm ${
+                            vote.isCorrect
+                              ? "bg-emerald-500/20 text-emerald-300"
+                              : "bg-red-500/20 text-red-300"
+                          }`}
+                        >
+                          🍺 {formatBeers(vote.points)}
                         </span>
                       )}
                     </div>

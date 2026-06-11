@@ -1,7 +1,7 @@
 "use client";
 
 import { type VoteOutcome } from "../../../generated/prisma";
-import { outcomeShort } from "~/lib/match";
+import { BEER_NO_BET, formatBeers, outcomeShort } from "~/lib/match";
 import { api } from "~/trpc/react";
 
 const OUTCOMES: VoteOutcome[] = ["HOME_WIN", "DRAW", "AWAY_WIN"];
@@ -53,7 +53,11 @@ export function VoteForm({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Cast your prediction</h3>
+      <h3 className="text-lg font-semibold">Place your bet</h3>
+      <p className="text-sm text-white/50">
+        Required for every match — skip it and you owe {formatBeers(BEER_NO_BET)}{" "}
+        anyway.
+      </p>
       <div className="grid grid-cols-3 gap-3">
         {OUTCOMES.map((outcome) => (
           <button

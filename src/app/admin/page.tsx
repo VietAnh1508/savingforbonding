@@ -21,7 +21,7 @@ export default async function AdminPage({
         <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/5 p-8">
           <h1 className="mb-2 text-2xl font-bold">Admin Login</h1>
           <p className="mb-6 text-sm text-white/60">
-            Manage World Cup matches and betting ratios
+            Manage World Cup matches and beer odds ratios
           </p>
           {error && (
             <p className="mb-4 text-sm text-red-400">Incorrect password</p>

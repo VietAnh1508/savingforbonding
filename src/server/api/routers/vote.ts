@@ -86,8 +86,8 @@ export const voteRouter = createTRPCRouter({
       totalVotes,
       correctVotes,
       accuracy,
-      totalPoints: user?.totalPoints ?? 0,
-      weeklyPoints: user?.weeklyPoints ?? 0,
+      totalBeers: user?.totalPoints ?? 0,
+      weeklyBeers: user?.weeklyPoints ?? 0,
     };
   }),
 });

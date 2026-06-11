@@ -32,7 +32,7 @@ export default async function Home() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold">Upcoming Matches</h1>
             <p className="mt-2 text-white/60">
-              Predict World Cup outcomes and climb the leaderboard
+              Predict World Cup outcomes — win or lose, you owe beer
             </p>
           </div>
 

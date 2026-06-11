@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { signInWithCredentials } from "~/app/auth/actions";
+import { signUp } from "~/app/auth/actions";
 import { auth } from "~/server/auth";
 
 const ERROR_MESSAGES: Record<string, string> = {
-  InvalidCredentials: "Invalid email or password.",
+  InvalidInput: "Please fill in all required fields.",
+  PasswordTooShort: "Password must be at least 8 characters.",
+  EmailTaken: "An account with this email already exists.",
 };
 
-export default async function SignInPage({
+export default async function SignUpPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>;
@@ -24,9 +26,7 @@ export default async function SignInPage({
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-8">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-emerald-400">⚽ FootyPredict</h1>
-          <p className="mt-2 text-white/60">
-            Sign in with your email and password
-          </p>
+          <p className="mt-2 text-white/60">Create your account</p>
         </div>
 
         {errorMessage && (
@@ -35,7 +35,21 @@ export default async function SignInPage({
           </p>
         )}
 
-        <form action={signInWithCredentials} className="space-y-4">
+        <form action={signUp} className="space-y-4">
+          <div>
+            <label htmlFor="name" className="mb-1 block text-sm text-white/70">
+              Name <span className="text-white/40">(optional)</span>
+            </label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              autoComplete="name"
+              className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-white placeholder:text-white/40 focus:border-emerald-500/50 focus:outline-none"
+              placeholder="Your name"
+            />
+          </div>
+
           <div>
             <label htmlFor="email" className="mb-1 block text-sm text-white/70">
               Email
@@ -63,9 +77,10 @@ export default async function SignInPage({
               name="password"
               type="password"
               required
-              autoComplete="current-password"
+              minLength={8}
+              autoComplete="new-password"
               className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-white placeholder:text-white/40 focus:border-emerald-500/50 focus:outline-none"
-              placeholder="Your password"
+              placeholder="At least 8 characters"
             />
           </div>
 
@@ -73,17 +88,17 @@ export default async function SignInPage({
             type="submit"
             className="w-full rounded-xl border border-emerald-500/30 bg-emerald-500/20 px-4 py-3 font-semibold text-emerald-300 transition hover:bg-emerald-500/30"
           >
-            Sign in
+            Create account
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-white/50">
-          No account yet?{" "}
+          Already have an account?{" "}
           <Link
-            href="/auth/signup"
+            href="/auth/signin"
             className="font-medium text-emerald-400 hover:text-emerald-300"
           >
-            Create one
+            Sign in
           </Link>
         </p>
       </div>

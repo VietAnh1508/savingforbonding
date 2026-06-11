@@ -17,7 +17,9 @@ export function BettingRatios({
 
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
-      <h3 className="mb-3 text-sm font-medium text-white/60">Betting Ratio</h3>
+      <h3 className="mb-3 text-sm font-medium text-white/60">
+        Beer Odds Ratio
+      </h3>
       <div className="flex items-center justify-center gap-4">
         <span className="text-sm font-medium">{homeCountry}</span>
         <span className="font-mono text-3xl font-bold text-emerald-400">

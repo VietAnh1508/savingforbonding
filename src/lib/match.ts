@@ -1,7 +1,22 @@
 import { type MatchStatus, type VoteOutcome } from "../../generated/prisma";
 
 export const VOTE_LOCK_MINUTES = 5;
-export const CORRECT_PREDICTION_POINTS = 10;
+
+/** Platform fee — paid on every bet (win or lose). */
+export const BEER_PLATFORM_FEE = 1;
+/** Extra penalty on a losing bet, on top of the platform fee. */
+export const BEER_LOSE_PENALTY = 2;
+export const BEER_WIN = BEER_PLATFORM_FEE;
+export const BEER_LOSE = BEER_PLATFORM_FEE + BEER_LOSE_PENALTY;
+export const BEER_NO_BET = 2;
+
+export function beerCostForVote(isCorrect: boolean): number {
+  return isCorrect ? BEER_WIN : BEER_LOSE;
+}
+
+export function formatBeers(count: number): string {
+  return `${count} beer${count === 1 ? "" : "s"}`;
+}
 
 export function validateBettingRatios(
   homeRatio: number,

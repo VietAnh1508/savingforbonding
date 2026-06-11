@@ -36,7 +36,7 @@ export const leaderboardRouter = createTRPCRouter({
         id: user.id,
         name: user.name,
         image: user.image,
-        points: user.totalPoints,
+        beers: user.totalPoints,
         correctPredictions: user._count.votes,
       }));
     }),
@@ -69,7 +69,7 @@ export const leaderboardRouter = createTRPCRouter({
         id: user.id,
         name: user.name,
         image: user.image,
-        points: user.weeklyPoints,
+        beers: user.weeklyPoints,
       }));
     }),
 });

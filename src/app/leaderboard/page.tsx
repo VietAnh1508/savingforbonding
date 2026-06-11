@@ -13,7 +13,10 @@ export default async function LeaderboardPage() {
       <div className="min-h-screen bg-gradient-to-b from-[#0a1f0a] to-[#0d1117] text-white">
         <Nav />
         <main className="container mx-auto max-w-3xl px-4 py-8">
-          <h1 className="mb-8 text-3xl font-bold">Leaderboard</h1>
+          <h1 className="mb-2 text-3xl font-bold">Top Donator</h1>
+          <p className="mb-8 text-white/60">
+            Who owes the most beer? Higher is more generous.
+          </p>
 
           <div className="space-y-12">
             <section>
@@ -22,7 +25,7 @@ export default async function LeaderboardPage() {
               </h2>
               <LeaderboardTable
                 entries={weekly}
-                pointsLabel="Weekly Points"
+                beersLabel="Weekly Beers"
               />
             </section>
 
@@ -32,7 +35,7 @@ export default async function LeaderboardPage() {
               </h2>
               <LeaderboardTable
                 entries={global}
-                pointsLabel="Total Points"
+                beersLabel="Total Beers"
               />
             </section>
           </div>
