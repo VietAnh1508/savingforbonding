@@ -4,6 +4,19 @@ import { type RouterOutputs } from "~/trpc/react";
 
 type Entry = RouterOutputs["leaderboard"]["global"][number];
 
+function titleForRank(rank: number): string | null {
+  switch (rank) {
+    case 1:
+      return "The Hand of God";
+    case 2:
+      return "National Prider";
+    case 3:
+      return "Doctor of Prediction";
+    default:
+      return null;
+  }
+}
+
 export function LeaderboardTable({
   entries,
   beersLabel = "Beers",
@@ -27,6 +40,7 @@ export function LeaderboardTable({
             <th className="px-4 py-3 font-medium">Rank</th>
             <th className="px-4 py-3 font-medium">Player</th>
             <th className="px-4 py-3 text-right font-medium">{beersLabel}</th>
+            <th className="px-4 py-3 font-medium">Title</th>
           </tr>
         </thead>
         <tbody>
@@ -72,6 +86,11 @@ export function LeaderboardTable({
               </td>
               <td className="px-4 py-3 text-right font-bold text-amber-400">
                 🍺 {entry.beers}
+              </td>
+              <td className="px-4 py-3 text-sm text-emerald-300">
+                {titleForRank(entry.rank) ?? (
+                  <span className="text-white/30">—</span>
+                )}
               </td>
             </tr>
           ))}
