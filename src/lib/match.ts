@@ -41,20 +41,6 @@ export function validateBettingRatios(
   if (homeRatio < 0 || awayRatio < 0) {
     return "Ratios cannot be negative";
   }
-  const homeSet = homeRatio > 0;
-  const awaySet = awayRatio > 0;
-  if (homeSet && awaySet) {
-    return "Only one side can have a ratio — set the other to 0";
-  }
-  if (!homeSet && !awaySet) {
-    return "One side must have a ratio greater than 0";
-  }
-  if (homeSet && awayRatio !== 0) {
-    return "When home has a ratio, away must be 0";
-  }
-  if (awaySet && homeRatio !== 0) {
-    return "When away has a ratio, home must be 0";
-  }
   return null;
 }
 
@@ -152,6 +138,10 @@ export function describeHandicapRule(
 ): string | null {
   if (!hasBettingHandicap(homeRatio, awayRatio)) {
     return null;
+  }
+
+  if (homeRatio > 0 && awayRatio > 0) {
+    return `${homeCountry} -${formatRatioValue(homeRatio)} and ${awayCountry} +${formatRatioValue(awayRatio)} handicaps. Win or lose is decided after both lines are applied; (X) on a tie after handicap.`;
   }
 
   if (homeRatio > 0) {

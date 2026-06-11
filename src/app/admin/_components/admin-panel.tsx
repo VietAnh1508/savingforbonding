@@ -189,7 +189,7 @@ export function AdminPanel() {
         </h2>
 
         <p className="text-sm text-white/50">
-          Set a ratio on one side only — the other must be 0.
+          Set home and away ratios freely. Use 0 for no handicap on that side.
         </p>
 
         <div className="grid gap-4 sm:grid-cols-2">
