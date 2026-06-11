@@ -30,13 +30,30 @@ export const matchRouter = createTRPCRouter({
         take: limit,
       });
 
+      const matchIds = matches.map((match) => match.id);
+
       const voteCountsByMatchId = await getVoteCountsByMatchId(
         ctx.db,
-        matches.map((match) => match.id),
+        matchIds,
+      );
+
+      const userVotes = ctx.session?.user
+        ? await ctx.db.vote.findMany({
+            where: {
+              userId: ctx.session.user.id,
+              matchId: { in: matchIds },
+            },
+            select: { matchId: true, outcome: true },
+          })
+        : [];
+
+      const userVoteByMatchId = new Map(
+        userVotes.map((vote) => [vote.matchId, vote.outcome]),
       );
 
       return matches.map((match) => ({
         ...match,
+        userVoteOutcome: userVoteByMatchId.get(match.id) ?? null,
         voteCounts:
           voteCountsByMatchId.get(match.id) ?? emptyMatchVoteCounts(),
       }));

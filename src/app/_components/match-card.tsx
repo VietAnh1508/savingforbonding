@@ -7,6 +7,12 @@ import { type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listUpcoming"][number];
 
+function predictedTeamClass(isPredicted: boolean) {
+  return isPredicted
+    ? "rounded-full border-2 border-emerald-400 px-3 py-2"
+    : "px-3 py-2";
+}
+
 function statusBadge(status: Match["status"]) {
   const styles: Record<Match["status"], string> = {
     SCHEDULED: "bg-blue-500/20 text-blue-300",
@@ -26,6 +32,11 @@ function statusBadge(status: Match["status"]) {
 }
 
 export function MatchCard({ match }: { match: Match }) {
+  const prediction = match.userVoteOutcome;
+  const predictsHomeWin = prediction === "HOME_WIN";
+  const predictsAwayWin = prediction === "AWAY_WIN";
+  const predictsDraw = prediction === "DRAW";
+
   return (
     <Link
       href={`/matches/${match.id}`}
@@ -37,9 +48,16 @@ export function MatchCard({ match }: { match: Match }) {
       </div>
 
       <div className="flex items-center justify-between gap-4">
-        <div className="flex flex-1 flex-col items-center gap-2 text-center">
+        <div
+          className={`flex flex-1 flex-col items-center gap-2 text-center ${predictedTeamClass(predictsHomeWin)}`}
+        >
           <TeamFlag country={match.homeCountry} size="sm" />
           <span className="text-sm font-medium">{match.homeCountry}</span>
+          {predictsHomeWin && (
+            <span className="text-xs font-medium text-emerald-400">
+              predict win
+            </span>
+          )}
         </div>
 
         <div className="flex flex-col items-center gap-1">
@@ -50,14 +68,26 @@ export function MatchCard({ match }: { match: Match }) {
           ) : (
             <span className="text-lg font-bold text-white/40">vs</span>
           )}
+          {predictsDraw && (
+            <span className="text-xs font-medium text-emerald-400">
+              predict draw
+            </span>
+          )}
           <span className="text-xs text-white/50">
             {formatKickoffTime(match.kickoffAt)}
           </span>
         </div>
 
-        <div className="flex flex-1 flex-col items-center gap-2 text-center">
+        <div
+          className={`flex flex-1 flex-col items-center gap-2 text-center ${predictedTeamClass(predictsAwayWin)}`}
+        >
           <TeamFlag country={match.awayCountry} size="sm" />
           <span className="text-sm font-medium">{match.awayCountry}</span>
+          {predictsAwayWin && (
+            <span className="text-xs font-medium text-emerald-400">
+              predict win
+            </span>
+          )}
         </div>
       </div>
 
