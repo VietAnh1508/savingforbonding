@@ -4,6 +4,7 @@ import { z } from "zod";
 import { isMatchEditable, validateBettingRatios } from "~/lib/match";
 import { adminProcedure, createTRPCRouter } from "~/server/api/trpc";
 import { resolveMatchVotes } from "~/server/services/resolve-votes";
+import { syncFifaFixtures } from "~/server/services/sync-fifa-fixtures";
 
 const matchStatusSchema = z.enum([
   "SCHEDULED",
@@ -58,6 +59,10 @@ const matchUpdateSchema = z
   });
 
 export const adminRouter = createTRPCRouter({
+  syncFromFifa: adminProcedure.mutation(async ({ ctx }) => {
+    return syncFifaFixtures(ctx.db);
+  }),
+
   listAll: adminProcedure.query(async ({ ctx }) => {
     return ctx.db.match.findMany({
       orderBy: { kickoffAt: "asc" },

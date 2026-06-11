@@ -8,6 +8,8 @@ export const env = createEnv({
         ? z.string()
         : z.string().optional(),
     DATABASE_URL: z.string(),
+    TURSO_DATABASE_URL: z.string().optional(),
+    TURSO_API_KEY: z.string().optional(),
     FOOTBALL_DATA_API_KEY: z.string().optional(),
     CRON_SECRET: z.string().optional(),
     ADMIN_PASSWORD: z.string().optional(),
@@ -21,6 +23,8 @@ export const env = createEnv({
   runtimeEnv: {
     AUTH_SECRET: process.env.AUTH_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
+    TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL,
+    TURSO_API_KEY: process.env.TURSO_API_KEY,
     FOOTBALL_DATA_API_KEY: process.env.FOOTBALL_DATA_API_KEY,
     CRON_SECRET: process.env.CRON_SECRET,
     ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,

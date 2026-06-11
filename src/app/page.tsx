@@ -40,8 +40,8 @@ export default async function Home() {
             <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center">
               <p className="text-lg text-white/60">No upcoming matches found.</p>
               <p className="mt-2 text-sm text-white/40">
-                Run <code className="text-emerald-400">npm run db:setup</code> or
-                add matches in the{" "}
+                Run <code className="text-emerald-400">npm run sync:fifa</code> to
+                pull the World Cup schedule from FIFA, or add matches in the{" "}
                 <a href="/admin" className="text-emerald-400 hover:underline">
                   admin page
                 </a>

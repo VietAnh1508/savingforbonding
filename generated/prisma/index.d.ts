@@ -1456,6 +1456,7 @@ export namespace Prisma {
 
   export type MatchMinAggregateOutputType = {
     id: string | null
+    externalId: string | null
     tournament: string | null
     homeCountry: string | null
     awayCountry: string | null
@@ -1472,6 +1473,7 @@ export namespace Prisma {
 
   export type MatchMaxAggregateOutputType = {
     id: string | null
+    externalId: string | null
     tournament: string | null
     homeCountry: string | null
     awayCountry: string | null
@@ -1488,6 +1490,7 @@ export namespace Prisma {
 
   export type MatchCountAggregateOutputType = {
     id: number
+    externalId: number
     tournament: number
     homeCountry: number
     awayCountry: number
@@ -1520,6 +1523,7 @@ export namespace Prisma {
 
   export type MatchMinAggregateInputType = {
     id?: true
+    externalId?: true
     tournament?: true
     homeCountry?: true
     awayCountry?: true
@@ -1536,6 +1540,7 @@ export namespace Prisma {
 
   export type MatchMaxAggregateInputType = {
     id?: true
+    externalId?: true
     tournament?: true
     homeCountry?: true
     awayCountry?: true
@@ -1552,6 +1557,7 @@ export namespace Prisma {
 
   export type MatchCountAggregateInputType = {
     id?: true
+    externalId?: true
     tournament?: true
     homeCountry?: true
     awayCountry?: true
@@ -1655,6 +1661,7 @@ export namespace Prisma {
 
   export type MatchGroupByOutputType = {
     id: string
+    externalId: string | null
     tournament: string
     homeCountry: string
     awayCountry: string
@@ -1690,6 +1697,7 @@ export namespace Prisma {
 
   export type MatchSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    externalId?: boolean
     tournament?: boolean
     homeCountry?: boolean
     awayCountry?: boolean
@@ -1708,6 +1716,7 @@ export namespace Prisma {
 
   export type MatchSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    externalId?: boolean
     tournament?: boolean
     homeCountry?: boolean
     awayCountry?: boolean
@@ -1724,6 +1733,7 @@ export namespace Prisma {
 
   export type MatchSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    externalId?: boolean
     tournament?: boolean
     homeCountry?: boolean
     awayCountry?: boolean
@@ -1740,6 +1750,7 @@ export namespace Prisma {
 
   export type MatchSelectScalar = {
     id?: boolean
+    externalId?: boolean
     tournament?: boolean
     homeCountry?: boolean
     awayCountry?: boolean
@@ -1754,7 +1765,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type MatchOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tournament" | "homeCountry" | "awayCountry" | "kickoffAt" | "status" | "homeScore" | "awayScore" | "result" | "homeRatio" | "awayRatio" | "createdAt" | "updatedAt", ExtArgs["result"]["match"]>
+  export type MatchOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "externalId" | "tournament" | "homeCountry" | "awayCountry" | "kickoffAt" | "status" | "homeScore" | "awayScore" | "result" | "homeRatio" | "awayRatio" | "createdAt" | "updatedAt", ExtArgs["result"]["match"]>
   export type MatchInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     votes?: boolean | Match$votesArgs<ExtArgs>
     _count?: boolean | MatchCountOutputTypeDefaultArgs<ExtArgs>
@@ -1769,6 +1780,7 @@ export namespace Prisma {
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
+      externalId: string | null
       tournament: string
       homeCountry: string
       awayCountry: string
@@ -2206,6 +2218,7 @@ export namespace Prisma {
    */
   interface MatchFieldRefs {
     readonly id: FieldRef<"Match", 'String'>
+    readonly externalId: FieldRef<"Match", 'String'>
     readonly tournament: FieldRef<"Match", 'String'>
     readonly homeCountry: FieldRef<"Match", 'String'>
     readonly awayCountry: FieldRef<"Match", 'String'>
@@ -8205,6 +8218,7 @@ export namespace Prisma {
 
   export const MatchScalarFieldEnum: {
     id: 'id',
+    externalId: 'externalId',
     tournament: 'tournament',
     homeCountry: 'homeCountry',
     awayCountry: 'awayCountry',
@@ -8366,6 +8380,7 @@ export namespace Prisma {
     OR?: MatchWhereInput[]
     NOT?: MatchWhereInput | MatchWhereInput[]
     id?: StringFilter<"Match"> | string
+    externalId?: StringNullableFilter<"Match"> | string | null
     tournament?: StringFilter<"Match"> | string
     homeCountry?: StringFilter<"Match"> | string
     awayCountry?: StringFilter<"Match"> | string
@@ -8383,6 +8398,7 @@ export namespace Prisma {
 
   export type MatchOrderByWithRelationInput = {
     id?: SortOrder
+    externalId?: SortOrderInput | SortOrder
     tournament?: SortOrder
     homeCountry?: SortOrder
     awayCountry?: SortOrder
@@ -8400,6 +8416,7 @@ export namespace Prisma {
 
   export type MatchWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    externalId?: string
     AND?: MatchWhereInput | MatchWhereInput[]
     OR?: MatchWhereInput[]
     NOT?: MatchWhereInput | MatchWhereInput[]
@@ -8416,10 +8433,11 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Match"> | Date | string
     updatedAt?: DateTimeFilter<"Match"> | Date | string
     votes?: VoteListRelationFilter
-  }, "id">
+  }, "id" | "externalId">
 
   export type MatchOrderByWithAggregationInput = {
     id?: SortOrder
+    externalId?: SortOrderInput | SortOrder
     tournament?: SortOrder
     homeCountry?: SortOrder
     awayCountry?: SortOrder
@@ -8444,6 +8462,7 @@ export namespace Prisma {
     OR?: MatchScalarWhereWithAggregatesInput[]
     NOT?: MatchScalarWhereWithAggregatesInput | MatchScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Match"> | string
+    externalId?: StringNullableWithAggregatesFilter<"Match"> | string | null
     tournament?: StringWithAggregatesFilter<"Match"> | string
     homeCountry?: StringWithAggregatesFilter<"Match"> | string
     awayCountry?: StringWithAggregatesFilter<"Match"> | string
@@ -8805,6 +8824,7 @@ export namespace Prisma {
 
   export type MatchCreateInput = {
     id?: string
+    externalId?: string | null
     tournament?: string
     homeCountry: string
     awayCountry: string
@@ -8822,6 +8842,7 @@ export namespace Prisma {
 
   export type MatchUncheckedCreateInput = {
     id?: string
+    externalId?: string | null
     tournament?: string
     homeCountry: string
     awayCountry: string
@@ -8839,6 +8860,7 @@ export namespace Prisma {
 
   export type MatchUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
     tournament?: StringFieldUpdateOperationsInput | string
     homeCountry?: StringFieldUpdateOperationsInput | string
     awayCountry?: StringFieldUpdateOperationsInput | string
@@ -8856,6 +8878,7 @@ export namespace Prisma {
 
   export type MatchUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
     tournament?: StringFieldUpdateOperationsInput | string
     homeCountry?: StringFieldUpdateOperationsInput | string
     awayCountry?: StringFieldUpdateOperationsInput | string
@@ -8873,6 +8896,7 @@ export namespace Prisma {
 
   export type MatchCreateManyInput = {
     id?: string
+    externalId?: string | null
     tournament?: string
     homeCountry: string
     awayCountry: string
@@ -8889,6 +8913,7 @@ export namespace Prisma {
 
   export type MatchUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
     tournament?: StringFieldUpdateOperationsInput | string
     homeCountry?: StringFieldUpdateOperationsInput | string
     awayCountry?: StringFieldUpdateOperationsInput | string
@@ -8905,6 +8930,7 @@ export namespace Prisma {
 
   export type MatchUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
     tournament?: StringFieldUpdateOperationsInput | string
     homeCountry?: StringFieldUpdateOperationsInput | string
     awayCountry?: StringFieldUpdateOperationsInput | string
@@ -9298,6 +9324,20 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
+  export type StringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[]
@@ -9362,6 +9402,7 @@ export namespace Prisma {
 
   export type MatchCountOrderByAggregateInput = {
     id?: SortOrder
+    externalId?: SortOrder
     tournament?: SortOrder
     homeCountry?: SortOrder
     awayCountry?: SortOrder
@@ -9385,6 +9426,7 @@ export namespace Prisma {
 
   export type MatchMaxOrderByAggregateInput = {
     id?: SortOrder
+    externalId?: SortOrder
     tournament?: SortOrder
     homeCountry?: SortOrder
     awayCountry?: SortOrder
@@ -9401,6 +9443,7 @@ export namespace Prisma {
 
   export type MatchMinOrderByAggregateInput = {
     id?: SortOrder
+    externalId?: SortOrder
     tournament?: SortOrder
     homeCountry?: SortOrder
     awayCountry?: SortOrder
@@ -9437,6 +9480,23 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedStringFilter<$PrismaModel>
     _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -9618,20 +9678,6 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
-  export type StringNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | null
-    notIn?: string[] | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
-  }
-
   export type AccountProviderProviderAccountIdCompoundUniqueInput = {
     provider: string
     providerAccountId: string
@@ -9693,23 +9739,6 @@ export namespace Prisma {
   export type AccountSumOrderByAggregateInput = {
     expires_at?: SortOrder
     refresh_token_expires_in?: SortOrder
-  }
-
-  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | null
-    notIn?: string[] | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type SessionCountOrderByAggregateInput = {
@@ -9862,6 +9891,10 @@ export namespace Prisma {
     set?: string
   }
 
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+  }
+
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
   }
@@ -9966,10 +9999,6 @@ export namespace Prisma {
     create?: XOR<UserCreateWithoutAccountsInput, UserUncheckedCreateWithoutAccountsInput>
     connectOrCreate?: UserCreateOrConnectWithoutAccountsInput
     connect?: UserWhereUniqueInput
-  }
-
-  export type NullableStringFieldUpdateOperationsInput = {
-    set?: string | null
   }
 
   export type UserUpdateOneRequiredWithoutAccountsNestedInput = {
@@ -10138,6 +10167,20 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
+  export type NestedStringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
   export type NestedDateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[]
@@ -10211,6 +10254,23 @@ export namespace Prisma {
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntFilter<$PrismaModel> | number
+  }
+
+  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -10336,37 +10396,6 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
-  export type NestedStringNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | null
-    notIn?: string[] | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
-  }
-
-  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | null
-    notIn?: string[] | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
-  }
-
   export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | null
@@ -10484,6 +10513,7 @@ export namespace Prisma {
 
   export type MatchCreateWithoutVotesInput = {
     id?: string
+    externalId?: string | null
     tournament?: string
     homeCountry: string
     awayCountry: string
@@ -10500,6 +10530,7 @@ export namespace Prisma {
 
   export type MatchUncheckedCreateWithoutVotesInput = {
     id?: string
+    externalId?: string | null
     tournament?: string
     homeCountry: string
     awayCountry: string
@@ -10569,6 +10600,7 @@ export namespace Prisma {
 
   export type MatchUpdateWithoutVotesInput = {
     id?: StringFieldUpdateOperationsInput | string
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
     tournament?: StringFieldUpdateOperationsInput | string
     homeCountry?: StringFieldUpdateOperationsInput | string
     awayCountry?: StringFieldUpdateOperationsInput | string
@@ -10585,6 +10617,7 @@ export namespace Prisma {
 
   export type MatchUncheckedUpdateWithoutVotesInput = {
     id?: StringFieldUpdateOperationsInput | string
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
     tournament?: StringFieldUpdateOperationsInput | string
     homeCountry?: StringFieldUpdateOperationsInput | string
     awayCountry?: StringFieldUpdateOperationsInput | string

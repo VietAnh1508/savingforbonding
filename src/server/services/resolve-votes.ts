@@ -11,7 +11,29 @@ export async function resolveMatchVotes(
   homeScore: number,
   awayScore: number,
 ) {
+  const match = await db.match.findUnique({ where: { id: matchId } });
+  if (!match) {
+    throw new Error("Match not found");
+  }
+
   const result = deriveResult(homeScore, awayScore);
+  const alreadyResolved =
+    match.status === "COMPLETED" && match.result !== null;
+
+  if (alreadyResolved) {
+    const unresolvedVotes = await db.vote.findMany({
+      where: { matchId, isCorrect: null },
+    });
+
+    if (unresolvedVotes.length === 0) {
+      return {
+        result: match.result!,
+        beersCharged: 0,
+        noBetPenalties: 0,
+        alreadyResolved: true,
+      };
+    }
+  }
 
   await db.match.update({
     where: { id: matchId },
@@ -48,30 +70,36 @@ export async function resolveMatchVotes(
     beersCharged += beers;
   }
 
-  const votedUserIds = new Set(
-    (
-      await db.vote.findMany({
-        where: { matchId },
-        select: { userId: true },
-      })
-    ).map((v) => v.userId),
-  );
+  let noBetPenalties = 0;
 
-  const nonVoters = await db.user.findMany({
-    where: { id: { notIn: [...votedUserIds] } },
-    select: { id: true },
-  });
+  if (!alreadyResolved) {
+    const votedUserIds = new Set(
+      (
+        await db.vote.findMany({
+          where: { matchId },
+          select: { userId: true },
+        })
+      ).map((v) => v.userId),
+    );
 
-  for (const user of nonVoters) {
-    await db.user.update({
-      where: { id: user.id },
-      data: {
-        totalPoints: { increment: BEER_NO_BET },
-        weeklyPoints: { increment: BEER_NO_BET },
-      },
+    const nonVoters = await db.user.findMany({
+      where: { id: { notIn: [...votedUserIds] } },
+      select: { id: true },
     });
-    beersCharged += BEER_NO_BET;
+
+    for (const user of nonVoters) {
+      await db.user.update({
+        where: { id: user.id },
+        data: {
+          totalPoints: { increment: BEER_NO_BET },
+          weeklyPoints: { increment: BEER_NO_BET },
+        },
+      });
+      beersCharged += BEER_NO_BET;
+    }
+
+    noBetPenalties = nonVoters.length;
   }
 
-  return { result, beersCharged, noBetPenalties: nonVoters.length };
+  return { result, beersCharged, noBetPenalties, alreadyResolved: false };
 }

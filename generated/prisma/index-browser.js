@@ -120,6 +120,7 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 
 exports.Prisma.MatchScalarFieldEnum = {
   id: 'id',
+  externalId: 'externalId',
   tournament: 'tournament',
   homeCountry: 'homeCountry',
   awayCountry: 'awayCountry',

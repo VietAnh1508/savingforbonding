@@ -6,6 +6,14 @@ import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
 const config = {
+  serverExternalPackages: [
+    "@prisma/adapter-libsql",
+    "@libsql/client",
+    "@libsql/isomorphic-fetch",
+    "@libsql/hrana-client",
+    "@libsql/core",
+    "libsql",
+  ],
   images: {
     remotePatterns: [
       {

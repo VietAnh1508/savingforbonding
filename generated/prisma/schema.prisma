@@ -24,6 +24,7 @@ enum VoteOutcome {
 
 model Match {
   id          String       @id @default(cuid())
+  externalId  String?      @unique
   tournament  String       @default("FIFA World Cup")
   homeCountry String
   awayCountry String

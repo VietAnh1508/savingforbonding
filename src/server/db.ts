@@ -1,8 +1,13 @@
+import "server-only";
+
+import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 
 import { env } from "~/env";
-import { PrismaClient } from "../../generated/prisma";
+import { PrismaClient, type Prisma } from "../../generated/prisma";
+
+const require = createRequire(import.meta.url);
 
 function getGeneratedClientMtime() {
   try {
@@ -19,7 +24,7 @@ function getGeneratedClientMtime() {
  * but Next.js resolves it relative to the project root. Point runtime at the
  * same file the CLI creates: prisma/db.sqlite
  */
-function resolveDatabaseUrl(): string {
+function resolveLocalDatabaseUrl(): string {
   const url = env.DATABASE_URL;
   if (!url.startsWith("file:")) return url;
 
@@ -34,14 +39,37 @@ function resolveDatabaseUrl(): string {
   return `file:${path.join(process.cwd(), normalized)}`;
 }
 
-const createPrismaClient = () =>
-  new PrismaClient({
-    datasources: {
-      db: { url: resolveDatabaseUrl() },
-    },
-    log:
-      env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+function useTurso(): boolean {
+  return Boolean(env.TURSO_DATABASE_URL && env.TURSO_API_KEY);
+}
+
+function createTursoClient(log: Prisma.LogLevel[]) {
+  const { PrismaLibSQL } =
+    require("@prisma/adapter-libsql") as typeof import("@prisma/adapter-libsql");
+
+  const adapter = new PrismaLibSQL({
+    url: env.TURSO_DATABASE_URL!,
+    authToken: env.TURSO_API_KEY!,
   });
+
+  return new PrismaClient({ adapter, log });
+}
+
+export const createPrismaClient = () => {
+  const log: Prisma.LogLevel[] =
+    env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"];
+
+  if (useTurso()) {
+    return createTursoClient(log);
+  }
+
+  return new PrismaClient({
+    datasources: {
+      db: { url: resolveLocalDatabaseUrl() },
+    },
+    log,
+  });
+};
 
 const globalForPrisma = globalThis as unknown as {
   prisma: ReturnType<typeof createPrismaClient> | undefined;
