@@ -5,35 +5,16 @@ const FIFA_WORLD_CUP_COMPETITION_ID = "17";
 export const FIFA_VIETNAM_UTC_OFFSET_HOURS = 7;
 
 /**
- * FIFA `Date` uses Vietnam wall-clock components with a misleading `Z` suffix.
- * Example: `2026-06-12T02:00:00Z` is 02:00 in Vietnam, not 02:00 UTC.
+ * FIFA `Date` is ISO-8601 UTC (e.g. `2026-06-11T19:00:00Z` = 12/06 02:00 in Vietnam).
  */
 export function parseFifaKickoffToUtc(iso: string): Date {
-  const match = iso.match(
-    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/,
-  );
+  const kickoffAt = new Date(iso);
 
-  if (!match) {
-    return new Date(iso);
+  if (Number.isNaN(kickoffAt.getTime())) {
+    throw new Error(`Invalid FIFA kickoff: ${iso}`);
   }
 
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const hour = Number(match[4]);
-  const minute = Number(match[5]);
-  const second = Number(match[6] ?? 0);
-
-  return new Date(
-    Date.UTC(
-      year,
-      month - 1,
-      day,
-      hour - FIFA_VIETNAM_UTC_OFFSET_HOURS,
-      minute,
-      second,
-    ),
-  );
+  return kickoffAt;
 }
 
 type FifaLocalizedText = {

@@ -1,5 +1,10 @@
 import { type PrismaClient } from "../../../generated/prisma";
 import { buildFifaMatchPatch } from "~/lib/fifa-sync";
+import {
+  buildKqbdKickoffLookup,
+  fetchKqbdWorldCupSchedule,
+  lookupKqbdKickoff,
+} from "~/lib/kqbd-schedule";
 import { deriveResult } from "~/lib/match";
 import {
   fetchWorldCupFixtures,
@@ -23,7 +28,15 @@ export async function syncFifaFixtures(
   db: PrismaClient,
   seasonYear = 2026,
 ): Promise<SyncFifaFixturesResult> {
-  const fixtures = await fetchWorldCupFixtures(seasonYear);
+  const [fixtures, kqbdFixtures] = await Promise.all([
+    fetchWorldCupFixtures(seasonYear),
+    fetchKqbdWorldCupSchedule(seasonYear).catch((error: unknown) => {
+      console.warn("KQBD schedule fetch failed; using FIFA kickoff times only.", error);
+      return [];
+    }),
+  ]);
+
+  const kqbdKickoffLookup = buildKqbdKickoffLookup(kqbdFixtures);
 
   let created = 0;
   let updated = 0;
@@ -36,7 +49,9 @@ export async function syncFifaFixtures(
     const fifaStatus = mapFifaMatchStatus(fixture);
     const fifaHome = fifaTeamName(fixture.Home, fixture.PlaceHolderA);
     const fifaAway = fifaTeamName(fixture.Away, fixture.PlaceHolderB);
-    const fifaKickoff = parseFifaKickoffToUtc(fixture.Date);
+    const fifaKickoff =
+      lookupKqbdKickoff(fifaHome, fifaAway, kqbdKickoffLookup) ??
+      parseFifaKickoffToUtc(fixture.Date);
     const tournament = fifaTournamentName(fixture);
 
     const fifaHomeScore =
