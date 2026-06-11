@@ -1,6 +1,6 @@
 import { MatchCard } from "~/app/_components/match-card";
 import { Nav } from "~/app/_components/nav";
-import { formatMatchDate } from "~/lib/match";
+import { formatMatchDate, toDisplayKickoffAt } from "~/lib/match";
 import { api, HydrateClient } from "~/trpc/server";
 
 export default async function Home() {
@@ -20,8 +20,8 @@ export default async function Home() {
 
   const sortedDates = Object.keys(grouped).sort(
     (a, b) =>
-      new Date(grouped[a]![0]!.kickoffAt).getTime() -
-      new Date(grouped[b]![0]!.kickoffAt).getTime(),
+      toDisplayKickoffAt(grouped[a]![0]!.kickoffAt).getTime() -
+      toDisplayKickoffAt(grouped[b]![0]!.kickoffAt).getTime(),
   );
 
   return (

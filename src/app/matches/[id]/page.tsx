@@ -6,7 +6,7 @@ import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
 import { Nav } from "~/app/_components/nav";
 import { TeamFlag } from "~/app/_components/team-flag";
 import { VoteForm } from "~/app/_components/vote-form";
-import { formatMatchDateTime } from "~/lib/match";
+import { formatMatchDateTime, toDisplayKickoffAt } from "~/lib/match";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -44,7 +44,7 @@ export default async function MatchPage({
                   <span className="text-2xl font-bold text-white/40">vs</span>
                 )}
                 <time
-                  dateTime={match.kickoffAt.toISOString()}
+                  dateTime={toDisplayKickoffAt(match.kickoffAt).toISOString()}
                   className="text-sm text-white/50"
                 >
                   {formatMatchDateTime(match.kickoffAt)}

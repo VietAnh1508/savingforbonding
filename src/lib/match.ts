@@ -8,6 +8,16 @@ export type MatchVoteCounts = {
 
 export const VOTE_LOCK_MINUTES = 5;
 
+/** Added to DB kickoff times for all user-facing display and voting lock. */
+export const MATCH_KICKOFF_DISPLAY_OFFSET_HOURS = 0;
+
+export function toDisplayKickoffAt(kickoffAt: Date): Date {
+  return new Date(
+    kickoffAt.getTime() +
+      MATCH_KICKOFF_DISPLAY_OFFSET_HOURS * 60 * 60 * 1000,
+  );
+}
+
 /** Platform fee — paid on every bet (win or lose). */
 export const BEER_PLATFORM_FEE = 1;
 /** Extra penalty on a losing bet, on top of the platform fee. */
@@ -55,7 +65,10 @@ export function isVotingOpen(
   if (status === "COMPLETED" || status === "CANCELLED" || status === "LIVE") {
     return false;
   }
-  const lockTime = new Date(kickoffAt.getTime() - VOTE_LOCK_MINUTES * 60 * 1000);
+  const displayKickoff = toDisplayKickoffAt(kickoffAt);
+  const lockTime = new Date(
+    displayKickoff.getTime() - VOTE_LOCK_MINUTES * 60 * 1000,
+  );
   return new Date() < lockTime;
 }
 
@@ -124,13 +137,13 @@ const matchDateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
 });
 
 export function formatMatchDate(date: Date): string {
-  return matchDateFormatter.format(new Date(date));
+  return matchDateFormatter.format(toDisplayKickoffAt(date));
 }
 
 export function formatKickoffTime(date: Date): string {
-  return matchTimeFormatter.format(new Date(date));
+  return matchTimeFormatter.format(toDisplayKickoffAt(date));
 }
 
 export function formatMatchDateTime(date: Date): string {
-  return matchDateTimeFormatter.format(new Date(date));
+  return matchDateTimeFormatter.format(toDisplayKickoffAt(date));
 }
