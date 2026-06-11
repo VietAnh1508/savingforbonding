@@ -8,6 +8,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   InvalidInput: "Please fill in all required fields.",
   PasswordTooShort: "Password must be at least 8 characters.",
   EmailTaken: "An account with this email already exists.",
+  AllInRequired: 'You must check "I am all in" to create an account.',
 };
 
 export default async function SignUpPage({
@@ -83,6 +84,18 @@ export default async function SignUpPage({
               placeholder="At least 8 characters"
             />
           </div>
+
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+            <input
+              id="allIn"
+              name="allIn"
+              type="checkbox"
+              value="yes"
+              required
+              className="mt-1 h-4 w-4 rounded border-white/20 bg-white/10 text-emerald-500 focus:ring-emerald-500/50"
+            />
+            <span className="text-sm text-white/80">I am all in</span>
+          </label>
 
           <button
             type="submit"

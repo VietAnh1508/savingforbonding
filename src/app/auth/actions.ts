@@ -33,6 +33,11 @@ export async function signUp(formData: FormData) {
   const email = formData.get("email");
   const password = formData.get("password");
   const name = formData.get("name");
+  const allIn = formData.get("allIn");
+
+  if (allIn !== "yes") {
+    redirect("/auth/signup?error=AllInRequired");
+  }
 
   if (
     typeof email !== "string" ||
