@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
+import { EditProfileName } from "~/app/_components/edit-profile-name";
 import { Nav } from "~/app/_components/nav";
 import { formatBeers, outcomeShort } from "~/lib/match";
 import { auth } from "~/server/auth";
@@ -34,12 +35,10 @@ export default async function ProfilePage() {
                 {(session.user.name ?? "?")[0]}
               </div>
             )}
-            <div>
-              <h1 className="text-2xl font-bold">
-                {session.user.name ?? "Your Profile"}
-              </h1>
-              <p className="text-white/60">{session.user.email}</p>
-            </div>
+            <EditProfileName
+              initialName={session.user.name}
+              email={session.user.email}
+            />
           </div>
 
           <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">

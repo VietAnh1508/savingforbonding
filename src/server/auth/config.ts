@@ -56,13 +56,30 @@ export const authConfig = {
       if (user) token.sub = user.id;
       return token;
     },
-    session: ({ session, token }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: token.sub!,
-      },
-    }),
+    session: async ({ session, token }) => {
+      const user = token.sub
+        ? await db.user.findUnique({
+            where: { id: token.sub },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          })
+        : null;
+
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: token.sub!,
+          name: user?.name ?? session.user.name,
+          email: user?.email ?? session.user.email,
+          image: user?.image ?? session.user.image,
+        },
+      };
+    },
   },
   pages: {
     signIn: "/auth/signin",
