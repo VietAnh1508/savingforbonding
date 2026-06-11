@@ -1,11 +1,12 @@
-import { LeaderboardTable } from "~/app/_components/leaderboard-table";
+import { LeaderboardTabs } from "~/app/_components/leaderboard-tabs";
 import { Nav } from "~/app/_components/nav";
 import { api, HydrateClient } from "~/trpc/server";
 
 export default async function LeaderboardPage() {
-  const [global, weekly] = await Promise.all([
+  const [global, weekly, beerPool] = await Promise.all([
     api.leaderboard.global(),
     api.leaderboard.weekly(),
+    api.leaderboard.totalBeerPool(),
   ]);
 
   return (
@@ -18,27 +19,7 @@ export default async function LeaderboardPage() {
             Who owes the most beer? Higher is more generous.
           </p>
 
-          <div className="space-y-12">
-            <section>
-              <h2 className="mb-4 text-xl font-semibold text-emerald-400">
-                This Week
-              </h2>
-              <LeaderboardTable
-                entries={weekly}
-                beersLabel="Weekly Beers"
-              />
-            </section>
-
-            <section>
-              <h2 className="mb-4 text-xl font-semibold text-emerald-400">
-                All Time
-              </h2>
-              <LeaderboardTable
-                entries={global}
-                beersLabel="Total Beers"
-              />
-            </section>
-          </div>
+          <LeaderboardTabs weekly={weekly} global={global} beerPool={beerPool} />
         </main>
       </div>
     </HydrateClient>

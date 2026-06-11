@@ -72,4 +72,22 @@ export const leaderboardRouter = createTRPCRouter({
         beers: user.weeklyPoints,
       }));
     }),
+
+  totalBeerPool: publicProcedure.query(async ({ ctx }) => {
+    const [aggregate, contributors] = await Promise.all([
+      ctx.db.user.aggregate({
+        _sum: { totalPoints: true },
+        _count: { _all: true },
+      }),
+      ctx.db.user.count({
+        where: { totalPoints: { gt: 0 } },
+      }),
+    ]);
+
+    return {
+      totalBeers: aggregate._sum.totalPoints ?? 0,
+      contributorCount: contributors,
+      userCount: aggregate._count._all,
+    };
+  }),
 });
