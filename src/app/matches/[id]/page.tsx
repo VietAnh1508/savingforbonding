@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { BeerStakes } from "~/app/_components/beer-stakes";
+import { formatMatchDateTime } from "~/lib/match";
 import { BettingRatios } from "~/app/_components/betting-ratios";
 import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
 import { Nav } from "~/app/_components/nav";
@@ -46,14 +47,7 @@ export default async function MatchPage({
                   dateTime={match.kickoffAt.toISOString()}
                   className="text-sm text-white/50"
                 >
-                  {new Intl.DateTimeFormat(undefined, {
-                    weekday: "long",
-                    month: "long",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    timeZoneName: "short",
-                  }).format(new Date(match.kickoffAt))}
+                  {formatMatchDateTime(match.kickoffAt)}
                 </time>
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-medium ${

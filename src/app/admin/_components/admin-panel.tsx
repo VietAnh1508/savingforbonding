@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 
-import { isMatchEditable, validateBettingRatios } from "~/lib/match";
+import {
+  formatMatchDateTime,
+  isMatchEditable,
+  validateBettingRatios,
+} from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
 
@@ -321,10 +325,7 @@ export function AdminPanel() {
                       {match.homeCountry} vs {match.awayCountry}
                     </div>
                     <div className="mt-1 text-sm text-white/50">
-                      {new Intl.DateTimeFormat(undefined, {
-                        dateStyle: "full",
-                        timeStyle: "short",
-                      }).format(new Date(match.kickoffAt))}
+                      {formatMatchDateTime(match.kickoffAt)}
                     </div>
                     <div className="mt-1 font-mono text-sm text-emerald-400">
                       1: {match.homeRatio.toFixed(2)} · 2:{" "}
