@@ -6,9 +6,6 @@ export type MatchVoteCounts = {
   away: number;
 };
 
-/** Vietnam time — matches fifa.com with timezone preset to Vietnam. */
-export const MATCH_DISPLAY_TIMEZONE = "Asia/Ho_Chi_Minh";
-
 export const VOTE_LOCK_MINUTES = 5;
 
 /** Platform fee — paid on every bet (win or lose). */
@@ -97,33 +94,43 @@ export function outcomeShort(outcome: VoteOutcome): string {
   }
 }
 
+/** Vietnam time (UTC+7) for all match date/time display. */
+export const MATCH_DISPLAY_TIMEZONE = "Asia/Ho_Chi_Minh";
+
+const matchDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  timeZone: MATCH_DISPLAY_TIMEZONE,
+});
+
+const matchTimeFormatter = new Intl.DateTimeFormat("en-GB", {
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: MATCH_DISPLAY_TIMEZONE,
+  timeZoneName: "short",
+});
+
+const matchDateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: MATCH_DISPLAY_TIMEZONE,
+  timeZoneName: "short",
+});
+
 export function formatMatchDate(date: Date): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZone: MATCH_DISPLAY_TIMEZONE,
-  }).format(new Date(date));
+  return matchDateFormatter.format(new Date(date));
 }
 
 export function formatKickoffTime(date: Date): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: MATCH_DISPLAY_TIMEZONE,
-    timeZoneName: "short",
-  }).format(new Date(date));
+  return matchTimeFormatter.format(new Date(date));
 }
 
 export function formatMatchDateTime(date: Date): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: MATCH_DISPLAY_TIMEZONE,
-    timeZoneName: "short",
-  }).format(new Date(date));
+  return matchDateTimeFormatter.format(new Date(date));
 }

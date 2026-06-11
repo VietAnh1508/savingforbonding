@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 
 import { BeerStakes } from "~/app/_components/beer-stakes";
-import { formatMatchDateTime } from "~/lib/match";
 import { BettingRatios } from "~/app/_components/betting-ratios";
 import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
 import { Nav } from "~/app/_components/nav";
 import { TeamFlag } from "~/app/_components/team-flag";
 import { VoteForm } from "~/app/_components/vote-form";
+import { formatMatchDateTime } from "~/lib/match";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
