@@ -221,6 +221,7 @@ export function formatMatchDateTime(date: Date): string {
   return matchDateTimeFormatter.format(toDisplayKickoffAt(date));
 }
 
-export function formatJoiningDate(date: Date): string {
+export function formatJoiningDate(date: Date | null | undefined): string {
+  if (!date) return "—";
   return joiningDateFormatter.format(date);
 }
