@@ -6068,6 +6068,7 @@ export namespace Prisma {
     image: string | null
     totalPoints: number | null
     weeklyPoints: number | null
+    createdAt: Date | null
   }
 
   export type UserMaxAggregateOutputType = {
@@ -6079,6 +6080,7 @@ export namespace Prisma {
     image: string | null
     totalPoints: number | null
     weeklyPoints: number | null
+    createdAt: Date | null
   }
 
   export type UserCountAggregateOutputType = {
@@ -6090,6 +6092,7 @@ export namespace Prisma {
     image: number
     totalPoints: number
     weeklyPoints: number
+    createdAt: number
     _all: number
   }
 
@@ -6113,6 +6116,7 @@ export namespace Prisma {
     image?: true
     totalPoints?: true
     weeklyPoints?: true
+    createdAt?: true
   }
 
   export type UserMaxAggregateInputType = {
@@ -6124,6 +6128,7 @@ export namespace Prisma {
     image?: true
     totalPoints?: true
     weeklyPoints?: true
+    createdAt?: true
   }
 
   export type UserCountAggregateInputType = {
@@ -6135,6 +6140,7 @@ export namespace Prisma {
     image?: true
     totalPoints?: true
     weeklyPoints?: true
+    createdAt?: true
     _all?: true
   }
 
@@ -6233,6 +6239,7 @@ export namespace Prisma {
     image: string | null
     totalPoints: number
     weeklyPoints: number
+    createdAt: Date
     _count: UserCountAggregateOutputType | null
     _avg: UserAvgAggregateOutputType | null
     _sum: UserSumAggregateOutputType | null
@@ -6263,6 +6270,7 @@ export namespace Prisma {
     image?: boolean
     totalPoints?: boolean
     weeklyPoints?: boolean
+    createdAt?: boolean
     accounts?: boolean | User$accountsArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
     votes?: boolean | User$votesArgs<ExtArgs>
@@ -6278,6 +6286,7 @@ export namespace Prisma {
     image?: boolean
     totalPoints?: boolean
     weeklyPoints?: boolean
+    createdAt?: boolean
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -6289,6 +6298,7 @@ export namespace Prisma {
     image?: boolean
     totalPoints?: boolean
     weeklyPoints?: boolean
+    createdAt?: boolean
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectScalar = {
@@ -6300,9 +6310,10 @@ export namespace Prisma {
     image?: boolean
     totalPoints?: boolean
     weeklyPoints?: boolean
+    createdAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "passwordHash" | "emailVerified" | "image" | "totalPoints" | "weeklyPoints", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "passwordHash" | "emailVerified" | "image" | "totalPoints" | "weeklyPoints" | "createdAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     accounts?: boolean | User$accountsArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
@@ -6328,6 +6339,7 @@ export namespace Prisma {
       image: string | null
       totalPoints: number
       weeklyPoints: number
+      createdAt: Date
     }, ExtArgs["result"]["user"]>
     composites: {}
   }
@@ -6762,6 +6774,7 @@ export namespace Prisma {
     readonly image: FieldRef<"User", 'String'>
     readonly totalPoints: FieldRef<"User", 'Int'>
     readonly weeklyPoints: FieldRef<"User", 'Int'>
+    readonly createdAt: FieldRef<"User", 'DateTime'>
   }
     
 
@@ -8287,7 +8300,8 @@ export namespace Prisma {
     emailVerified: 'emailVerified',
     image: 'image',
     totalPoints: 'totalPoints',
-    weeklyPoints: 'weeklyPoints'
+    weeklyPoints: 'weeklyPoints',
+    createdAt: 'createdAt'
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -8713,6 +8727,7 @@ export namespace Prisma {
     image?: StringNullableFilter<"User"> | string | null
     totalPoints?: IntFilter<"User"> | number
     weeklyPoints?: IntFilter<"User"> | number
+    createdAt?: DateTimeFilter<"User"> | Date | string
     accounts?: AccountListRelationFilter
     sessions?: SessionListRelationFilter
     votes?: VoteListRelationFilter
@@ -8727,6 +8742,7 @@ export namespace Prisma {
     image?: SortOrderInput | SortOrder
     totalPoints?: SortOrder
     weeklyPoints?: SortOrder
+    createdAt?: SortOrder
     accounts?: AccountOrderByRelationAggregateInput
     sessions?: SessionOrderByRelationAggregateInput
     votes?: VoteOrderByRelationAggregateInput
@@ -8744,6 +8760,7 @@ export namespace Prisma {
     image?: StringNullableFilter<"User"> | string | null
     totalPoints?: IntFilter<"User"> | number
     weeklyPoints?: IntFilter<"User"> | number
+    createdAt?: DateTimeFilter<"User"> | Date | string
     accounts?: AccountListRelationFilter
     sessions?: SessionListRelationFilter
     votes?: VoteListRelationFilter
@@ -8758,6 +8775,7 @@ export namespace Prisma {
     image?: SortOrderInput | SortOrder
     totalPoints?: SortOrder
     weeklyPoints?: SortOrder
+    createdAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
     _avg?: UserAvgOrderByAggregateInput
     _max?: UserMaxOrderByAggregateInput
@@ -8777,6 +8795,7 @@ export namespace Prisma {
     image?: StringNullableWithAggregatesFilter<"User"> | string | null
     totalPoints?: IntWithAggregatesFilter<"User"> | number
     weeklyPoints?: IntWithAggregatesFilter<"User"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
   }
 
   export type VerificationTokenWhereInput = {
@@ -9188,6 +9207,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    createdAt?: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     votes?: VoteCreateNestedManyWithoutUserInput
@@ -9202,6 +9222,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    createdAt?: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     votes?: VoteUncheckedCreateNestedManyWithoutUserInput
@@ -9216,6 +9237,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     votes?: VoteUpdateManyWithoutUserNestedInput
@@ -9230,6 +9252,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     votes?: VoteUncheckedUpdateManyWithoutUserNestedInput
@@ -9244,6 +9267,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    createdAt?: Date | string
   }
 
   export type UserUpdateManyMutationInput = {
@@ -9255,6 +9279,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type UserUncheckedUpdateManyInput = {
@@ -9266,6 +9291,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type VerificationTokenCreateInput = {
@@ -9802,6 +9828,7 @@ export namespace Prisma {
     image?: SortOrder
     totalPoints?: SortOrder
     weeklyPoints?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type UserAvgOrderByAggregateInput = {
@@ -9818,6 +9845,7 @@ export namespace Prisma {
     image?: SortOrder
     totalPoints?: SortOrder
     weeklyPoints?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type UserMinOrderByAggregateInput = {
@@ -9829,6 +9857,7 @@ export namespace Prisma {
     image?: SortOrder
     totalPoints?: SortOrder
     weeklyPoints?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type UserSumOrderByAggregateInput = {
@@ -10489,6 +10518,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    createdAt?: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
   }
@@ -10502,6 +10532,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    createdAt?: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
   }
@@ -10570,6 +10601,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
   }
@@ -10583,6 +10615,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
   }
@@ -10641,6 +10674,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    createdAt?: Date | string
     sessions?: SessionCreateNestedManyWithoutUserInput
     votes?: VoteCreateNestedManyWithoutUserInput
   }
@@ -10654,6 +10688,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    createdAt?: Date | string
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     votes?: VoteUncheckedCreateNestedManyWithoutUserInput
   }
@@ -10683,6 +10718,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: SessionUpdateManyWithoutUserNestedInput
     votes?: VoteUpdateManyWithoutUserNestedInput
   }
@@ -10696,6 +10732,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     votes?: VoteUncheckedUpdateManyWithoutUserNestedInput
   }
@@ -10709,6 +10746,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    createdAt?: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
     votes?: VoteCreateNestedManyWithoutUserInput
   }
@@ -10722,6 +10760,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    createdAt?: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     votes?: VoteUncheckedCreateNestedManyWithoutUserInput
   }
@@ -10751,6 +10790,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
     votes?: VoteUpdateManyWithoutUserNestedInput
   }
@@ -10764,6 +10804,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     votes?: VoteUncheckedUpdateManyWithoutUserNestedInput
   }

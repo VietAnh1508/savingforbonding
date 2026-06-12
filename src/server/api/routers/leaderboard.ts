@@ -9,6 +9,7 @@ export const leaderboardRouter = createTRPCRouter({
         name: true,
         image: true,
         totalPoints: true,
+        createdAt: true,
         _count: {
           select: {
             votes: { where: { isCorrect: true } },
@@ -22,6 +23,7 @@ export const leaderboardRouter = createTRPCRouter({
       id: user.id,
       name: user.name,
       image: user.image,
+      joiningDate: user.createdAt,
       beers: user.totalPoints,
       correctPredictions: user._count.votes,
     }));

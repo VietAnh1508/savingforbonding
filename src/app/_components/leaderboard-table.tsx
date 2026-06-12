@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { formatJoiningDate } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
 type Entry = RouterOutputs["leaderboard"]["global"][number];
@@ -39,6 +40,7 @@ export function LeaderboardTable({
           <tr className="border-b border-white/10 bg-white/5 text-left text-sm text-white/60">
             <th className="px-4 py-3 font-medium">Rank</th>
             <th className="px-4 py-3 font-medium">Player</th>
+            <th className="px-4 py-3 font-medium">Joining Date</th>
             <th className="px-4 py-3 text-right font-medium">{beersLabel}</th>
             <th className="px-4 py-3 font-medium">Title</th>
           </tr>
@@ -83,6 +85,9 @@ export function LeaderboardTable({
                     {entry.name ?? "Anonymous"}
                   </span>
                 </div>
+              </td>
+              <td className="px-4 py-3 text-sm text-white/60">
+                {formatJoiningDate(entry.joiningDate)}
               </td>
               <td className="px-4 py-3 text-right font-bold text-amber-400">
                 🍺 {entry.beers}

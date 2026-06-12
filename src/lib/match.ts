@@ -202,6 +202,13 @@ const matchDateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZoneName: "short",
 });
 
+const joiningDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  timeZone: MATCH_DISPLAY_TIMEZONE,
+});
+
 export function formatMatchDate(date: Date): string {
   return matchDateFormatter.format(toDisplayKickoffAt(date));
 }
@@ -212,4 +219,8 @@ export function formatKickoffTime(date: Date): string {
 
 export function formatMatchDateTime(date: Date): string {
   return matchDateTimeFormatter.format(toDisplayKickoffAt(date));
+}
+
+export function formatJoiningDate(date: Date): string {
+  return joiningDateFormatter.format(date);
 }

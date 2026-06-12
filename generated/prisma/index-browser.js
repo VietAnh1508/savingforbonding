@@ -177,7 +177,8 @@ exports.Prisma.UserScalarFieldEnum = {
   emailVerified: 'emailVerified',
   image: 'image',
   totalPoints: 'totalPoints',
-  weeklyPoints: 'weeklyPoints'
+  weeklyPoints: 'weeklyPoints',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.VerificationTokenScalarFieldEnum = {
