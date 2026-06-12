@@ -24,7 +24,7 @@ export const matchRouter = createTRPCRouter({
 
       const matches = await ctx.db.match.findMany({
         where: {
-          status: { in: ["SCHEDULED", "LIVE", "POSTPONED"] },
+          status: { in: ["SCHEDULED", "LIVE", "POSTPONED", "COMPLETED"] },
         },
         orderBy: { kickoffAt: "asc" },
         take: limit,
