@@ -13,6 +13,11 @@ function predictedTeamClass(isPredicted: boolean) {
     : "px-3 py-2";
 }
 
+function statusLabel(status: Match["status"]): string {
+  if (status === "SCHEDULED") return "UP COMING";
+  return status;
+}
+
 function statusBadge(status: Match["status"]) {
   const styles: Record<Match["status"], string> = {
     SCHEDULED: "bg-blue-500/20 text-blue-300",
@@ -26,7 +31,7 @@ function statusBadge(status: Match["status"]) {
     <span
       className={`rounded-full px-2 py-0.5 text-xs font-medium ${styles[status]}`}
     >
-      {status}
+      {statusLabel(status)}
     </span>
   );
 }
