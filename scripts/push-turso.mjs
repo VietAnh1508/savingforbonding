@@ -43,3 +43,7 @@ execSync("npx prisma db push", {
     PRISMA_USE_TURSO: "1",
   },
 });
+
+execSync("node --env-file=.env scripts/backfill-user-joining-dates.mjs", {
+  stdio: "inherit",
+});

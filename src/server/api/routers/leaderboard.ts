@@ -1,21 +1,31 @@
 import { type PrismaClient } from "../../../../generated/prisma";
+import { resolveUserJoiningDate } from "~/lib/user-joining-date";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+
+const leaderboardUserSelect = {
+  id: true,
+  name: true,
+  image: true,
+  totalPoints: true,
+  votes: {
+    select: { createdAt: true },
+    orderBy: { createdAt: "asc" as const },
+    take: 1,
+  },
+  _count: {
+    select: {
+      votes: { where: { isCorrect: true } },
+    },
+  },
+};
 
 async function fetchLeaderboardUsers(db: PrismaClient) {
   try {
     return await db.user.findMany({
       orderBy: [{ totalPoints: "desc" }, { name: "asc" }],
       select: {
-        id: true,
-        name: true,
-        image: true,
-        totalPoints: true,
+        ...leaderboardUserSelect,
         createdAt: true,
-        _count: {
-          select: {
-            votes: { where: { isCorrect: true } },
-          },
-        },
       },
     });
   } catch (error) {
@@ -24,22 +34,10 @@ async function fetchLeaderboardUsers(db: PrismaClient) {
       error,
     );
 
-    const users = await db.user.findMany({
+    return db.user.findMany({
       orderBy: [{ totalPoints: "desc" }, { name: "asc" }],
-      select: {
-        id: true,
-        name: true,
-        image: true,
-        totalPoints: true,
-        _count: {
-          select: {
-            votes: { where: { isCorrect: true } },
-          },
-        },
-      },
+      select: leaderboardUserSelect,
     });
-
-    return users.map((user) => ({ ...user, createdAt: null }));
   }
 }
 
@@ -47,15 +45,25 @@ export const leaderboardRouter = createTRPCRouter({
   global: publicProcedure.query(async ({ ctx }) => {
     const users = await fetchLeaderboardUsers(ctx.db);
 
-    return users.map((user, index) => ({
-      rank: index + 1,
-      id: user.id,
-      name: user.name,
-      image: user.image,
-      joiningDate: user.createdAt,
-      beers: user.totalPoints,
-      correctPredictions: user._count.votes,
-    }));
+    return users.map((user, index) => {
+      const createdAt =
+        "createdAt" in user && user.createdAt instanceof Date
+          ? user.createdAt
+          : null;
+
+      return {
+        rank: index + 1,
+        id: user.id,
+        name: user.name,
+        image: user.image,
+        joiningDate: resolveUserJoiningDate({
+          createdAt,
+          earliestVoteAt: user.votes[0]?.createdAt ?? null,
+        }),
+        beers: user.totalPoints,
+        correctPredictions: user._count.votes,
+      };
+    });
   }),
 
   totalBeerPool: publicProcedure.query(async ({ ctx }) => {

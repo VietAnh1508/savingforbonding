@@ -69,6 +69,7 @@ export async function signUp(formData: FormData) {
       email: normalizedEmail,
       passwordHash,
       name: typeof name === "string" && name.trim() ? name.trim() : null,
+      createdAt: new Date(),
     },
   });
 
