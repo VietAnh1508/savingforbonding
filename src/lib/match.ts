@@ -8,16 +8,6 @@ export type MatchVoteCounts = {
 
 export const VOTE_LOCK_MINUTES = 5;
 
-/** Added to DB kickoff times for all user-facing display and voting lock. */
-export const MATCH_KICKOFF_DISPLAY_OFFSET_HOURS = 0;
-
-export function toDisplayKickoffAt(kickoffAt: Date): Date {
-  return new Date(
-    kickoffAt.getTime() +
-      MATCH_KICKOFF_DISPLAY_OFFSET_HOURS * 60 * 60 * 1000,
-  );
-}
-
 /** Platform fee — paid on every bet (win or lose). */
 export const BEER_PLATFORM_FEE = 1;
 /** Extra penalty on a losing bet, on top of the platform fee. */
@@ -51,9 +41,8 @@ export function isVotingOpen(
   if (status === "COMPLETED" || status === "CANCELLED" || status === "LIVE") {
     return false;
   }
-  const displayKickoff = toDisplayKickoffAt(kickoffAt);
   const lockTime = new Date(
-    displayKickoff.getTime() - VOTE_LOCK_MINUTES * 60 * 1000,
+    kickoffAt.getTime() - VOTE_LOCK_MINUTES * 60 * 1000,
   );
   return new Date() < lockTime;
 }
@@ -176,6 +165,18 @@ export function outcomeShort(outcome: VoteOutcome): string {
 /** Vietnam time (UTC+7) for all match date/time display. */
 export const MATCH_DISPLAY_TIMEZONE = "Asia/Ho_Chi_Minh";
 
+const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+/** Format a UTC Date as a `datetime-local` input value in Vietnam time (UTC+7). */
+export function toVietnamDatetimeLocal(date: Date): string {
+  return new Date(date.getTime() + VN_OFFSET_MS).toISOString().slice(0, 16);
+}
+
+/** Parse a `datetime-local` input value entered as Vietnam time (UTC+7) into a UTC Date. */
+export function fromVietnamDatetimeLocal(value: string): Date {
+  return new Date(`${value}:00+07:00`);
+}
+
 const matchDateFormatter = new Intl.DateTimeFormat("en-GB", {
   weekday: "long",
   year: "numeric",
@@ -210,15 +211,15 @@ const joiningDateFormatter = new Intl.DateTimeFormat("en-GB", {
 });
 
 export function formatMatchDate(date: Date): string {
-  return matchDateFormatter.format(toDisplayKickoffAt(date));
+  return matchDateFormatter.format(date);
 }
 
 export function formatKickoffTime(date: Date): string {
-  return matchTimeFormatter.format(toDisplayKickoffAt(date));
+  return matchTimeFormatter.format(date);
 }
 
 export function formatMatchDateTime(date: Date): string {
-  return matchDateTimeFormatter.format(toDisplayKickoffAt(date));
+  return matchDateTimeFormatter.format(date);
 }
 
 export function formatJoiningDate(date: Date): string {

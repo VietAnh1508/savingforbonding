@@ -4,7 +4,9 @@ import { useState } from "react";
 
 import {
   formatMatchDateTime,
+  fromVietnamDatetimeLocal,
   isMatchEditable,
+  toVietnamDatetimeLocal,
   validateBettingRatios,
 } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
@@ -97,7 +99,7 @@ export function AdminPanel() {
     setForm({
       homeCountry: match.homeCountry,
       awayCountry: match.awayCountry,
-      kickoffAt: new Date(match.kickoffAt).toISOString().slice(0, 16),
+      kickoffAt: toVietnamDatetimeLocal(new Date(match.kickoffAt)),
       tournament: match.tournament,
       homeRatio: String(match.homeRatio),
       awayRatio: String(match.awayRatio),
@@ -126,7 +128,7 @@ export function AdminPanel() {
     const data = {
       homeCountry: form.homeCountry,
       awayCountry: form.awayCountry,
-      kickoffAt: new Date(form.kickoffAt),
+      kickoffAt: fromVietnamDatetimeLocal(form.kickoffAt),
       tournament: form.tournament,
       homeRatio,
       awayRatio,
