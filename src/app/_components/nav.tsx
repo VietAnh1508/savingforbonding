@@ -25,6 +25,12 @@ export async function Nav() {
           >
             Top Donator
           </Link>
+          <Link
+            href="/rules"
+            className="text-sm font-medium text-white/80 transition hover:text-white"
+          >
+            Rules
+          </Link>
           {session?.user && (
             <Link
               href="/profile"
