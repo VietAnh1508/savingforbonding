@@ -56,6 +56,7 @@ export const matchRouter = createTRPCRouter({
         userVoteOutcome: userVoteByMatchId.get(match.id) ?? null,
         voteCounts:
           voteCountsByMatchId.get(match.id) ?? emptyMatchVoteCounts(),
+        votingOpen: isVotingOpen(match.kickoffAt, match.status),
       }));
     }),
 

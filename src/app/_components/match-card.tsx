@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 
 import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
+import { QuickBetButton } from "~/app/_components/quick-bet-button";
 import { TeamFlag } from "~/app/_components/team-flag";
 import { formatKickoffTime, formatRatioValue } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
@@ -48,7 +51,7 @@ function formatMatchScore(match: Match): string {
   return "TBD - TBD";
 }
 
-export function MatchCard({ match }: { match: Match }) {
+export function MatchCard({ match, isSignedIn }: { match: Match; isSignedIn: boolean }) {
   const prediction = match.userVoteOutcome;
   const predictsHomeWin = prediction === "HOME_WIN";
   const predictsAwayWin = prediction === "AWAY_WIN";
@@ -61,8 +64,8 @@ export function MatchCard({ match }: { match: Match }) {
       className="block rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-emerald-500/30 hover:bg-white/10"
     >
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-xs text-white/50">{match.tournament}</span>
         {statusBadge(match.status)}
+        {match.votingOpen && isSignedIn && <QuickBetButton match={match} />}
       </div>
 
       <div className="flex items-center justify-between gap-4">

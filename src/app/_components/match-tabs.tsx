@@ -29,9 +29,11 @@ function groupByDate(matches: Match[]) {
 function MatchList({
   matches,
   emptyMessage,
+  isSignedIn,
 }: {
   matches: Match[];
   emptyMessage: string;
+  isSignedIn: boolean;
 }) {
   const groups = groupByDate(matches);
 
@@ -52,7 +54,7 @@ function MatchList({
           </h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {dayMatches.map((match) => (
-              <MatchCard key={match.id} match={match} />
+              <MatchCard key={match.id} match={match} isSignedIn={isSignedIn} />
             ))}
           </div>
         </section>
@@ -64,9 +66,11 @@ function MatchList({
 export function MatchTabs({
   upcoming,
   completed,
+  isSignedIn,
 }: {
   upcoming: Match[];
   completed: Match[];
+  isSignedIn: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("upcoming");
 
@@ -104,12 +108,14 @@ export function MatchTabs({
         <MatchList
           matches={upcoming}
           emptyMessage="No upcoming matches found."
+          isSignedIn={isSignedIn}
         />
       )}
       {activeTab === "completed" && (
         <MatchList
           matches={completed}
           emptyMessage="No completed matches yet."
+          isSignedIn={isSignedIn}
         />
       )}
     </div>

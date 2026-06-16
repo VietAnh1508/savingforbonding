@@ -1,11 +1,15 @@
 import { MatchTabs } from "~/app/_components/match-tabs";
 import { Nav } from "~/app/_components/nav";
+import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
 export default async function Home() {
   void api.match.listUpcoming.prefetch();
 
-  const matches = await api.match.listUpcoming();
+  const [matches, session] = await Promise.all([
+    api.match.listUpcoming(),
+    auth(),
+  ]);
 
   const upcoming = matches.filter((m) =>
     ["SCHEDULED", "LIVE", "POSTPONED"].includes(m.status),
@@ -30,7 +34,7 @@ export default async function Home() {
               </p>
             </div>
           ) : (
-            <MatchTabs upcoming={upcoming} completed={completed} />
+            <MatchTabs upcoming={upcoming} completed={completed} isSignedIn={!!session?.user} />
           )}
         </main>
       </div>
