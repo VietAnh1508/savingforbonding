@@ -67,6 +67,28 @@ export const voteRouter = createTRPCRouter({
       });
     }),
 
+  getMyMissedMatches: protectedProcedure
+    .input(
+      z
+        .object({
+          limit: z.number().min(1).max(100).default(20),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const limit = input?.limit ?? 20;
+      const userId = ctx.session.user.id;
+
+      return ctx.db.match.findMany({
+        where: {
+          status: "COMPLETED",
+          votes: { none: { userId } },
+        },
+        orderBy: { kickoffAt: "desc" },
+        take: limit,
+      });
+    }),
+
   getMyStats: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 

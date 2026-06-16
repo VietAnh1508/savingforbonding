@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 
 import { EditProfileName } from "~/app/_components/edit-profile-name";
 import { Nav } from "~/app/_components/nav";
-import { formatBeers, outcomeShort } from "~/lib/match";
+import { type VoteOutcome } from "../../../generated/prisma";
+import { BEER_NO_BET, formatBeers, outcomeShort } from "~/lib/match";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -11,10 +12,38 @@ export default async function ProfilePage() {
   const session = await auth();
   if (!session?.user) redirect("/auth/signin");
 
-  const [stats, votes] = await Promise.all([
+  const [stats, votes, missedMatches] = await Promise.all([
     api.vote.getMyStats(),
     api.vote.getMyVotes({ limit: 20 }),
+    api.vote.getMyMissedMatches({ limit: 20 }),
   ]);
+
+  type VoteItem =
+    | { kind: "vote"; id: string; kickoffAt: Date; homeCountry: string; awayCountry: string; outcome: VoteOutcome; isCorrect: boolean | null; points: number }
+    | { kind: "missed"; id: string; kickoffAt: Date; homeCountry: string; awayCountry: string };
+
+  const voteItems: VoteItem[] = votes.map((v) => ({
+    kind: "vote" as const,
+    id: v.id,
+    kickoffAt: v.match.kickoffAt,
+    homeCountry: v.match.homeCountry,
+    awayCountry: v.match.awayCountry,
+    outcome: v.outcome,
+    isCorrect: v.isCorrect,
+    points: v.points,
+  }));
+
+  const missedItems: VoteItem[] = missedMatches.map((m) => ({
+    kind: "missed" as const,
+    id: m.id,
+    kickoffAt: m.kickoffAt,
+    homeCountry: m.homeCountry,
+    awayCountry: m.awayCountry,
+  }));
+
+  const allItems = [...voteItems, ...missedItems].sort(
+    (a, b) => b.kickoffAt.getTime() - a.kickoffAt.getTime(),
+  );
 
   return (
     <HydrateClient>
@@ -65,7 +94,7 @@ export default async function ProfilePage() {
 
           <section>
             <h2 className="mb-4 text-xl font-semibold">Recent Predictions</h2>
-            {votes.length === 0 ? (
+            {allItems.length === 0 ? (
               <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center text-white/50">
                 No predictions yet.{" "}
                 <a href="/" className="text-emerald-400 hover:underline">
@@ -74,32 +103,38 @@ export default async function ProfilePage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {votes.map((vote) => (
+                {allItems.map((item) => (
                   <a
-                    key={vote.id}
-                    href={`/matches/${vote.match.id}`}
+                    key={`${item.kind}-${item.id}`}
+                    href={`/matches/${item.id}`}
                     className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
                   >
                     <div>
                       <div className="font-medium">
-                        {vote.match.homeCountry} vs {vote.match.awayCountry}
+                        {item.homeCountry} vs {item.awayCountry}
                       </div>
                       <div className="text-sm text-white/50">
-                        Predicted: {outcomeShort(vote.outcome)}
+                        {item.kind === "vote"
+                          ? `Predicted: ${outcomeShort(item.outcome)}`
+                          : "No prediction"}
                       </div>
                     </div>
                     <div>
-                      {vote.isCorrect === null ? (
+                      {item.kind === "missed" ? (
+                        <span className="rounded-full bg-yellow-500/20 px-3 py-1 text-sm text-yellow-300">
+                          🍺 {formatBeers(BEER_NO_BET)} missed
+                        </span>
+                      ) : item.isCorrect === null ? (
                         <span className="text-sm text-white/40">Pending</span>
                       ) : (
                         <span
                           className={`rounded-full px-3 py-1 text-sm ${
-                            vote.isCorrect
+                            item.isCorrect
                               ? "bg-emerald-500/20 text-emerald-300"
                               : "bg-red-500/20 text-red-300"
                           }`}
                         >
-                          🍺 {formatBeers(vote.points)}
+                          🍺 {formatBeers(item.points)}
                         </span>
                       )}
                     </div>
