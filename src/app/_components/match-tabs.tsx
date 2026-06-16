@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { MatchCard } from "~/app/_components/match-card";
 import { formatMatchDate, toVietnamDatetimeLocal } from "~/lib/match";
-import { type RouterOutputs } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listUpcoming"][number];
 
@@ -63,16 +63,31 @@ function MatchList({
   );
 }
 
-export function MatchTabs({
-  upcoming,
-  completed,
-  isSignedIn,
-}: {
-  upcoming: Match[];
-  completed: Match[];
-  isSignedIn: boolean;
-}) {
+export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
   const [activeTab, setActiveTab] = useState<TabId>("upcoming");
+
+  const { data: matches = [] } = api.match.listUpcoming.useQuery();
+
+  const upcoming = matches.filter((m) =>
+    ["SCHEDULED", "LIVE", "POSTPONED"].includes(m.status),
+  );
+  const completed = matches.filter((m) => m.status === "COMPLETED");
+
+  if (matches.length === 0) {
+    return (
+      <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center">
+        <p className="text-lg text-white/60">No matches found.</p>
+        <p className="mt-2 text-sm text-white/40">
+          Run <code className="text-emerald-400">npm run sync:fifa</code> to
+          pull the World Cup schedule from FIFA, or add matches in the{" "}
+          <a href="/admin" className="text-emerald-400 hover:underline">
+            admin page
+          </a>
+          .
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -121,4 +136,3 @@ export function MatchTabs({
     </div>
   );
 }
-
