@@ -1,6 +1,6 @@
 import { MatchCard } from "~/app/_components/match-card";
 import { Nav } from "~/app/_components/nav";
-import { formatMatchDate } from "~/lib/match";
+import { formatMatchDate, toVietnamDatetimeLocal } from "~/lib/match";
 import { api, HydrateClient } from "~/trpc/server";
 
 export default async function Home() {
@@ -10,7 +10,7 @@ export default async function Home() {
 
   const grouped = matches.reduce(
     (acc, match) => {
-      const key = formatMatchDate(match.kickoffAt);
+      const key = toVietnamDatetimeLocal(match.kickoffAt).slice(0, 10);
       acc[key] ??= [];
       acc[key].push(match);
       return acc;
@@ -18,11 +18,7 @@ export default async function Home() {
     {} as Record<string, typeof matches>,
   );
 
-  const sortedDates = Object.keys(grouped).sort(
-    (a, b) =>
-      grouped[a]![0]!.kickoffAt.getTime() -
-      grouped[b]![0]!.kickoffAt.getTime(),
-  );
+  const sortedDates = Object.keys(grouped).sort();
 
   return (
     <HydrateClient>
@@ -50,13 +46,13 @@ export default async function Home() {
             </div>
           ) : (
             <div className="space-y-8">
-              {sortedDates.map((date) => (
-                <section key={date}>
+              {sortedDates.map((dateKey) => (
+                <section key={dateKey}>
                   <h2 className="mb-4 text-xl font-semibold text-emerald-400">
-                    {date}
+                    {formatMatchDate(grouped[dateKey]![0]!.kickoffAt)}
                   </h2>
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {grouped[date]!.map((match) => (
+                    {grouped[dateKey]!.map((match) => (
                       <MatchCard key={match.id} match={match} />
                     ))}
                   </div>
