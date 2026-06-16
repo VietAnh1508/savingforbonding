@@ -90,7 +90,16 @@ export function LeaderboardTable({
                 {formatJoiningDate(entry.joiningDate)}
               </td>
               <td className="px-4 py-3 text-right font-bold text-amber-400">
-                🍺 {entry.beers}
+                <span className="group relative inline-block cursor-help">
+                  🍺 {entry.beers}
+                  <span className="pointer-events-none absolute bottom-full right-0 z-10 mb-1 hidden whitespace-nowrap rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-normal shadow-lg ring-1 ring-white/10 group-hover:block">
+                    <span className="text-green-400">{entry.correctPredictions}</span>
+                    <span className="mx-1 text-white/30">/</span>
+                    <span className="text-red-400">{entry.incorrectPredictions}</span>
+                    <span className="mx-1 text-white/30">/</span>
+                    <span className="text-white/40">{entry.missedPredictions}</span>
+                  </span>
+                </span>
               </td>
               <td className="px-4 py-3 text-sm text-emerald-300">
                 {titleForRank(entry.rank) ?? (

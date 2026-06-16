@@ -8,14 +8,8 @@ const leaderboardUserSelect = {
   image: true,
   totalPoints: true,
   votes: {
-    select: { createdAt: true },
+    select: { createdAt: true, isCorrect: true },
     orderBy: { createdAt: "asc" as const },
-    take: 1,
-  },
-  _count: {
-    select: {
-      votes: { where: { isCorrect: true } },
-    },
   },
 };
 
@@ -43,13 +37,19 @@ async function fetchLeaderboardUsers(db: PrismaClient) {
 
 export const leaderboardRouter = createTRPCRouter({
   global: publicProcedure.query(async ({ ctx }) => {
-    const users = await fetchLeaderboardUsers(ctx.db);
+    const [users, completedMatchCount] = await Promise.all([
+      fetchLeaderboardUsers(ctx.db),
+      ctx.db.match.count({ where: { status: "COMPLETED" } }),
+    ]);
 
     return users.map((user, index) => {
       const createdAt =
         "createdAt" in user && user.createdAt instanceof Date
           ? user.createdAt
           : null;
+
+      const correct = user.votes.filter((v) => v.isCorrect === true).length;
+      const incorrect = user.votes.filter((v) => v.isCorrect === false).length;
 
       return {
         rank: index + 1,
@@ -61,7 +61,9 @@ export const leaderboardRouter = createTRPCRouter({
           earliestVoteAt: user.votes[0]?.createdAt ?? null,
         }),
         beers: user.totalPoints,
-        correctPredictions: user._count.votes,
+        correctPredictions: correct,
+        incorrectPredictions: incorrect,
+        missedPredictions: completedMatchCount - correct - incorrect,
       };
     });
   }),
