@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { isMatchEditable, validateBettingRatios } from "~/lib/match";
+import { BEER_NO_BET, isMatchEditable, validateBettingRatios } from "~/lib/match";
 import { adminProcedure, createTRPCRouter } from "~/server/api/trpc";
 import { resolveMatchVotes } from "~/server/services/resolve-votes";
 import { syncFifaFixtures } from "~/server/services/sync-fifa-fixtures";
@@ -61,6 +61,40 @@ const matchUpdateSchema = z
 export const adminRouter = createTRPCRouter({
   syncFromFifa: adminProcedure.mutation(async ({ ctx }) => {
     return syncFifaFixtures(ctx.db);
+  }),
+
+  repairBeerTotals: adminProcedure.mutation(async ({ ctx }) => {
+    const [completedMatchCount, users] = await Promise.all([
+      ctx.db.match.count({ where: { status: "COMPLETED" } }),
+      ctx.db.user.findMany({
+        select: {
+          id: true,
+          totalPoints: true,
+          votes: {
+            where: { isCorrect: { not: null } },
+            select: { points: true },
+          },
+        },
+      }),
+    ]);
+
+    let usersUpdated = 0;
+
+    for (const user of users) {
+      const votePointsSum = user.votes.reduce((sum, v) => sum + v.points, 0);
+      const missedCount = completedMatchCount - user.votes.length;
+      const newTotalPoints = votePointsSum + missedCount * BEER_NO_BET;
+
+      if (newTotalPoints !== user.totalPoints) {
+        await ctx.db.user.update({
+          where: { id: user.id },
+          data: { totalPoints: newTotalPoints, weeklyPoints: newTotalPoints },
+        });
+        usersUpdated++;
+      }
+    }
+
+    return { usersUpdated, completedMatchCount };
   }),
 
   listAll: adminProcedure.query(async ({ ctx }) => {

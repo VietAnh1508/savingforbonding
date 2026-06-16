@@ -129,7 +129,15 @@ export async function syncFifaFixtures(
 
     const wasCompleted = existing.status === "COMPLETED";
     const isNowCompleted = patch.status === "COMPLETED";
+    const isTransitioningToCompleted =
+      !wasCompleted &&
+      isNowCompleted &&
+      patch.homeScore !== null &&
+      patch.awayScore !== null;
 
+    // When transitioning to COMPLETED, omit status/scores/result here —
+    // resolveMatchVotes writes those fields itself, and must see the match
+    // as not-yet-resolved so it applies the BEER_NO_BET penalty to non-voters.
     await db.match.update({
       where: { externalId },
       data: {
@@ -137,25 +145,22 @@ export async function syncFifaFixtures(
         homeCountry: patch.homeCountry,
         awayCountry: patch.awayCountry,
         kickoffAt: patch.kickoffAt,
-        status: patch.status,
-        homeScore: patch.homeScore,
-        awayScore: patch.awayScore,
-        result: patch.result,
+        ...(!isTransitioningToCompleted && {
+          status: patch.status,
+          homeScore: patch.homeScore,
+          awayScore: patch.awayScore,
+          result: patch.result,
+        }),
       },
     });
     updated++;
 
-    if (
-      !wasCompleted &&
-      isNowCompleted &&
-      patch.homeScore !== null &&
-      patch.awayScore !== null
-    ) {
+    if (isTransitioningToCompleted) {
       const resolution = await resolveMatchVotes(
         db,
         existing.id,
-        patch.homeScore,
-        patch.awayScore,
+        patch.homeScore!,
+        patch.awayScore!,
       );
       if (!resolution.alreadyResolved) resolved++;
     }

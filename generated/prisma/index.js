@@ -202,7 +202,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/ngha/SavingForBonding/generated/prisma",
+      "value": "/Users/toah/Coding/savingforbonding/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -216,7 +216,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/ngha/SavingForBonding/prisma/schema.prisma",
+    "sourceFilePath": "/Users/toah/Coding/savingforbonding/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
