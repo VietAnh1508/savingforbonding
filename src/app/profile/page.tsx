@@ -92,7 +92,7 @@ export default async function ProfilePage() {
                 <span className="mx-1 text-white/30">/</span>
                 <span className="text-red-400">{stats.incorrectVotes}</span>
                 <span className="mx-1 text-white/30">/</span>
-                <span className="text-white/40">{stats.missedVotes}</span>
+                <span className="text-yellow-300">{stats.missedVotes}</span>
               </div>
               <div className="mt-1 text-xs text-white/50">Correct / Wrong / Missed</div>
             </div>
