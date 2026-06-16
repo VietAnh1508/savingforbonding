@@ -26,7 +26,13 @@ function groupByDate(matches: Match[]) {
     .map((key) => ({ dateKey: key, matches: grouped[key]! }));
 }
 
-function MatchList({ matches, emptyMessage }: { matches: Match[]; emptyMessage: string }) {
+function MatchList({
+  matches,
+  emptyMessage,
+}: {
+  matches: Match[];
+  emptyMessage: string;
+}) {
   const groups = groupByDate(matches);
 
   if (groups.length === 0) {
@@ -82,6 +88,11 @@ export function MatchTabs({
             className={`text-xl transition ${activeTab === "completed" ? "text-white" : "text-white/30 hover:text-white/50"}`}
           >
             Completed
+            {completed.length > 0 && (
+              <span className="ml-2 font-normal text-white/40">
+                ({completed.length})
+              </span>
+            )}
           </button>
         </h1>
         <p className="mt-2 text-white/60">
@@ -90,11 +101,18 @@ export function MatchTabs({
       </div>
 
       {activeTab === "upcoming" && (
-        <MatchList matches={upcoming} emptyMessage="No upcoming matches found." />
+        <MatchList
+          matches={upcoming}
+          emptyMessage="No upcoming matches found."
+        />
       )}
       {activeTab === "completed" && (
-        <MatchList matches={completed} emptyMessage="No completed matches yet." />
+        <MatchList
+          matches={completed}
+          emptyMessage="No completed matches yet."
+        />
       )}
     </div>
   );
 }
+
