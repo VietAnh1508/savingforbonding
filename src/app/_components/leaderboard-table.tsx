@@ -40,9 +40,9 @@ export function LeaderboardTable({
           <tr className="border-b border-white/10 bg-white/5 text-left text-sm text-white/60">
             <th className="px-4 py-3 font-medium">Rank</th>
             <th className="px-4 py-3 font-medium">Player</th>
-            <th className="px-4 py-3 font-medium">Joining Date</th>
             <th className="px-4 py-3 text-right font-medium">{beersLabel}</th>
-            <th className="px-4 py-3 font-medium">Title</th>
+            <th className="hidden px-4 py-3 font-medium sm:table-cell">Title</th>
+            <th className="hidden px-4 py-3 font-medium sm:table-cell">Joining Date</th>
           </tr>
         </thead>
         <tbody>
@@ -86,25 +86,31 @@ export function LeaderboardTable({
                   </span>
                 </div>
               </td>
-              <td className="px-4 py-3 text-sm text-white/60">
-                {formatJoiningDate(entry.joiningDate)}
-              </td>
               <td className="px-4 py-3 text-right font-bold text-amber-400">
                 <span className="group relative inline-block cursor-help">
                   🍺 {entry.beers}
                   <span className="pointer-events-none absolute bottom-full right-0 z-10 mb-1 hidden whitespace-nowrap rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-normal shadow-lg ring-1 ring-white/10 group-hover:block">
-                    <span className="text-green-400">{entry.correctPredictions}</span>
+                    <span className="text-green-400">
+                      {entry.correctPredictions}
+                    </span>
                     <span className="mx-1 text-white/30">/</span>
-                    <span className="text-red-400">{entry.incorrectPredictions}</span>
+                    <span className="text-red-400">
+                      {entry.incorrectPredictions}
+                    </span>
                     <span className="mx-1 text-white/30">/</span>
-                    <span className="text-white/40">{entry.missedPredictions}</span>
+                    <span className="text-white/40">
+                      {entry.missedPredictions}
+                    </span>
                   </span>
                 </span>
               </td>
-              <td className="px-4 py-3 text-sm text-emerald-300">
+              <td className="hidden px-4 py-3 text-sm text-emerald-300 sm:table-cell">
                 {titleForRank(entry.rank) ?? (
                   <span className="text-white/30">—</span>
                 )}
+              </td>
+              <td className="hidden px-4 py-3 text-sm text-white/60 sm:table-cell">
+                {formatJoiningDate(entry.joiningDate)}
               </td>
             </tr>
           ))}
@@ -113,3 +119,4 @@ export function LeaderboardTable({
     </div>
   );
 }
+
