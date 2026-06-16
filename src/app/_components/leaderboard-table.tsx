@@ -87,9 +87,9 @@ export function LeaderboardTable({
                 </div>
               </td>
               <td className="px-4 py-3 text-right font-bold text-amber-400">
-                <span className="group relative inline-block cursor-help">
+                <span className="group relative inline-block cursor-help outline-none" tabIndex={0}>
                   🍺 {entry.beers}
-                  <span className="pointer-events-none absolute bottom-full right-0 z-10 mb-1 hidden whitespace-nowrap rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-normal shadow-lg ring-1 ring-white/10 group-hover:block">
+                  <span className="pointer-events-none absolute bottom-full right-0 z-10 mb-1 hidden whitespace-nowrap rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-normal shadow-lg ring-1 ring-white/10 group-hover:block group-focus-within:block">
                     <span className="text-green-400">
                       {entry.correctPredictions}
                     </span>
