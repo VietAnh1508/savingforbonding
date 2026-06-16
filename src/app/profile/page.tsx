@@ -72,15 +72,15 @@ export default async function ProfilePage() {
 
           <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[
-              { label: "Total Beers", value: `🍺 ${stats.totalBeers}` },
-              { label: "Weekly Beers", value: `🍺 ${stats.weeklyBeers}` },
+              { label: "Total Beers", value: `${stats.totalBeers}` },
+              { label: "Weekly Beers", value: `${stats.weeklyBeers}` },
               { label: "Accuracy", value: `${stats.accuracy}%` },
             ].map((stat) => (
               <div
                 key={stat.label}
                 className="rounded-xl border border-white/10 bg-white/5 p-4 text-center"
               >
-                <div className="text-2xl font-bold text-emerald-400">
+                <div className="text-2xl font-bold text-white">
                   {stat.value}
                 </div>
                 <div className="mt-1 text-xs text-white/50">{stat.label}</div>
