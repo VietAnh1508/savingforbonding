@@ -92,21 +92,27 @@ export const voteRouter = createTRPCRouter({
   getMyStats: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
-    const [totalVotes, correctVotes, user] = await Promise.all([
-      ctx.db.vote.count({ where: { userId } }),
-      ctx.db.vote.count({ where: { userId, isCorrect: true } }),
-      ctx.db.user.findUnique({
-        where: { id: userId },
-        select: { totalPoints: true, weeklyPoints: true },
-      }),
-    ]);
+    const [totalVotes, correctVotes, incorrectVotes, completedMatchCount, user] =
+      await Promise.all([
+        ctx.db.vote.count({ where: { userId } }),
+        ctx.db.vote.count({ where: { userId, isCorrect: true } }),
+        ctx.db.vote.count({ where: { userId, isCorrect: false } }),
+        ctx.db.match.count({ where: { status: "COMPLETED" } }),
+        ctx.db.user.findUnique({
+          where: { id: userId },
+          select: { totalPoints: true, weeklyPoints: true },
+        }),
+      ]);
 
     const accuracy =
       totalVotes > 0 ? Math.round((correctVotes / totalVotes) * 100) : 0;
+    const missedVotes = completedMatchCount - correctVotes - incorrectVotes;
 
     return {
       totalVotes,
       correctVotes,
+      incorrectVotes,
+      missedVotes,
       accuracy,
       totalBeers: user?.totalPoints ?? 0,
       weeklyBeers: user?.weeklyPoints ?? 0,

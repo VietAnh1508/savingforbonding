@@ -75,10 +75,6 @@ export default async function ProfilePage() {
               { label: "Total Beers", value: `🍺 ${stats.totalBeers}` },
               { label: "Weekly Beers", value: `🍺 ${stats.weeklyBeers}` },
               { label: "Accuracy", value: `${stats.accuracy}%` },
-              {
-                label: "Correct",
-                value: `${stats.correctVotes}/${stats.totalVotes}`,
-              },
             ].map((stat) => (
               <div
                 key={stat.label}
@@ -90,6 +86,16 @@ export default async function ProfilePage() {
                 <div className="mt-1 text-xs text-white/50">{stat.label}</div>
               </div>
             ))}
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
+              <div className="text-2xl font-bold">
+                <span className="text-green-400">{stats.correctVotes}</span>
+                <span className="mx-1 text-white/30">/</span>
+                <span className="text-red-400">{stats.incorrectVotes}</span>
+                <span className="mx-1 text-white/30">/</span>
+                <span className="text-white/40">{stats.missedVotes}</span>
+              </div>
+              <div className="mt-1 text-xs text-white/50">Correct / Wrong / Missed</div>
+            </div>
           </div>
 
           <section>
@@ -122,7 +128,7 @@ export default async function ProfilePage() {
                     <div>
                       {item.kind === "missed" ? (
                         <span className="rounded-full bg-yellow-500/20 px-3 py-1 text-sm text-yellow-300">
-                          🍺 {formatBeers(BEER_NO_BET)} missed
+                          🍺 {formatBeers(BEER_NO_BET)}
                         </span>
                       ) : item.isCorrect === null ? (
                         <span className="text-sm text-white/40">Pending</span>
