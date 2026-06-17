@@ -61,7 +61,7 @@ export function QuickVoteButton({ match }: { match: Match }) {
 
       {open && (
         <div
-          className="absolute right-0 top-full z-10 mt-1 min-w-[8rem] overflow-hidden rounded-lg border border-foreground/10 bg-card shadow-xl"
+          className="absolute right-0 top-full z-50 mt-1 min-w-[8rem] overflow-hidden rounded-lg border border-foreground/10 bg-card shadow-xl"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
