@@ -3,14 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 
 import { Spinner } from "~/app/_components/spinner";
+import { useToast } from "~/app/_components/toast";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listUpcoming"][number];
 
-export function QuickBetButton({ match }: { match: Match }) {
+export function QuickVoteButton({ match }: { match: Match }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const utils = api.useUtils();
+  const toast = useToast();
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -25,6 +27,7 @@ export function QuickBetButton({ match }: { match: Match }) {
   const castVote = api.vote.cast.useMutation({
     onSuccess: () => {
       void utils.match.listUpcoming.invalidate();
+      toast.success("Prediction saved!");
     },
   });
 

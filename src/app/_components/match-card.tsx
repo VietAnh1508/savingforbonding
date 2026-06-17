@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
-import { QuickBetButton } from "~/app/_components/quick-bet-button";
+import { QuickVoteButton } from "~/app/_components/quick-vote-button";
 import { TeamFlag } from "~/app/_components/team-flag";
 import { formatKickoffTime, formatRatioValue } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
@@ -65,7 +65,7 @@ export function MatchCard({ match, isSignedIn }: { match: Match; isSignedIn: boo
     >
       <div className="mb-3 flex items-center justify-between">
         {statusBadge(match.status)}
-        {match.votingOpen && isSignedIn && <QuickBetButton match={match} />}
+        {match.votingOpen && isSignedIn && <QuickVoteButton match={match} />}
       </div>
 
       <div className="flex items-center justify-between gap-4">
