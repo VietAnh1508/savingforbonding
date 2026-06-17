@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { api } from "~/trpc/react";
 import { ConfirmDialog } from "~/app/_components/confirm-dialog";
+import { useToast } from "~/app/_components/toast";
 import { UserCard } from "./user-card";
 
 type PendingDelete = { id: string; name: string | null; email: string };
 
 export function UsersPanel({ currentUserId }: { currentUserId?: string }) {
   const utils = api.useUtils();
+  const toast = useToast();
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
 
   const { data: users = [], isLoading } = api.admin.listUsers.useQuery();
@@ -17,6 +19,7 @@ export function UsersPanel({ currentUserId }: { currentUserId?: string }) {
     onSuccess: async () => {
       await utils.admin.listUsers.invalidate();
       setPendingDelete(null);
+      toast.success("User deleted");
     },
   });
 

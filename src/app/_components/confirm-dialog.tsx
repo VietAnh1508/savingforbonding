@@ -1,5 +1,7 @@
 "use client";
 
+import { Spinner } from "./spinner";
+
 interface ConfirmDialogProps {
   open: boolean;
   title: string;
@@ -49,13 +51,14 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+            className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
               dangerous
                 ? "bg-red-600 text-white hover:bg-red-500"
                 : "bg-white text-black hover:bg-white/90"
             }`}
           >
-            {loading ? "…" : confirmLabel}
+            {loading && <Spinner className="h-3.5 w-3.5" />}
+            {confirmLabel}
           </button>
         </div>
       </div>

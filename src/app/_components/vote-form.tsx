@@ -1,9 +1,9 @@
 "use client";
 
-import { type VoteOutcome } from "../../../generated/prisma";
 import { BEER_NO_BET, formatBeers, outcomeShort } from "~/lib/match";
-import { type RouterOutputs } from "~/trpc/react";
-import { api } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react";
+import { type VoteOutcome } from "../../../generated/prisma";
+import { useToast } from "./toast";
 
 const OUTCOMES: VoteOutcome[] = ["HOME_WIN", "DRAW", "AWAY_WIN"];
 
@@ -21,6 +21,7 @@ export function VoteForm({
   initialMatch: MatchDetail;
 }) {
   const utils = api.useUtils();
+  const toast = useToast();
 
   const { data: match } = api.match.getById.useQuery(
     { id: matchId },
@@ -60,6 +61,9 @@ export function VoteForm({
 
       return { previous };
     },
+    onSuccess: () => {
+      toast.success("Prediction saved!");
+    },
     onError: (_error, _input, context) => {
       if (context?.previous) {
         utils.match.getById.setData({ id: matchId }, context.previous);
@@ -97,10 +101,10 @@ export function VoteForm({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Place your bet</h3>
+      <h3 className="text-lg font-semibold">Place your vote</h3>
       <p className="text-sm text-white/50">
-        Required for every match — skip it and you owe {formatBeers(BEER_NO_BET)}{" "}
-        anyway.
+        Required for every match — skip it and you owe{" "}
+        {formatBeers(BEER_NO_BET)} anyway.
       </p>
       <div className="grid grid-cols-3 gap-3">
         {OUTCOMES.map((outcome) => (
@@ -109,7 +113,7 @@ export function VoteForm({
             type="button"
             disabled={castVote.isPending}
             onClick={() => castVote.mutate({ matchId, outcome })}
-            className={`rounded-xl border p-4 text-center transition ${
+            className={`cursor-pointer rounded-xl border p-4 text-center transition ${
               currentVote === outcome
                 ? "border-emerald-500 bg-emerald-500/20 text-emerald-300"
                 : "border-white/10 bg-white/5 hover:border-emerald-500/50 hover:bg-white/10"
@@ -117,8 +121,12 @@ export function VoteForm({
           >
             {outcome === "DRAW" ? (
               <>
-                <div className="text-2xl font-bold">{outcomeShort(outcome)}</div>
-                <div className="mt-1 text-xs text-white/60">{label(outcome)}</div>
+                <div className="text-2xl font-bold">
+                  {outcomeShort(outcome)}
+                </div>
+                <div className="mt-1 text-xs text-white/60">
+                  {label(outcome)}
+                </div>
               </>
             ) : (
               <div className="font-semibold">{label(outcome)}</div>
@@ -137,3 +145,4 @@ export function VoteForm({
     </div>
   );
 }
+
