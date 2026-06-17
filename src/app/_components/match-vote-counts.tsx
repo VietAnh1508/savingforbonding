@@ -15,7 +15,7 @@ export function MatchVoteCounts({
 }) {
   return (
     <div className="flex items-center justify-between gap-4 text-center text-xs text-white/50">
-      <div className="flex flex-1 flex-col items-center gap-0.5">
+      <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5">
         <span className="font-medium text-white/70">{homeCountry}</span>
         <span>{voterLabel(voteCounts.home)}</span>
       </div>
@@ -25,7 +25,7 @@ export function MatchVoteCounts({
         <span>{voterLabel(voteCounts.draw)}</span>
       </div>
 
-      <div className="flex flex-1 flex-col items-center gap-0.5">
+      <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5">
         <span className="font-medium text-white/70">{awayCountry}</span>
         <span>{voterLabel(voteCounts.away)}</span>
       </div>
