@@ -98,57 +98,59 @@ export function MatchForm({ editingMatch, onSuccess, onCancel }: Props) {
     }
   }
 
+  const inputClass = "w-full rounded-lg border border-foreground/10 bg-foreground/10 px-3 py-2";
+
   return (
     <form
       onSubmit={handleSubmit}
       className="space-y-4"
     >
-      <p className="text-sm text-white/50">
+      <p className="text-sm text-foreground/50">
         Set home and away ratios freely. Use 0 for no handicap on that side.
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-1">
-          <span className="text-sm text-white/60">Home Country</span>
+          <span className="text-sm text-foreground/60">Home Country</span>
           <input
             required
             value={form.homeCountry}
             onChange={(e) => setForm({ ...form, homeCountry: e.target.value })}
-            className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2"
+            className={inputClass}
             placeholder="Brazil"
           />
         </label>
         <label className="space-y-1">
-          <span className="text-sm text-white/60">Away Country</span>
+          <span className="text-sm text-foreground/60">Away Country</span>
           <input
             required
             value={form.awayCountry}
             onChange={(e) => setForm({ ...form, awayCountry: e.target.value })}
-            className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2"
+            className={inputClass}
             placeholder="Argentina"
           />
         </label>
         <label className="space-y-1">
-          <span className="text-sm text-white/60">Kickoff</span>
+          <span className="text-sm text-foreground/60">Kickoff</span>
           <input
             required
             type="datetime-local"
             value={form.kickoffAt}
             onChange={(e) => setForm({ ...form, kickoffAt: e.target.value })}
-            className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2"
+            className={inputClass}
           />
         </label>
         <label className="space-y-1">
-          <span className="text-sm text-white/60">Tournament</span>
+          <span className="text-sm text-foreground/60">Tournament</span>
           <input
             required
             value={form.tournament}
             onChange={(e) => setForm({ ...form, tournament: e.target.value })}
-            className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2"
+            className={inputClass}
           />
         </label>
         <label className="space-y-1">
-          <span className="text-sm text-white/60">Home Ratio (1)</span>
+          <span className="text-sm text-foreground/60">Home Ratio (1)</span>
           <input
             required
             type="number"
@@ -156,11 +158,11 @@ export function MatchForm({ editingMatch, onSuccess, onCancel }: Props) {
             min="0"
             value={form.homeRatio}
             onChange={(e) => setForm({ ...form, homeRatio: e.target.value })}
-            className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2"
+            className={inputClass}
           />
         </label>
         <label className="space-y-1">
-          <span className="text-sm text-white/60">Away Ratio (2)</span>
+          <span className="text-sm text-foreground/60">Away Ratio (2)</span>
           <input
             required
             type="number"
@@ -168,17 +170,17 @@ export function MatchForm({ editingMatch, onSuccess, onCancel }: Props) {
             min="0"
             value={form.awayRatio}
             onChange={(e) => setForm({ ...form, awayRatio: e.target.value })}
-            className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2"
+            className={inputClass}
           />
         </label>
         <label className="space-y-1">
-          <span className="text-sm text-white/60">Status</span>
+          <span className="text-sm text-foreground/60">Status</span>
           <select
             value={form.status}
             onChange={(e) =>
               setForm({ ...form, status: e.target.value as EditableStatus })
             }
-            className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2"
+            className={inputClass}
           >
             <option value="SCHEDULED">Scheduled</option>
             <option value="LIVE">Live</option>
@@ -200,7 +202,7 @@ export function MatchForm({ editingMatch, onSuccess, onCancel }: Props) {
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-white/10 px-4 py-2 transition hover:bg-white/10"
+            className="rounded-lg border border-foreground/10 px-4 py-2 transition hover:bg-foreground/10"
           >
             Cancel
           </button>

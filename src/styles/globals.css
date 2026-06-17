@@ -1,6 +1,36 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+/* Dark mode (default — avoids any class-on-load flash) */
+:root {
+  --fg: #ffffff;
+  --bg-from: #0a1f0a;
+  --bg-to: #0d1117;
+  --card-bg: #1a1a2e;
+}
+
+/* Light mode overrides */
+html:not(.dark) {
+  --fg: #0f2e1a;
+  --bg-from: #f0fdf4;
+  --bg-to: #ffffff;
+  --card-bg: #ffffff;
+}
+
+@theme inline {
+  --color-foreground: var(--fg);
+  --color-card: var(--card-bg);
+}
+
+body {
+  background-image: linear-gradient(to bottom, var(--bg-from), var(--bg-to));
+  background-attachment: fixed;
+  color: var(--fg);
+  min-height: 100vh;
 }

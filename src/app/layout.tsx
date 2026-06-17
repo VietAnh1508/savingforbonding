@@ -3,6 +3,7 @@ import "~/styles/globals.css";
 import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 
+import { ThemeProvider } from "~/app/_components/theme-provider";
 import { ToastProvider } from "~/app/_components/toast";
 import { TRPCReactProvider } from "~/trpc/react";
 
@@ -20,11 +21,13 @@ const geist = Geist({
 
 export default function RootLayout({ children }: React.PropsWithChildren) {
   return (
-    <html lang="en" className={`${geist.variable}`}>
+    <html lang="en" className={`${geist.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased">
-        <TRPCReactProvider>
-          <ToastProvider>{children}</ToastProvider>
-        </TRPCReactProvider>
+        <ThemeProvider>
+          <TRPCReactProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </TRPCReactProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

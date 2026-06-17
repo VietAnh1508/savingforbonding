@@ -17,7 +17,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a1f0a] to-[#0d1117] text-white">
+    <>
       <Nav />
       <main className="container mx-auto max-w-3xl px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
@@ -25,7 +25,7 @@ export default async function AdminLayout({
           <form action={adminLogout}>
             <button
               type="submit"
-              className="rounded-lg border border-white/10 px-4 py-2 text-sm hover:bg-white/10"
+              className="rounded-lg border border-foreground/10 px-4 py-2 text-sm hover:bg-foreground/10"
             >
               Log out
             </button>
@@ -33,6 +33,6 @@ export default async function AdminLayout({
         </div>
         {children}
       </main>
-    </div>
+    </>
   );
 }

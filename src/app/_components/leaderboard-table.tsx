@@ -27,17 +27,17 @@ export function LeaderboardTable({
 }) {
   if (entries.length === 0) {
     return (
-      <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center text-white/50">
+      <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-8 text-center text-foreground/50">
         No registered users yet.
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-white/10">
+    <div className="overflow-hidden rounded-xl border border-foreground/10">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-white/10 bg-white/5 text-left text-sm text-white/60">
+          <tr className="border-b border-foreground/10 bg-foreground/5 text-left text-sm text-foreground/60">
             <th className="px-4 py-3 font-medium">Rank</th>
             <th className="px-4 py-3 font-medium">Player</th>
             <th className="px-4 py-3 text-right font-medium">{beersLabel}</th>
@@ -49,18 +49,18 @@ export function LeaderboardTable({
           {entries.map((entry) => (
             <tr
               key={entry.id}
-              className="border-b border-white/5 transition hover:bg-white/5"
+              className="border-b border-foreground/5 transition hover:bg-foreground/5"
             >
               <td className="px-4 py-3">
                 <span
                   className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
                     entry.rank === 1
-                      ? "bg-yellow-500/20 text-yellow-300"
+                      ? "bg-yellow-500/20 text-yellow-600 dark:text-yellow-300"
                       : entry.rank === 2
-                        ? "bg-gray-400/20 text-gray-300"
+                        ? "bg-gray-400/20 text-gray-500 dark:text-gray-300"
                         : entry.rank === 3
-                          ? "bg-amber-700/20 text-amber-400"
-                          : "bg-white/5 text-white/60"
+                          ? "bg-amber-700/20 text-amber-600 dark:text-amber-400"
+                          : "bg-foreground/5 text-foreground/60"
                   }`}
                 >
                   {entry.rank}
@@ -86,10 +86,10 @@ export function LeaderboardTable({
                   </span>
                 </div>
               </td>
-              <td className="px-4 py-3 text-right font-bold text-amber-400">
+              <td className="px-4 py-3 text-right font-bold text-amber-600 dark:text-amber-400">
                 <span className="group relative inline-block cursor-help outline-none" tabIndex={0}>
                   🍺 {entry.beers}
-                  <span className="pointer-events-none absolute bottom-full right-0 z-10 mb-1 hidden whitespace-nowrap rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-normal shadow-lg ring-1 ring-white/10 group-hover:block group-focus-within:block">
+                  <span className="pointer-events-none absolute bottom-full right-0 z-10 mb-1 hidden whitespace-nowrap rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-normal text-white shadow-lg ring-1 ring-white/10 group-hover:block group-focus-within:block">
                     <span className="text-green-400">
                       {entry.correctPredictions}
                     </span>
@@ -104,12 +104,12 @@ export function LeaderboardTable({
                   </span>
                 </span>
               </td>
-              <td className="hidden px-4 py-3 text-sm text-emerald-300 sm:table-cell">
+              <td className="hidden px-4 py-3 text-sm text-emerald-600 dark:text-emerald-300 sm:table-cell">
                 {titleForRank(entry.rank) ?? (
-                  <span className="text-white/30">—</span>
+                  <span className="text-foreground/30">—</span>
                 )}
               </td>
-              <td className="hidden px-4 py-3 text-sm text-white/60 sm:table-cell">
+              <td className="hidden px-4 py-3 text-sm text-foreground/60 sm:table-cell">
                 {formatJoiningDate(entry.joiningDate)}
               </td>
             </tr>
@@ -119,4 +119,3 @@ export function LeaderboardTable({
     </div>
   );
 }
-

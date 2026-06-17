@@ -29,21 +29,21 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm dark:bg-black/60"
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#1a1a2e] p-6 shadow-xl"
+        className="w-full max-w-sm rounded-2xl border border-foreground/10 bg-card p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="mb-2 text-base font-semibold text-white">{title}</h3>
-        <p className="mb-6 text-sm text-white/60">{description}</p>
+        <h3 className="mb-2 text-base font-semibold">{title}</h3>
+        <p className="mb-6 text-sm text-foreground/60">{description}</p>
         <div className="flex justify-end gap-2">
           <button
             type="button"
             onClick={onCancel}
             disabled={loading}
-            className="cursor-pointer rounded-lg px-4 py-2 text-sm text-white/60 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="cursor-pointer rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
             {cancelLabel}
           </button>
@@ -54,7 +54,7 @@ export function ConfirmDialog({
             className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
               dangerous
                 ? "bg-red-600 text-white hover:bg-red-500"
-                : "bg-white text-black hover:bg-white/90"
+                : "bg-foreground text-card hover:bg-foreground/90"
             }`}
           >
             {loading && <Spinner className="h-3.5 w-3.5" />}

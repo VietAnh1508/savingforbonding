@@ -20,11 +20,11 @@ export default async function ChangePasswordPage({
   const errorMessage = error ? ERROR_MESSAGES[error] : null;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#0a1f0a] to-[#0d1117] text-white">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-8">
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="w-full max-w-md rounded-2xl border border-foreground/10 bg-foreground/5 p-8">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold text-emerald-400">Set a new password</h1>
-          <p className="mt-2 text-sm text-white/60">
+          <p className="mt-2 text-sm text-foreground/60">
             Your password was reset by an admin. Choose a new one to continue.
           </p>
         </div>
@@ -37,7 +37,7 @@ export default async function ChangePasswordPage({
 
         <form action={changePassword} className="space-y-4">
           <div>
-            <label htmlFor="password" className="mb-1 block text-sm text-white/70">
+            <label htmlFor="password" className="mb-1 block text-sm text-foreground/70">
               New password
             </label>
             <input
@@ -47,7 +47,7 @@ export default async function ChangePasswordPage({
               required
               minLength={8}
               autoComplete="new-password"
-              className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-white placeholder:text-white/40 focus:border-emerald-500/50 focus:outline-none"
+              className="w-full rounded-xl border border-foreground/10 bg-foreground/10 px-4 py-3 text-foreground placeholder:text-foreground/40 focus:border-emerald-500/50 focus:outline-none"
               placeholder="At least 8 characters"
             />
           </div>

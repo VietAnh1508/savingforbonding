@@ -47,14 +47,14 @@ export function EditProfileName({
               onChange={(event) => setName(event.target.value)}
               maxLength={80}
               autoFocus
-              className="rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-white placeholder:text-white/40 focus:border-emerald-500/50 focus:outline-none"
+              className="rounded-xl border border-foreground/10 bg-foreground/10 px-4 py-2 text-foreground placeholder:text-foreground/40 focus:border-emerald-500/50 focus:outline-none"
               placeholder="Your name"
             />
             <button
               type="submit"
               disabled={updateName.isPending || !name.trim()}
               aria-label="Save name"
-              className="rounded-md p-1 text-emerald-400 transition hover:bg-white/10 disabled:opacity-40"
+              className="rounded-md p-1 text-emerald-400 transition hover:bg-foreground/10 disabled:opacity-40"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
@@ -65,7 +65,7 @@ export function EditProfileName({
               onClick={handleCancel}
               disabled={updateName.isPending}
               aria-label="Cancel"
-              className="rounded-md p-1 text-white/40 transition hover:bg-white/10 hover:text-white disabled:opacity-40"
+              className="rounded-md p-1 text-foreground/40 transition hover:bg-foreground/10 hover:text-foreground disabled:opacity-40"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"/>
@@ -73,7 +73,7 @@ export function EditProfileName({
               </svg>
             </button>
           </div>
-          <p className="mt-1 text-sm text-white/50">{email}</p>
+          <p className="mt-1 text-sm text-foreground/50">{email}</p>
           {updateName.error && (
             <p className="mt-1 text-sm text-red-400">{updateName.error.message}</p>
           )}
@@ -88,7 +88,7 @@ export function EditProfileName({
               type="button"
               onClick={() => setEditing(true)}
               aria-label="Edit name"
-              className="rounded-md p-1 text-white/40 transition hover:bg-white/10 hover:text-white"
+              className="rounded-md p-1 text-foreground/40 transition hover:bg-foreground/10 hover:text-foreground"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
@@ -96,7 +96,7 @@ export function EditProfileName({
               </svg>
             </button>
           </div>
-          <p className="text-sm text-white/60 sm:text-base">{email}</p>
+          <p className="text-sm text-foreground/60 sm:text-base">{email}</p>
         </div>
       )}
     </div>

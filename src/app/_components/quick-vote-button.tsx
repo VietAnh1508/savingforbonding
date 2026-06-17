@@ -51,7 +51,7 @@ export function QuickVoteButton({ match }: { match: Match }) {
         }}
         className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 ${
           currentVote
-            ? "border border-emerald-500/50 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+            ? "border border-emerald-500/50 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/30"
             : "bg-emerald-600 text-white hover:bg-emerald-500"
         }`}
       >
@@ -61,7 +61,7 @@ export function QuickVoteButton({ match }: { match: Match }) {
 
       {open && (
         <div
-          className="absolute right-0 top-full z-10 mt-1 min-w-[8rem] overflow-hidden rounded-lg border border-white/10 bg-[#1a2e1a] shadow-xl"
+          className="absolute right-0 top-full z-10 mt-1 min-w-[8rem] overflow-hidden rounded-lg border border-foreground/10 bg-card shadow-xl"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -75,10 +75,10 @@ export function QuickVoteButton({ match }: { match: Match }) {
                 setOpen(false);
                 castVote.mutate({ matchId: match.id, outcome });
               }}
-              className={`w-full px-4 py-2 text-left text-sm transition hover:bg-white/10 ${
+              className={`w-full px-4 py-2 text-left text-sm transition hover:bg-foreground/10 ${
                 currentVote === outcome
-                  ? "bg-emerald-500/20 text-emerald-300"
-                  : "text-white/80"
+                  ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                  : "text-foreground/80"
               }`}
             >
               {label}

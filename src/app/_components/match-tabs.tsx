@@ -39,8 +39,8 @@ function MatchList({
 
   if (groups.length === 0) {
     return (
-      <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center">
-        <p className="text-lg text-white/60">{emptyMessage}</p>
+      <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-12 text-center">
+        <p className="text-lg text-foreground/60">{emptyMessage}</p>
       </div>
     );
   }
@@ -75,9 +75,9 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
 
   if (matches.length === 0) {
     return (
-      <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center">
-        <p className="text-lg text-white/60">No matches found.</p>
-        <p className="mt-2 text-sm text-white/40">
+      <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-12 text-center">
+        <p className="text-lg text-foreground/60">No matches found.</p>
+        <p className="mt-2 text-sm text-foreground/40">
           Run <code className="text-emerald-400">npm run sync:fifa</code> to
           pull the World Cup schedule from FIFA, or add matches in the{" "}
           <a href="/admin" className="text-emerald-400 hover:underline">
@@ -96,25 +96,25 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
           <button
             type="button"
             onClick={() => setActiveTab("upcoming")}
-            className={`transition ${activeTab === "upcoming" ? "text-white" : "text-white/30 hover:text-white/50"}`}
+            className={`transition ${activeTab === "upcoming" ? "" : "text-foreground/30 hover:text-foreground/50"}`}
           >
             Upcoming
           </button>
-          <span className="text-white/20">/</span>
+          <span className="text-foreground/20">/</span>
           <button
             type="button"
             onClick={() => setActiveTab("completed")}
-            className={`text-xl transition ${activeTab === "completed" ? "text-white" : "text-white/30 hover:text-white/50"}`}
+            className={`text-xl transition ${activeTab === "completed" ? "" : "text-foreground/30 hover:text-foreground/50"}`}
           >
             Completed
             {completed.length > 0 && (
-              <span className="ml-2 font-normal text-white/40">
+              <span className="ml-2 font-normal text-foreground/40">
                 ({completed.length})
               </span>
             )}
           </button>
         </h1>
-        <p className="mt-2 text-white/60">
+        <p className="mt-2 text-foreground/60">
           Predict World Cup outcomes — win or lose, you owe beer
         </p>
       </div>

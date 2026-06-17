@@ -17,7 +17,7 @@ export function MatchesPanel() {
   );
 
   if (isLoading) {
-    return <p className="text-white/50">Loading matches...</p>;
+    return <p className="text-foreground/50">Loading matches...</p>;
   }
 
   const filteredMatches = matches.filter((m) =>
@@ -28,7 +28,7 @@ export function MatchesPanel() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-xl border border-white/10 bg-white/5">
+      <div className="rounded-xl border border-foreground/10 bg-foreground/5">
         <button
           type="button"
           onClick={() => setFormOpen((o) => !o)}
@@ -37,10 +37,10 @@ export function MatchesPanel() {
           <span className="text-lg font-semibold">
             {editingMatch ? "Edit Match" : "Add New Match"}
           </span>
-          <span className="text-white/40">{formOpen ? "▲" : "▼"}</span>
+          <span className="text-foreground/40">{formOpen ? "▲" : "▼"}</span>
         </button>
         {formOpen && (
-          <div className="border-t border-white/10 px-6 pb-6 pt-4">
+          <div className="border-t border-foreground/10 px-6 pb-6 pt-4">
             <MatchForm
               key={editingMatch?.id ?? "new"}
               editingMatch={editingMatch}
@@ -54,7 +54,7 @@ export function MatchesPanel() {
       <div className="space-y-4">
         <div className="flex items-center gap-4">
           <h2 className="text-lg font-semibold">Matches</h2>
-          <div className="flex rounded-lg border border-white/10 bg-white/5 p-1 text-sm">
+          <div className="flex rounded-lg border border-foreground/10 bg-foreground/5 p-1 text-sm">
             {(["upcoming", "completed"] as const).map((tab) => {
               const count =
                 tab === "upcoming"
@@ -67,12 +67,12 @@ export function MatchesPanel() {
                   onClick={() => setActiveTab(tab)}
                   className={`rounded-md px-3 py-1 capitalize transition ${
                     activeTab === tab
-                      ? "bg-white/15 font-medium text-white"
-                      : "text-white/50 hover:text-white/80"
+                      ? "bg-foreground/15 font-medium"
+                      : "text-foreground/50 hover:text-foreground/80"
                   }`}
                 >
                   {tab}{" "}
-                  <span className="text-xs text-white/40">({count})</span>
+                  <span className="text-xs text-foreground/40">({count})</span>
                 </button>
               );
             })}
@@ -81,7 +81,7 @@ export function MatchesPanel() {
 
         <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-1">
           {filteredMatches.length === 0 ? (
-            <p className="text-white/50">No {activeTab} matches.</p>
+            <p className="text-foreground/50">No {activeTab} matches.</p>
           ) : (
             filteredMatches.map((match) => (
               <MatchCard key={match.id} match={match} onEdit={(m) => { setEditingMatch(m); setFormOpen(true); }} />

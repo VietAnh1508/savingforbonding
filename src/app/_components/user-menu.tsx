@@ -50,7 +50,7 @@ export function UserMenu({
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="flex cursor-pointer items-center gap-2 rounded-full bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/30"
+        className="flex cursor-pointer items-center gap-2 rounded-full bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300 transition hover:bg-emerald-500/30"
       >
         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/30 text-xs font-bold uppercase">
           {displayName[0]}
@@ -73,26 +73,26 @@ export function UserMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-[#0d1117] shadow-xl"
+          className="absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-xl border border-foreground/10 bg-card shadow-xl"
         >
           <Link
             href="/profile"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="block border-b border-white/10 px-4 py-3 transition-colors hover:bg-white/10"
+            className="block border-b border-foreground/10 px-4 py-3 transition-colors hover:bg-foreground/10"
           >
-            <p className="truncate text-sm font-medium text-white">
+            <p className="truncate text-sm font-medium">
               {displayName}
             </p>
             {email && (
-              <p className="truncate text-xs text-white/50">{email}</p>
+              <p className="truncate text-xs text-foreground/50">{email}</p>
             )}
           </Link>
           <Link
             href="/api/auth/signout"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="block px-4 py-3 text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+            className="block px-4 py-3 text-sm text-foreground/80 transition-colors hover:bg-foreground/10 hover:text-foreground"
           >
             Sign out
           </Link>

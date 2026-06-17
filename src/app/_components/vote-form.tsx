@@ -88,7 +88,7 @@ export function VoteForm({
 
   if (!votingOpen) {
     return (
-      <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-center text-red-300">
+      <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-center text-red-700 dark:text-red-300">
         Voting is locked for this match
         {currentVote && (
           <p className="mt-2 text-sm">
@@ -102,7 +102,7 @@ export function VoteForm({
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Place your vote</h3>
-      <p className="text-sm text-white/50">
+      <p className="text-sm text-foreground/50">
         Required for every match — skip it and you owe{" "}
         {formatBeers(BEER_NO_BET)} anyway.
       </p>
@@ -115,8 +115,8 @@ export function VoteForm({
             onClick={() => castVote.mutate({ matchId, outcome })}
             className={`cursor-pointer rounded-xl border p-4 text-center transition ${
               currentVote === outcome
-                ? "border-emerald-500 bg-emerald-500/20 text-emerald-300"
-                : "border-white/10 bg-white/5 hover:border-emerald-500/50 hover:bg-white/10"
+                ? "border-emerald-500 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                : "border-foreground/10 bg-foreground/5 hover:border-emerald-500/50 hover:bg-foreground/10"
             }`}
           >
             {outcome === "DRAW" ? (
@@ -124,7 +124,7 @@ export function VoteForm({
                 <div className="text-2xl font-bold">
                   {outcomeShort(outcome)}
                 </div>
-                <div className="mt-1 text-xs text-white/60">
+                <div className="mt-1 text-xs text-foreground/60">
                   {label(outcome)}
                 </div>
               </>
@@ -135,14 +135,13 @@ export function VoteForm({
         ))}
       </div>
       {castVote.error && (
-        <p className="text-sm text-red-400">{castVote.error.message}</p>
+        <p className="text-sm text-red-600 dark:text-red-400">{castVote.error.message}</p>
       )}
       {currentVote && (
-        <p className="text-center text-sm text-white/50">
+        <p className="text-center text-sm text-foreground/50">
           You can change your vote until 5 minutes before kickoff
         </p>
       )}
     </div>
   );
 }
-
