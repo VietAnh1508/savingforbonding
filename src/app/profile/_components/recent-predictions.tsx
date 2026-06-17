@@ -1,0 +1,85 @@
+import { BEER_NO_BET, formatBeers, outcomeShort } from "~/lib/match";
+import { type RouterOutputs } from "~/trpc/react";
+
+type VoteItem =
+  | {
+      kind: "vote";
+      id: string;
+      kickoffAt: Date;
+      homeCountry: string;
+      awayCountry: string;
+      outcome: RouterOutputs["vote"]["getMyVotes"][number]["outcome"];
+      isCorrect: boolean | null;
+      points: number;
+    }
+  | {
+      kind: "missed";
+      id: string;
+      kickoffAt: Date;
+      homeCountry: string;
+      awayCountry: string;
+    };
+
+export function RecentPredictions({ items }: { items: VoteItem[] }) {
+  return (
+    <section className="flex min-h-0 flex-1 flex-col">
+      <h2 className="mb-4 text-xl font-semibold">Recent Predictions</h2>
+      {items.length === 0 ? (
+        <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center text-white/50">
+          No predictions yet.{" "}
+          <a href="/" className="text-emerald-400 hover:underline">
+            Browse matches
+          </a>
+        </div>
+      ) : (
+        <div className="flex-1 space-y-3 overflow-y-auto pr-1">
+          {items.map((item) => (
+            <a
+              key={`${item.kind}-${item.id}`}
+              href={`/matches/${item.id}`}
+              className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="font-medium">
+                  {item.homeCountry} vs {item.awayCountry}
+                  <span className="ml-2 text-sm font-normal text-white/50">
+                    {item.kickoffAt.toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+                <div className="text-sm text-white/50">
+                  {item.kind === "vote"
+                    ? `Predicted: ${outcomeShort(item.outcome)}`
+                    : "No prediction"}
+                </div>
+              </div>
+              <div className="ml-3 shrink-0">
+                {item.kind === "missed" ? (
+                  <span className="rounded-full bg-yellow-500/20 px-3 py-1 text-sm text-yellow-300">
+                    🍺 {formatBeers(BEER_NO_BET)}
+                  </span>
+                ) : item.isCorrect === null ? (
+                  <span className="text-sm text-white/40">Pending</span>
+                ) : (
+                  <span
+                    className={`rounded-full px-3 py-1 text-sm ${
+                      item.isCorrect
+                        ? "bg-emerald-500/20 text-emerald-300"
+                        : "bg-red-500/20 text-red-300"
+                    }`}
+                  >
+                    🍺 {formatBeers(item.points)}
+                  </span>
+                )}
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}

@@ -60,7 +60,7 @@ export function FifaSyncBanner() {
           type="button"
           onClick={() => void syncFromFifa()}
           disabled={syncPending}
-          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium transition hover:bg-emerald-500 disabled:opacity-50"
+          className="cursor-pointer rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium transition hover:bg-emerald-500 disabled:opacity-50"
         >
           {syncPending ? "Syncing..." : "Sync from FIFA"}
         </button>
@@ -84,3 +84,4 @@ export function FifaSyncBanner() {
     </div>
   );
 }
+
