@@ -7,9 +7,9 @@ export async function Nav() {
   const session = await auth();
 
   return (
-    <nav className="relative border-b border-foreground/10 bg-black/20 backdrop-blur-sm dark:bg-black/20 bg-white/60">
-      <div className="container mx-auto flex items-center justify-between px-4 py-4">
-        <Link href="/" className="text-xl font-bold text-emerald-400">
+    <nav className="sticky top-0 z-50 border-b border-foreground/10 bg-white/60 backdrop-blur-sm dark:bg-black/20">
+      <div className="container mx-auto flex items-center justify-between px-4 py-2 md:py-4">
+        <Link href="/" className="text-base font-bold text-emerald-400 md:text-xl">
           ⚽ SavingForBonding
         </Link>
         <NavMenu

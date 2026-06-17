@@ -50,12 +50,11 @@ export function UserMenu({
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="flex cursor-pointer items-center gap-2 rounded-full bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300 transition hover:bg-emerald-500/30"
+        className="flex cursor-pointer items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300 transition hover:bg-emerald-500/30"
       >
         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/30 text-xs font-bold uppercase">
           {displayName[0]}
         </span>
-        <span>{displayName}</span>
         <svg
           aria-hidden="true"
           viewBox="0 0 20 20"
@@ -92,7 +91,7 @@ export function UserMenu({
             href="/api/auth/signout"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="block px-4 py-3 text-sm text-foreground/80 transition-colors hover:bg-foreground/10 hover:text-foreground"
+            className="block px-4 py-3 text-sm text-red-500 transition-colors hover:bg-foreground/10 hover:text-red-400"
           >
             Sign out
           </Link>
