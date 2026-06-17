@@ -6068,6 +6068,7 @@ export namespace Prisma {
     image: string | null
     totalPoints: number | null
     weeklyPoints: number | null
+    mustChangePassword: boolean | null
     createdAt: Date | null
   }
 
@@ -6080,6 +6081,7 @@ export namespace Prisma {
     image: string | null
     totalPoints: number | null
     weeklyPoints: number | null
+    mustChangePassword: boolean | null
     createdAt: Date | null
   }
 
@@ -6092,6 +6094,7 @@ export namespace Prisma {
     image: number
     totalPoints: number
     weeklyPoints: number
+    mustChangePassword: number
     createdAt: number
     _all: number
   }
@@ -6116,6 +6119,7 @@ export namespace Prisma {
     image?: true
     totalPoints?: true
     weeklyPoints?: true
+    mustChangePassword?: true
     createdAt?: true
   }
 
@@ -6128,6 +6132,7 @@ export namespace Prisma {
     image?: true
     totalPoints?: true
     weeklyPoints?: true
+    mustChangePassword?: true
     createdAt?: true
   }
 
@@ -6140,6 +6145,7 @@ export namespace Prisma {
     image?: true
     totalPoints?: true
     weeklyPoints?: true
+    mustChangePassword?: true
     createdAt?: true
     _all?: true
   }
@@ -6239,6 +6245,7 @@ export namespace Prisma {
     image: string | null
     totalPoints: number
     weeklyPoints: number
+    mustChangePassword: boolean
     createdAt: Date
     _count: UserCountAggregateOutputType | null
     _avg: UserAvgAggregateOutputType | null
@@ -6270,6 +6277,7 @@ export namespace Prisma {
     image?: boolean
     totalPoints?: boolean
     weeklyPoints?: boolean
+    mustChangePassword?: boolean
     createdAt?: boolean
     accounts?: boolean | User$accountsArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
@@ -6286,6 +6294,7 @@ export namespace Prisma {
     image?: boolean
     totalPoints?: boolean
     weeklyPoints?: boolean
+    mustChangePassword?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["user"]>
 
@@ -6298,6 +6307,7 @@ export namespace Prisma {
     image?: boolean
     totalPoints?: boolean
     weeklyPoints?: boolean
+    mustChangePassword?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["user"]>
 
@@ -6310,10 +6320,11 @@ export namespace Prisma {
     image?: boolean
     totalPoints?: boolean
     weeklyPoints?: boolean
+    mustChangePassword?: boolean
     createdAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "passwordHash" | "emailVerified" | "image" | "totalPoints" | "weeklyPoints" | "createdAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "passwordHash" | "emailVerified" | "image" | "totalPoints" | "weeklyPoints" | "mustChangePassword" | "createdAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     accounts?: boolean | User$accountsArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
@@ -6339,6 +6350,7 @@ export namespace Prisma {
       image: string | null
       totalPoints: number
       weeklyPoints: number
+      mustChangePassword: boolean
       createdAt: Date
     }, ExtArgs["result"]["user"]>
     composites: {}
@@ -6774,6 +6786,7 @@ export namespace Prisma {
     readonly image: FieldRef<"User", 'String'>
     readonly totalPoints: FieldRef<"User", 'Int'>
     readonly weeklyPoints: FieldRef<"User", 'Int'>
+    readonly mustChangePassword: FieldRef<"User", 'Boolean'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
   }
     
@@ -8301,6 +8314,7 @@ export namespace Prisma {
     image: 'image',
     totalPoints: 'totalPoints',
     weeklyPoints: 'weeklyPoints',
+    mustChangePassword: 'mustChangePassword',
     createdAt: 'createdAt'
   };
 
@@ -8727,6 +8741,7 @@ export namespace Prisma {
     image?: StringNullableFilter<"User"> | string | null
     totalPoints?: IntFilter<"User"> | number
     weeklyPoints?: IntFilter<"User"> | number
+    mustChangePassword?: BoolFilter<"User"> | boolean
     createdAt?: DateTimeFilter<"User"> | Date | string
     accounts?: AccountListRelationFilter
     sessions?: SessionListRelationFilter
@@ -8742,6 +8757,7 @@ export namespace Prisma {
     image?: SortOrderInput | SortOrder
     totalPoints?: SortOrder
     weeklyPoints?: SortOrder
+    mustChangePassword?: SortOrder
     createdAt?: SortOrder
     accounts?: AccountOrderByRelationAggregateInput
     sessions?: SessionOrderByRelationAggregateInput
@@ -8760,6 +8776,7 @@ export namespace Prisma {
     image?: StringNullableFilter<"User"> | string | null
     totalPoints?: IntFilter<"User"> | number
     weeklyPoints?: IntFilter<"User"> | number
+    mustChangePassword?: BoolFilter<"User"> | boolean
     createdAt?: DateTimeFilter<"User"> | Date | string
     accounts?: AccountListRelationFilter
     sessions?: SessionListRelationFilter
@@ -8775,6 +8792,7 @@ export namespace Prisma {
     image?: SortOrderInput | SortOrder
     totalPoints?: SortOrder
     weeklyPoints?: SortOrder
+    mustChangePassword?: SortOrder
     createdAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
     _avg?: UserAvgOrderByAggregateInput
@@ -8795,6 +8813,7 @@ export namespace Prisma {
     image?: StringNullableWithAggregatesFilter<"User"> | string | null
     totalPoints?: IntWithAggregatesFilter<"User"> | number
     weeklyPoints?: IntWithAggregatesFilter<"User"> | number
+    mustChangePassword?: BoolWithAggregatesFilter<"User"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
   }
 
@@ -9207,6 +9226,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    mustChangePassword?: boolean
     createdAt?: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
@@ -9222,6 +9242,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    mustChangePassword?: boolean
     createdAt?: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
@@ -9237,6 +9258,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
@@ -9252,6 +9274,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -9267,6 +9290,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    mustChangePassword?: boolean
     createdAt?: Date | string
   }
 
@@ -9279,6 +9303,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -9291,6 +9316,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -9799,6 +9825,11 @@ export namespace Prisma {
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type AccountListRelationFilter = {
     every?: AccountWhereInput
     some?: AccountWhereInput
@@ -9828,6 +9859,7 @@ export namespace Prisma {
     image?: SortOrder
     totalPoints?: SortOrder
     weeklyPoints?: SortOrder
+    mustChangePassword?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -9845,6 +9877,7 @@ export namespace Prisma {
     image?: SortOrder
     totalPoints?: SortOrder
     weeklyPoints?: SortOrder
+    mustChangePassword?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -9857,6 +9890,7 @@ export namespace Prisma {
     image?: SortOrder
     totalPoints?: SortOrder
     weeklyPoints?: SortOrder
+    mustChangePassword?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -9877,6 +9911,14 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedDateTimeNullableFilter<$PrismaModel>
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type VerificationTokenIdentifierTokenCompoundUniqueInput = {
@@ -10096,6 +10138,10 @@ export namespace Prisma {
 
   export type NullableDateTimeFieldUpdateOperationsInput = {
     set?: Date | string | null
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
   }
 
   export type AccountUpdateManyWithoutUserNestedInput = {
@@ -10436,6 +10482,11 @@ export namespace Prisma {
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | null
@@ -10448,6 +10499,14 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedDateTimeNullableFilter<$PrismaModel>
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type VoteCreateWithoutMatchInput = {
@@ -10518,6 +10577,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    mustChangePassword?: boolean
     createdAt?: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
@@ -10532,6 +10592,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    mustChangePassword?: boolean
     createdAt?: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
@@ -10601,6 +10662,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
@@ -10615,6 +10677,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -10674,6 +10737,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    mustChangePassword?: boolean
     createdAt?: Date | string
     sessions?: SessionCreateNestedManyWithoutUserInput
     votes?: VoteCreateNestedManyWithoutUserInput
@@ -10688,6 +10752,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    mustChangePassword?: boolean
     createdAt?: Date | string
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     votes?: VoteUncheckedCreateNestedManyWithoutUserInput
@@ -10718,6 +10783,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: SessionUpdateManyWithoutUserNestedInput
     votes?: VoteUpdateManyWithoutUserNestedInput
@@ -10732,6 +10798,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     votes?: VoteUncheckedUpdateManyWithoutUserNestedInput
@@ -10746,6 +10813,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    mustChangePassword?: boolean
     createdAt?: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
     votes?: VoteCreateNestedManyWithoutUserInput
@@ -10760,6 +10828,7 @@ export namespace Prisma {
     image?: string | null
     totalPoints?: number
     weeklyPoints?: number
+    mustChangePassword?: boolean
     createdAt?: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     votes?: VoteUncheckedCreateNestedManyWithoutUserInput
@@ -10790,6 +10859,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
     votes?: VoteUpdateManyWithoutUserNestedInput
@@ -10804,6 +10874,7 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     totalPoints?: IntFieldUpdateOperationsInput | number
     weeklyPoints?: IntFieldUpdateOperationsInput | number
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     votes?: VoteUncheckedUpdateManyWithoutUserNestedInput

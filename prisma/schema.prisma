@@ -95,9 +95,10 @@ model User {
     passwordHash  String?
     emailVerified DateTime?
     image         String?
-    totalPoints   Int       @default(0)
-    weeklyPoints  Int       @default(0)
-    createdAt     DateTime  @default(now())
+    totalPoints        Int       @default(0)
+    weeklyPoints       Int       @default(0)
+    mustChangePassword Boolean   @default(false)
+    createdAt          DateTime  @default(now())
     accounts      Account[]
     sessions      Session[]
     votes         Vote[]

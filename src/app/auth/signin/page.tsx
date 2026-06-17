@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { PasswordInput } from "~/app/_components/password-input";
 import { SubmitButton } from "~/app/_components/submit-button";
 import { signInWithCredentials } from "~/app/auth/actions";
 import { auth } from "~/server/auth";
@@ -61,10 +62,9 @@ export default async function SignInPage({
             >
               Password
             </label>
-            <input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               required
               autoComplete="current-password"
               className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-white placeholder:text-white/40 focus:border-emerald-500/50 focus:outline-none"

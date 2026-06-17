@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { BEER_NO_BET } from "~/lib/match";
 import { hashPassword } from "~/lib/password";
-import { signIn } from "~/server/auth";
+import { auth, signIn } from "~/server/auth";
 import { db } from "~/server/db";
 
 export async function signInWithCredentials(formData: FormData) {
@@ -16,11 +16,17 @@ export async function signInWithCredentials(formData: FormData) {
     redirect("/auth/signin?error=InvalidCredentials");
   }
 
+  const userRecord = await db.user.findUnique({
+    where: { email: email.toLowerCase() },
+    select: { mustChangePassword: true },
+  });
+  const redirectTo = userRecord?.mustChangePassword ? "/auth/change-password" : "/";
+
   try {
     await signIn("credentials", {
       email: email.toLowerCase(),
       password,
-      redirectTo: "/",
+      redirectTo,
     });
   } catch (error) {
     if (error instanceof AuthError) {
@@ -28,6 +34,24 @@ export async function signInWithCredentials(formData: FormData) {
     }
     throw error;
   }
+}
+
+export async function changePassword(formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/auth/signin");
+
+  const password = formData.get("password");
+  if (typeof password !== "string" || password.length < 8) {
+    redirect("/auth/change-password?error=PasswordTooShort");
+  }
+
+  const passwordHash = await hashPassword(password);
+  await db.user.update({
+    where: { id: session.user.id },
+    data: { passwordHash, mustChangePassword: false },
+  });
+
+  redirect("/");
 }
 
 export async function signUp(formData: FormData) {

@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 SavingForBonding is a FIFA World Cup football prediction game. Users predict match outcomes and accrue beer "debts" for wrong picks (tracked as points on a leaderboard). The app is a T3 Stack project: Next.js 15 (App Router), tRPC, Prisma, NextAuth, and Tailwind CSS v4.
 
+## Project Context & Engineering Principles
+
+This is an internal app shared among a group of friends — at most ~40 users. It runs for the duration of the 2026 FIFA World Cup (through end of July 2026), roughly one month.
+
+**Keep it simple.** This is not a public-facing product. Do not over-engineer: no need for rate limiting, complex caching strategies, multi-tenancy, advanced security hardening, or abstractions built for hypothetical scale. A solution that works cleanly for 40 users is the right solution.
+
+**Keep it clean.** Simple does not mean hacky. Code should be readable, maintainable, and structured so new features or bug fixes are easy to add. Avoid shortcuts that create technical debt or make the codebase harder to reason about. Prefer straightforward patterns over clever ones.
+
 ## Commands
 
 ```bash

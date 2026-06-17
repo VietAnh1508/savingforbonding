@@ -15,11 +15,13 @@ interface UserCardProps {
     _count: { votes: number };
   };
   onDelete: () => void;
+  onReset: () => void;
   isDeleting: boolean;
+  isResetting: boolean;
   isSelf: boolean;
 }
 
-export function UserCard({ user, onDelete, isDeleting, isSelf }: UserCardProps) {
+export function UserCard({ user, onDelete, onReset, isDeleting, isResetting, isSelf }: UserCardProps) {
   return (
     <div className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
       <div className="min-w-0 flex-1">
@@ -40,10 +42,12 @@ export function UserCard({ user, onDelete, isDeleting, isSelf }: UserCardProps) 
       </div>
 
       <div className="flex shrink-0 items-center gap-0.5">
-        <Tooltip label="Reset password - Coming soon">
+        <Tooltip label="Reset password">
           <button
             type="button"
-            className="cursor-pointer rounded-md p-1.5 text-white/40 transition hover:bg-white/10 hover:text-white/80"
+            disabled={isResetting}
+            onClick={onReset}
+            className="cursor-pointer rounded-md p-1.5 text-white/40 transition hover:bg-white/10 hover:text-white/80 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <KeyIcon />
           </button>
