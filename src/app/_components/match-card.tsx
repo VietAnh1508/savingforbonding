@@ -70,7 +70,7 @@ export function MatchCard({ match, isSignedIn }: { match: Match; isSignedIn: boo
 
       <div className="flex items-center justify-between gap-4">
         <div
-          className={`flex flex-1 flex-col items-center gap-1 text-center ${predictedTeamClass(predictsHomeWin)}`}
+          className={`flex min-w-0 flex-1 flex-col items-center gap-1 text-center ${predictedTeamClass(predictsHomeWin)}`}
         >
           <TeamFlag country={match.homeCountry} size="sm" />
           <span className="text-sm font-medium">{match.homeCountry}</span>
@@ -104,7 +104,7 @@ export function MatchCard({ match, isSignedIn }: { match: Match; isSignedIn: boo
         </div>
 
         <div
-          className={`flex flex-1 flex-col items-center gap-1 text-center ${predictedTeamClass(predictsAwayWin)}`}
+          className={`flex min-w-0 flex-1 flex-col items-center gap-1 text-center ${predictedTeamClass(predictsAwayWin)}`}
         >
           <TeamFlag country={match.awayCountry} size="sm" />
           <span className="text-sm font-medium">{match.awayCountry}</span>
