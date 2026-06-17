@@ -1,10 +1,9 @@
 import { cookies } from "next/headers";
+import Link from "next/link";
 
-import { AdminPanel } from "~/app/admin/_components/admin-panel";
-import { adminLogin, adminLogout } from "~/app/admin/actions";
-import { Nav } from "~/app/_components/nav";
+import { adminLogin } from "~/app/admin/actions";
+import { FifaSyncBanner } from "~/app/admin/_components/fifa-sync-banner";
 import { ADMIN_COOKIE } from "~/lib/admin";
-import { HydrateClient } from "~/trpc/server";
 
 export default async function AdminPage({
   searchParams,
@@ -50,29 +49,17 @@ export default async function AdminPage({
   }
 
   return (
-    <HydrateClient>
-      <div className="min-h-screen bg-gradient-to-b from-[#0a1f0a] to-[#0d1117] text-white">
-        <Nav />
-        <main className="container mx-auto max-w-3xl px-4 py-8">
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Admin</h1>
-              <p className="mt-1 text-white/60">
-                Add and update matches. Completed matches are locked.
-              </p>
-            </div>
-            <form action={adminLogout}>
-              <button
-                type="submit"
-                className="rounded-lg border border-white/10 px-4 py-2 text-sm hover:bg-white/10"
-              >
-                Log out
-              </button>
-            </form>
-          </div>
-          <AdminPanel />
-        </main>
-      </div>
-    </HydrateClient>
+    <div className="space-y-6">
+      <FifaSyncBanner />
+      <Link
+        href="/admin/matches"
+        className="block rounded-xl border border-white/10 bg-white/5 p-6 transition hover:bg-white/10"
+      >
+        <h2 className="font-semibold text-white">Match Management</h2>
+        <p className="mt-1 text-sm text-white/60">
+          Add, edit, and complete matches.
+        </p>
+      </Link>
+    </div>
   );
 }

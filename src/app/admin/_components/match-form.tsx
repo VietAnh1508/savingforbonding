@@ -101,12 +101,8 @@ export function MatchForm({ editingMatch, onSuccess, onCancel }: Props) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-xl border border-white/10 bg-white/5 p-6"
+      className="space-y-4"
     >
-      <h2 className="text-lg font-semibold">
-        {editingMatch ? "Edit Match" : "Add New Match"}
-      </h2>
-
       <p className="text-sm text-white/50">
         Set home and away ratios freely. Use 0 for no handicap on that side.
       </p>
