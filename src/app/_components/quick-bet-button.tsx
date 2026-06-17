@@ -46,7 +46,11 @@ export function QuickBetButton({ match }: { match: Match }) {
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-500 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70"
+        className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 ${
+          currentVote
+            ? "border border-emerald-500/50 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+            : "bg-emerald-600 text-white hover:bg-emerald-500"
+        }`}
       >
         {castVote.isPending && <Spinner className="h-3 w-3" />}
         {currentVote ? "Change predicted" : "Predict"}
