@@ -24,7 +24,7 @@ export function LeaderboardTabs({
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap gap-2 rounded-xl border border-white/10 bg-white/5 p-1">
+      <div className="mb-6 flex flex-wrap gap-2 rounded-xl border border-foreground/10 bg-foreground/5 p-1">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -32,8 +32,8 @@ export function LeaderboardTabs({
             onClick={() => setActiveTab(tab.id)}
             className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition ${
               activeTab === tab.id
-                ? "bg-emerald-500/20 text-emerald-300"
-                : "text-white/60 hover:bg-white/5 hover:text-white"
+                ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                : "text-foreground/60 hover:bg-foreground/5 hover:text-foreground"
             }`}
           >
             {tab.label}
@@ -46,17 +46,17 @@ export function LeaderboardTabs({
       )}
 
       {activeTab === "beerPool" && (
-        <div className="rounded-xl border border-white/10 bg-white/5 p-10 text-center">
-          <p className="text-sm font-medium uppercase tracking-wide text-white/50">
+        <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-10 text-center">
+          <p className="text-sm font-medium uppercase tracking-wide text-foreground/50">
             Community Beer Pool
           </p>
-          <p className="mt-4 text-6xl font-bold text-amber-400">
+          <p className="mt-4 text-6xl font-bold text-amber-600 dark:text-amber-400">
             🍺 {beerPool.totalBeers}
           </p>
-          <p className="mt-3 text-lg text-white/80">
+          <p className="mt-3 text-lg text-foreground/80">
             {formatBeers(beerPool.totalBeers)} pledged across the group
           </p>
-          <p className="mt-6 text-sm text-white/50">
+          <p className="mt-6 text-sm text-foreground/50">
             {beerPool.contributorCount} of {beerPool.userCount} player
             {beerPool.userCount === 1 ? "" : "s"} on the board
           </p>

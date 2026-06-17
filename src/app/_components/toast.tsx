@@ -100,7 +100,7 @@ function ToastItem({
       onClick={() => onDismiss(toast.id)}
       style={{ transition: "opacity 0.25s, transform 0.25s" }}
       className={[
-        "pointer-events-auto flex cursor-pointer items-center gap-3 overflow-hidden rounded-lg border border-white/10 bg-[#1a1a2e] py-2.5 pr-4 text-sm shadow-lg",
+        "pointer-events-auto flex cursor-pointer items-center gap-3 overflow-hidden rounded-lg border border-foreground/10 bg-card py-2.5 pr-4 text-sm shadow-lg",
         toast.visible
           ? "translate-y-0 opacity-100"
           : "translate-y-2 opacity-0",
@@ -112,7 +112,7 @@ function ToastItem({
       <span className={isSuccess ? "text-green-400" : "text-red-400"}>
         {isSuccess ? "✓" : "✕"}
       </span>
-      <span className="text-white/90">{toast.message}</span>
+      <span className="text-foreground/90">{toast.message}</span>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { ThemeToggle } from "~/app/_components/theme-toggle";
 import { UserMenu } from "~/app/_components/user-menu";
 
 interface NavClientProps {
@@ -18,21 +19,21 @@ export function NavMenu({ isLoggedIn, userName, userEmail }: NavClientProps) {
     <>
       <Link
         href="/"
-        className="text-sm font-medium text-white/80 transition-colors hover:text-white"
+        className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
         onClick={() => setOpen(false)}
       >
         Matches
       </Link>
       <Link
         href="/leaderboard"
-        className="text-sm font-medium text-white/80 transition-colors hover:text-white"
+        className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
         onClick={() => setOpen(false)}
       >
         Top Donator
       </Link>
       <Link
         href="/rules"
-        className="text-sm font-medium text-white/80 transition-colors hover:text-white"
+        className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
         onClick={() => setOpen(false)}
       >
         Rules
@@ -43,8 +44,9 @@ export function NavMenu({ isLoggedIn, userName, userEmail }: NavClientProps) {
   return (
     <>
       {/* Desktop nav */}
-      <div className="hidden items-center gap-6 md:flex">
+      <div className="hidden items-center gap-4 md:flex">
         {links}
+        <ThemeToggle />
         {isLoggedIn ? (
           <UserMenu name={userName} email={userEmail} />
         ) : (
@@ -64,20 +66,24 @@ export function NavMenu({ isLoggedIn, userName, userEmail }: NavClientProps) {
         aria-label="Toggle menu"
       >
         <span
-          className={`block h-0.5 w-6 bg-white transition-all duration-200 ${open ? "translate-y-2 rotate-45" : ""}`}
+          className={`block h-0.5 w-6 bg-foreground transition-all duration-200 ${open ? "translate-y-2 rotate-45" : ""}`}
         />
         <span
-          className={`block h-0.5 w-6 bg-white transition-all duration-200 ${open ? "opacity-0" : ""}`}
+          className={`block h-0.5 w-6 bg-foreground transition-all duration-200 ${open ? "opacity-0" : ""}`}
         />
         <span
-          className={`block h-0.5 w-6 bg-white transition-all duration-200 ${open ? "-translate-y-2 -rotate-45" : ""}`}
+          className={`block h-0.5 w-6 bg-foreground transition-all duration-200 ${open ? "-translate-y-2 -rotate-45" : ""}`}
         />
       </button>
 
       {/* Mobile dropdown */}
       {open && (
-        <div className="absolute left-0 right-0 top-full z-50 flex flex-col gap-4 border-b border-white/10 bg-black/90 px-6 py-5 backdrop-blur-sm md:hidden">
+        <div className="absolute left-0 right-0 top-full z-50 flex flex-col gap-4 border-b border-foreground/10 bg-white/95 px-6 py-5 backdrop-blur-sm dark:bg-black/90 md:hidden">
           {links}
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <span className="text-sm text-foreground/60">Toggle theme</span>
+          </div>
           {isLoggedIn ? (
             <UserMenu name={userName} email={userEmail} />
           ) : (

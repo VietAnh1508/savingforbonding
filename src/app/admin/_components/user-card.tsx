@@ -23,22 +23,22 @@ interface UserCardProps {
 
 export function UserCard({ user, onDelete, onReset, isDeleting, isResetting, isSelf }: UserCardProps) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+    <div className="flex items-center gap-4 rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-3">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-3">
           <span className="font-semibold">
-            {user.name ?? <span className="text-white/40">—</span>}
+            {user.name ?? <span className="text-foreground/40">—</span>}
           </span>
-          <span className="flex items-center gap-1 text-xs text-white/40">
+          <span className="flex items-center gap-1 text-xs text-foreground/40">
             <VoteIcon />
             {user._count.votes}
           </span>
-          <span className="flex items-center gap-1 text-xs text-white/40">
+          <span className="flex items-center gap-1 text-xs text-foreground/40">
             <BeerIcon />
             {user.totalPoints}
           </span>
         </div>
-        <p className="truncate text-sm text-white/50">{user.email}</p>
+        <p className="truncate text-sm text-foreground/50">{user.email}</p>
       </div>
 
       <div className="flex shrink-0 items-center gap-0.5">
@@ -47,7 +47,7 @@ export function UserCard({ user, onDelete, onReset, isDeleting, isResetting, isS
             type="button"
             disabled={isResetting}
             onClick={onReset}
-            className="cursor-pointer rounded-md p-1.5 text-white/40 transition hover:bg-white/10 hover:text-white/80 disabled:cursor-not-allowed disabled:opacity-50"
+            className="cursor-pointer rounded-md p-1.5 text-foreground/40 transition hover:bg-foreground/10 hover:text-foreground/80 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <KeyIcon />
           </button>

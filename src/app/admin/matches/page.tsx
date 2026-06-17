@@ -15,7 +15,7 @@ export default async function MatchesPage() {
       <div className="space-y-6">
         <Link
           href="/admin"
-          className="text-sm text-white/50 transition hover:text-white/80"
+          className="text-sm text-foreground/50 transition hover:text-foreground/80"
         >
           ← Back
         </Link>

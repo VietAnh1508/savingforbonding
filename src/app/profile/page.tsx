@@ -42,7 +42,7 @@ export default async function ProfilePage() {
 
   return (
     <HydrateClient>
-      <div className="flex h-screen flex-col bg-gradient-to-b from-[#0a1f0a] to-[#0d1117] text-white">
+      <div className="flex h-screen flex-col">
         <Nav />
         <main className="container mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col px-4 py-8">
           <div className="mb-6 flex items-center gap-3 sm:mb-8 sm:gap-4">
@@ -73,23 +73,23 @@ export default async function ProfilePage() {
             ].map((stat) => (
               <div
                 key={stat.label}
-                className="flex min-h-16 flex-col items-center justify-center rounded-xl border border-white/10 bg-white/5 p-3 text-center sm:min-h-24 sm:p-4"
+                className="flex min-h-16 flex-col items-center justify-center rounded-xl border border-foreground/10 bg-foreground/5 p-3 text-center sm:min-h-24 sm:p-4"
               >
-                <div className="text-xl font-bold text-white sm:text-2xl">
+                <div className="text-xl font-bold sm:text-2xl">
                   {stat.value}
                 </div>
-                <div className="text-xs text-white/50">{stat.label}</div>
+                <div className="text-xs text-foreground/50">{stat.label}</div>
               </div>
             ))}
-            <div className="flex min-h-16 flex-col items-center justify-center rounded-xl border border-white/10 bg-white/5 p-3 text-center sm:min-h-24 sm:p-4">
+            <div className="flex min-h-16 flex-col items-center justify-center rounded-xl border border-foreground/10 bg-foreground/5 p-3 text-center sm:min-h-24 sm:p-4">
               <div className="text-xl font-bold sm:text-2xl">
                 <span className="text-green-400">{stats.correctVotes}</span>
-                <span className="mx-1 text-white/30">/</span>
+                <span className="mx-1 text-foreground/30">/</span>
                 <span className="text-red-400">{stats.incorrectVotes}</span>
-                <span className="mx-1 text-white/30">/</span>
+                <span className="mx-1 text-foreground/30">/</span>
                 <span className="text-yellow-300">{stats.missedVotes}</span>
               </div>
-              <div className="text-xs text-white/50">Correct / Wrong / Missed</div>
+              <div className="text-xs text-foreground/50">Correct / Wrong / Missed</div>
             </div>
           </div>
 

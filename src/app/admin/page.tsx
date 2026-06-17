@@ -53,19 +53,19 @@ export default async function AdminPage({
       <FifaSyncBanner />
       <Link
         href="/admin/matches"
-        className="block rounded-xl border border-white/10 bg-white/5 p-6 transition hover:bg-white/10"
+        className="block rounded-xl border border-foreground/10 bg-foreground/5 p-6 transition hover:bg-foreground/10"
       >
-        <h2 className="font-semibold text-white">Match Management</h2>
-        <p className="mt-1 text-sm text-white/60">
+        <h2 className="font-semibold">Match Management</h2>
+        <p className="mt-1 text-sm text-foreground/60">
           Add, edit, and complete matches.
         </p>
       </Link>
       <Link
         href="/admin/users"
-        className="block rounded-xl border border-white/10 bg-white/5 p-6 transition hover:bg-white/10"
+        className="block rounded-xl border border-foreground/10 bg-foreground/5 p-6 transition hover:bg-foreground/10"
       >
-        <h2 className="font-semibold text-white">User Management</h2>
-        <p className="mt-1 text-sm text-white/60">
+        <h2 className="font-semibold">User Management</h2>
+        <p className="mt-1 text-sm text-foreground/60">
           View all registered users.
         </p>
       </Link>

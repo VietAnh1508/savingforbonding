@@ -11,12 +11,10 @@ export default async function Home() {
 
   return (
     <HydrateClient>
-      <div className="min-h-screen bg-gradient-to-b from-[#0a1f0a] to-[#0d1117] text-white">
-        <Nav />
-        <main className="container mx-auto px-4 py-8">
-          <MatchTabs isSignedIn={!!session?.user} />
-        </main>
-      </div>
+      <Nav />
+      <main className="container mx-auto px-4 py-8">
+        <MatchTabs isSignedIn={!!session?.user} />
+      </main>
     </HydrateClient>
   );
 }
