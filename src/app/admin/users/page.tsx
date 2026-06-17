@@ -3,12 +3,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { UsersPanel } from "~/app/admin/_components/users-panel";
+import { auth } from "~/server/auth";
 import { ADMIN_COOKIE } from "~/lib/admin";
 import { HydrateClient } from "~/trpc/server";
 
 export default async function UsersPage() {
   const cookieStore = await cookies();
   if (cookieStore.get(ADMIN_COOKIE)?.value !== "1") redirect("/admin");
+
+  const session = await auth();
 
   return (
     <HydrateClient>
@@ -19,7 +22,7 @@ export default async function UsersPage() {
         >
           ← Back
         </Link>
-        <UsersPanel />
+        <UsersPanel currentUserId={session?.user?.id} />
       </div>
     </HydrateClient>
   );

@@ -178,6 +178,17 @@ export const adminRouter = createTRPCRouter({
       );
     }),
 
+  deleteUser: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.db.user.findUnique({ where: { id: input.id } });
+      if (!user) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      }
+      await ctx.db.user.delete({ where: { id: input.id } });
+      return { success: true };
+    }),
+
   delete: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
