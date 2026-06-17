@@ -103,6 +103,21 @@ export const adminRouter = createTRPCRouter({
     });
   }),
 
+  listUsers: adminProcedure.query(async ({ ctx }) => {
+    return ctx.db.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        totalPoints: true,
+        weeklyPoints: true,
+        createdAt: true,
+        _count: { select: { votes: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+  }),
+
   create: adminProcedure
     .input(matchInputSchema)
     .mutation(async ({ ctx, input }) => {

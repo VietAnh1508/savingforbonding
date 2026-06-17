@@ -60,6 +60,15 @@ export default async function AdminPage({
           Add, edit, and complete matches.
         </p>
       </Link>
+      <Link
+        href="/admin/users"
+        className="block rounded-xl border border-white/10 bg-white/5 p-6 transition hover:bg-white/10"
+      >
+        <h2 className="font-semibold text-white">User Management</h2>
+        <p className="mt-1 text-sm text-white/60">
+          View all registered users.
+        </p>
+      </Link>
     </div>
   );
 }
