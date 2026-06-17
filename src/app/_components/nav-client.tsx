@@ -18,34 +18,25 @@ export function NavMenu({ isLoggedIn, userName, userEmail }: NavClientProps) {
     <>
       <Link
         href="/"
-        className="text-sm font-medium text-white/80 transition hover:text-white"
+        className="text-sm font-medium text-white/80 transition-colors hover:text-white"
         onClick={() => setOpen(false)}
       >
         Matches
       </Link>
       <Link
         href="/leaderboard"
-        className="text-sm font-medium text-white/80 transition hover:text-white"
+        className="text-sm font-medium text-white/80 transition-colors hover:text-white"
         onClick={() => setOpen(false)}
       >
         Top Donator
       </Link>
       <Link
         href="/rules"
-        className="text-sm font-medium text-white/80 transition hover:text-white"
+        className="text-sm font-medium text-white/80 transition-colors hover:text-white"
         onClick={() => setOpen(false)}
       >
         Rules
       </Link>
-      {isLoggedIn && (
-        <Link
-          href="/profile"
-          className="text-sm font-medium text-white/80 transition hover:text-white"
-          onClick={() => setOpen(false)}
-        >
-          Profile
-        </Link>
-      )}
     </>
   );
 

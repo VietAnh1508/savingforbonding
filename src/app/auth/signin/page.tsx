@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { SubmitButton } from "~/app/_components/submit-button";
 import { signInWithCredentials } from "~/app/auth/actions";
 import { auth } from "~/server/auth";
 
@@ -71,12 +72,7 @@ export default async function SignInPage({
             />
           </div>
 
-          <button
-            type="submit"
-            className="w-full rounded-xl border border-emerald-500/30 bg-emerald-500/20 px-4 py-3 font-semibold text-emerald-300 transition hover:bg-emerald-500/30"
-          >
-            Sign in
-          </button>
+          <SubmitButton>Sign in</SubmitButton>
         </form>
 
         <p className="mt-6 text-center text-sm text-white/50">
@@ -92,4 +88,3 @@ export default async function SignInPage({
     </div>
   );
 }
-
