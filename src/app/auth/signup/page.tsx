@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { PasswordInput } from "~/app/_components/password-input";
 import { SubmitButton } from "~/app/_components/submit-button";
 import { signUp } from "~/app/auth/actions";
 import { auth } from "~/server/auth";
@@ -76,10 +77,9 @@ export default async function SignUpPage({
             >
               Password
             </label>
-            <input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               required
               minLength={8}
               autoComplete="new-password"

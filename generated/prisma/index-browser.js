@@ -178,6 +178,7 @@ exports.Prisma.UserScalarFieldEnum = {
   image: 'image',
   totalPoints: 'totalPoints',
   weeklyPoints: 'weeklyPoints',
+  mustChangePassword: 'mustChangePassword',
   createdAt: 'createdAt'
 };
 

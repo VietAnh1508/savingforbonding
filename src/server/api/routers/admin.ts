@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { BEER_NO_BET, isMatchEditable, validateBettingRatios } from "~/lib/match";
+import { hashPassword } from "~/lib/password";
 import { adminProcedure, createTRPCRouter } from "~/server/api/trpc";
 import { resolveMatchVotes } from "~/server/services/resolve-votes";
 import { syncFifaFixtures } from "~/server/services/sync-fifa-fixtures";
@@ -176,6 +177,19 @@ export const adminRouter = createTRPCRouter({
         input.homeScore,
         input.awayScore,
       );
+    }),
+
+  resetUserPassword: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.db.user.findUnique({ where: { id: input.id } });
+      if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      const passwordHash = await hashPassword("changeme123");
+      await ctx.db.user.update({
+        where: { id: input.id },
+        data: { passwordHash, mustChangePassword: true },
+      });
+      return { success: true };
     }),
 
   deleteUser: adminProcedure

@@ -6,12 +6,13 @@ import { ConfirmDialog } from "~/app/_components/confirm-dialog";
 import { useToast } from "~/app/_components/toast";
 import { UserCard } from "./user-card";
 
-type PendingDelete = { id: string; name: string | null; email: string };
+type PendingAction = { id: string; name: string | null; email: string };
 
 export function UsersPanel({ currentUserId }: { currentUserId?: string }) {
   const utils = api.useUtils();
   const toast = useToast();
-  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<PendingAction | null>(null);
+  const [pendingReset, setPendingReset] = useState<PendingAction | null>(null);
 
   const { data: users = [], isLoading } = api.admin.listUsers.useQuery();
 
@@ -20,6 +21,13 @@ export function UsersPanel({ currentUserId }: { currentUserId?: string }) {
       await utils.admin.listUsers.invalidate();
       setPendingDelete(null);
       toast.success("User deleted");
+    },
+  });
+
+  const resetUserPassword = api.admin.resetUserPassword.useMutation({
+    onSuccess: () => {
+      setPendingReset(null);
+      toast.success("Password reset");
     },
   });
 
@@ -46,9 +54,13 @@ export function UsersPanel({ currentUserId }: { currentUserId?: string }) {
                 key={user.id}
                 user={user}
                 isDeleting={deleteUser.isPending && pendingDelete?.id === user.id}
+                isResetting={resetUserPassword.isPending && pendingReset?.id === user.id}
                 isSelf={user.id === currentUserId}
                 onDelete={() =>
                   setPendingDelete({ id: user.id, name: user.name, email: user.email })
+                }
+                onReset={() =>
+                  setPendingReset({ id: user.id, name: user.name, email: user.email })
                 }
               />
             ))}
@@ -67,6 +79,18 @@ export function UsersPanel({ currentUserId }: { currentUserId?: string }) {
           if (pendingDelete) deleteUser.mutate({ id: pendingDelete.id });
         }}
         onCancel={() => setPendingDelete(null)}
+      />
+
+      <ConfirmDialog
+        open={pendingReset !== null}
+        title="Reset password"
+        description={`Reset ${pendingReset?.name ?? pendingReset?.email ?? "this user"}'s password to "changeme123"? They'll be required to set a new one on next login.`}
+        confirmLabel="Reset"
+        loading={resetUserPassword.isPending}
+        onConfirm={() => {
+          if (pendingReset) resetUserPassword.mutate({ id: pendingReset.id });
+        }}
+        onCancel={() => setPendingReset(null)}
       />
     </>
   );
