@@ -2,7 +2,8 @@ name: Nightly PR develop → main
 
 on:
   schedule:
-    - cron: '0 15 * * *'  # 10 PM GMT+7 every day
+    - cron: '0 22 * * *'
+      timezone: 'Asia/Bangkok'
   workflow_dispatch:        # allow manual trigger from Actions UI
 
 jobs:
