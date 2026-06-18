@@ -14,11 +14,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Open PR if none exists
+      - name: Open PR if none exists and develop is ahead of main
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          git fetch origin main develop
+          ahead=$(git rev-list --count origin/main..origin/develop)
+          if [ "$ahead" -eq 0 ]; then
+            echo "develop is up-to-date with main — skipping."
+            exit 0
+          fi
+
           existing=$(gh pr list --base main --head develop --state open --json number --jq length)
           if [ "$existing" -gt 0 ]; then
             echo "PR already open — skipping."
