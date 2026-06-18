@@ -1,5 +1,5 @@
 const FIFA_API_BASE = "https://api.fifa.com/api/v3";
-const FIFA_WORLD_CUP_COMPETITION_ID = "17";
+const FIFA_WORLD_CUP_SEASON_ID = "285023";
 
 /** Matches fifa.com with timezone preset to Vietnam (UTC+7). */
 export const FIFA_VIETNAM_UTC_OFFSET_HOURS = 7;
@@ -101,7 +101,9 @@ export function mapFifaMatchStatus(match: FifaMatch) {
   return "SCHEDULED" as const;
 }
 
-async function fetchFifaMatchesPage(params: URLSearchParams): Promise<FifaMatch[]> {
+async function fetchFifaMatchesPage(
+  params: URLSearchParams,
+): Promise<FifaMatch[]> {
   const url = `${FIFA_API_BASE}/calendar/matches?${params.toString()}`;
   const response = await fetch(url, {
     headers: { Accept: "application/json" },
@@ -109,30 +111,26 @@ async function fetchFifaMatchesPage(params: URLSearchParams): Promise<FifaMatch[
   });
 
   if (!response.ok) {
-    throw new Error(`FIFA API error: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `FIFA API error: ${response.status} ${response.statusText}`,
+    );
   }
 
   const data = (await response.json()) as FifaMatchesResponse;
   return data.Results ?? [];
 }
 
-export async function fetchWorldCupFixtures(
-  seasonYear = 2026,
-): Promise<FifaMatch[]> {
-  const from = `${seasonYear}-06-01`;
-  const to = `${seasonYear}-07-31`;
-
+export async function fetchWorldCupFixtures(): Promise<FifaMatch[]> {
   const params = new URLSearchParams({
-    from,
-    to,
     language: "en",
     count: "500",
-    idCompetition: FIFA_WORLD_CUP_COMPETITION_ID,
+    idSeason: FIFA_WORLD_CUP_SEASON_ID,
   });
 
   const matches = await fetchFifaMatchesPage(params);
 
-  return matches
-    .filter((match) => match.IdCompetition === FIFA_WORLD_CUP_COMPETITION_ID)
-    .sort((a, b) => new Date(a.Date).getTime() - new Date(b.Date).getTime());
+  return matches.sort(
+    (a, b) => new Date(a.Date).getTime() - new Date(b.Date).getTime(),
+  );
 }
+

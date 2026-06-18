@@ -1,4 +1,3 @@
-import { type PrismaClient } from "../../../generated/prisma";
 import { buildFifaMatchPatch } from "~/lib/fifa-sync";
 import {
   buildKqbdKickoffLookup,
@@ -14,6 +13,7 @@ import {
   parseFifaKickoffToUtc,
 } from "~/server/services/fifa-api";
 import { resolveMatchVotes } from "~/server/services/resolve-votes";
+import { type PrismaClient } from "../../../generated/prisma";
 
 export type SyncFifaFixturesResult = {
   fetched: number;
@@ -29,9 +29,12 @@ export async function syncFifaFixtures(
   seasonYear = 2026,
 ): Promise<SyncFifaFixturesResult> {
   const [fixtures, kqbdFixtures] = await Promise.all([
-    fetchWorldCupFixtures(seasonYear),
+    fetchWorldCupFixtures(),
     fetchKqbdWorldCupSchedule(seasonYear).catch((error: unknown) => {
-      console.warn("KQBD schedule fetch failed; using FIFA kickoff times only.", error);
+      console.warn(
+        "KQBD schedule fetch failed; using FIFA kickoff times only.",
+        error,
+      );
       return [];
     }),
   ]);
@@ -54,10 +57,8 @@ export async function syncFifaFixtures(
       parseFifaKickoffToUtc(fixture.Date);
     const tournament = fifaTournamentName(fixture);
 
-    const fifaHomeScore =
-      fixture.HomeTeamScore ?? fixture.Home?.Score ?? null;
-    const fifaAwayScore =
-      fixture.AwayTeamScore ?? fixture.Away?.Score ?? null;
+    const fifaHomeScore = fixture.HomeTeamScore ?? fixture.Home?.Score ?? null;
+    const fifaAwayScore = fixture.AwayTeamScore ?? fixture.Away?.Score ?? null;
 
     const existing = await db.match.findUnique({
       where: { externalId },
@@ -89,11 +90,7 @@ export async function syncFifaFixtures(
       });
       created++;
 
-      if (
-        status === "COMPLETED" &&
-        homeScore !== null &&
-        awayScore !== null
-      ) {
+      if (status === "COMPLETED" && homeScore !== null && awayScore !== null) {
         const resolution = await resolveMatchVotes(
           db,
           match.id,
@@ -106,7 +103,11 @@ export async function syncFifaFixtures(
       continue;
     }
 
-    const { patch, teamsUpdated: teamsChanged, changed } = buildFifaMatchPatch(
+    const {
+      patch,
+      teamsUpdated: teamsChanged,
+      changed,
+    } = buildFifaMatchPatch(
       existing,
       {
         tournament,
