@@ -6,11 +6,12 @@ on:
 
 jobs:
   autofix:
-    # Only run when a human replies "@claude go ahead" on an issue (not a PR)
+    # Only run when a repo owner, member, or collaborator replies "@claude go ahead" on an issue (not a PR)
     if: |
       contains(github.event.comment.body, '@claude go ahead') &&
       github.event.comment.user.type != 'Bot' &&
-      github.event.issue.pull_request == null
+      github.event.issue.pull_request == null &&
+      contains(fromJSON('["OWNER", "COLLABORATOR"]'), github.event.comment.author_association)
     runs-on: ubuntu-latest
     permissions:
       contents: write
