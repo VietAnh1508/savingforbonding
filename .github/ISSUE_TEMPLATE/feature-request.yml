@@ -1,0 +1,32 @@
+name: Suggest an improvement
+description: Have an idea to make the app better? We'd love to hear it
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Got an idea? Tell us what you're picturing — no need to get technical.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What would you like?
+      description: Describe the change or new feature you have in mind.
+      placeholder: "e.g. I'd love to see all upcoming matches on one page so I can vote on them all at once"
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would this help?
+      description: What problem does it solve, or what would it make easier?
+      placeholder: "e.g. Right now I have to open each match one by one, which takes a while"
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else? (optional)
+      description: Mockup, screenshot, or extra context — whatever helps paint the picture.

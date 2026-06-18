@@ -1,0 +1,42 @@
+name: Something's not working
+description: Let us know about a bug or something that looks wrong
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Fill in as much as you can — even a little context helps a lot.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What went wrong?
+      description: Describe what you saw or what happened.
+      placeholder: "e.g. I clicked Submit on my prediction and got a blank screen"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+      placeholder: "e.g. I expected to see my prediction saved"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: How do we reproduce it?
+      description: Step-by-step if you can — what did you do just before it broke?
+      placeholder: |
+        1. Go to the Upcoming Matches page
+        2. Pick a result for France vs Brazil
+        3. Click Submit
+        4. ...
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot (optional)
+      description: Drag and drop an image here if it helps show the problem.
