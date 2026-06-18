@@ -1,0 +1,31 @@
+name: Nightly PR develop → main
+
+on:
+  schedule:
+    - cron: '0 15 * * *'  # 10 PM GMT+7 every day
+  workflow_dispatch:        # allow manual trigger from Actions UI
+
+jobs:
+  open-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Open PR if none exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          existing=$(gh pr list --base main --head develop --state open --json number --jq length)
+          if [ "$existing" -gt 0 ]; then
+            echo "PR already open — skipping."
+          else
+            gh pr create \
+              --base main \
+              --head develop \
+              --title "chore: nightly sync develop → main ($(date -u '+%Y-%m-%d'))" \
+              --body "Automated nightly PR to keep main up to date with develop."
+          fi
