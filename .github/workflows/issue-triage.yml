@@ -14,9 +14,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache Claude Code
+        id: claude-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.local
+          key: claude-code-${{ runner.os }}-v1
+
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          path_to_claude_code_executable: ${{ steps.claude-cache.outputs.cache-hit == 'true' && '/home/runner/.local/bin/claude' || '' }}
           claude_args: "--allowedTools 'Bash(gh issue comment:*),Bash(gh issue view:*)'"
           prompt: |
             You are triaging a new GitHub issue for the SavingForBonding app — a FIFA World Cup football prediction game built with Next.js 15, tRPC, Prisma, and Tailwind CSS v4.
