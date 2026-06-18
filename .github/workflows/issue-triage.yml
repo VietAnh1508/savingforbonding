@@ -17,6 +17,7 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: "--allowedTools 'Bash(gh issue comment:*),Bash(gh issue view:*)'"
           prompt: |
             You are triaging a new GitHub issue for the SavingForBonding app — a FIFA World Cup football prediction game built with Next.js 15, tRPC, Prisma, and Tailwind CSS v4.
 
