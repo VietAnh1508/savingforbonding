@@ -1,0 +1,43 @@
+name: Auto-fix issues with Claude
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  autofix:
+    # Only run when a human replies "@claude go ahead" on an issue (not a PR)
+    if: |
+      contains(github.event.comment.body, '@claude go ahead') &&
+      github.event.comment.user.type != 'Bot' &&
+      github.event.issue.pull_request == null
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          base_branch: develop
+          prompt: |
+            You are implementing a fix for GitHub issue #${{ github.event.issue.number }} in the SavingForBonding app — a FIFA World Cup football prediction game.
+
+            Issue title: ${{ github.event.issue.title }}
+
+            Issue body:
+            ${{ github.event.issue.body }}
+
+            The developer approved auto-implementation by replying "@claude go ahead".
+
+            Instructions:
+            1. Read the full issue and any comments on it for complete context and any clarifications provided.
+            2. Implement the fix following project conventions (TypeScript, Next.js 15 App Router, tRPC, Prisma, Tailwind CSS v4). The path alias `~/*` maps to `./src/*`. There are no tests — `npm run typecheck` is the only quality gate.
+            3. Run `npm run typecheck` and fix any type errors before committing.
+            4. Open a pull request against the `develop` branch that:
+               - Has a clear, descriptive title
+               - Includes "Closes #${{ github.event.issue.number }}" in the body to auto-close the issue
+               - Briefly summarizes what changed and why
