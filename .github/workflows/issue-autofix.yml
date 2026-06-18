@@ -13,6 +13,13 @@ jobs:
       github.event.issue.pull_request == null &&
       contains(fromJSON('["OWNER", "COLLABORATOR"]'), github.event.comment.author_association)
     runs-on: ubuntu-latest
+    # Explicitly unset app secrets so they are not available to Claude in the runner environment
+    env:
+      DATABASE_URL: ""
+      AUTH_SECRET: ""
+      ADMIN_PASSWORD: ""
+      TURSO_DATABASE_URL: ""
+      TURSO_API_KEY: ""
     permissions:
       contents: write
       issues: write
@@ -35,22 +42,16 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           base_branch: develop
           path_to_claude_code_executable: ${{ steps.claude-cache.outputs.cache-hit == 'true' && '/home/runner/.local/bin/claude' || '' }}
-          claude_args: "--allowedTools 'Read,Write,Edit,Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh pr create:*),Bash(git:*),Bash(npm run typecheck:*)'"
+          claude_args: "--max-turns 30 --allowedTools 'Read,Write,Edit,Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh pr create:*),Bash(git:*),Bash(npm run typecheck:*)'"
           prompt: |
-            You are implementing a fix for GitHub issue #${{ github.event.issue.number }} in the SavingForBonding app — a FIFA World Cup football prediction game.
+            You are implementing a fix for a GitHub issue in the SavingForBonding app — a FIFA World Cup football prediction game.
 
-            Issue title: ${{ github.event.issue.title }}
+            Start by running `gh issue view ${{ github.event.issue.number }} --comments` to read the full issue and all comments.
 
-            Issue body:
-            ${{ github.event.issue.body }}
-
-            The developer approved auto-implementation by replying "@claude go ahead".
-
-            Instructions:
-            1. Read the full issue and any comments on it for complete context and any clarifications provided.
-            2. Implement the fix following project conventions (TypeScript, Next.js 15 App Router, tRPC, Prisma, Tailwind CSS v4). The path alias `~/*` maps to `./src/*`. There are no tests — `npm run typecheck` is the only quality gate.
-            3. Run `npm run typecheck` and fix any type errors before committing.
-            4. Create a new branch off `develop` for your changes (do not commit directly to `develop`), then open a pull request against `develop` that:
+            Then follow these instructions:
+            1. Implement the fix following project conventions (TypeScript, Next.js 15 App Router, tRPC, Prisma, Tailwind CSS v4). The path alias `~/*` maps to `./src/*`. There are no tests — `npm run typecheck` is the only quality gate.
+            2. Run `npm run typecheck` and fix any type errors before committing.
+            3. Create a new branch off `develop` for your changes (do not commit directly to `develop`), then open a pull request against `develop` that:
                - Has a clear, descriptive title
                - Includes "Closes #${{ github.event.issue.number }}" in the body to auto-close the issue
                - Briefly summarizes what changed and why
