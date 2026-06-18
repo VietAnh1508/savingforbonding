@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +19,7 @@ jobs:
 
       - name: Open PR if none exists and develop is ahead of main
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           git fetch origin main develop
           ahead=$(git rev-list --count origin/main..origin/develop)
