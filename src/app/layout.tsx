@@ -11,7 +11,6 @@ export const metadata: Metadata = {
   title: "SavingForBonding — Football Prediction App",
   description:
     "Predict football match outcomes, track your accuracy, and see who tops the beer donation board.",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
 const geist = Geist({
