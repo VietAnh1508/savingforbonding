@@ -12,7 +12,7 @@ export default async function LeaderboardPage() {
     <HydrateClient>
       <Nav />
       <main className="container mx-auto max-w-3xl px-4 py-8">
-        <h1 className="mb-2 text-3xl font-bold">Top Donator</h1>
+        <h1 className="mb-2 text-3xl font-bold">Leaderboard</h1>
         <p className="mb-8 text-foreground/60">
           Who owes the most beer? Higher is more generous.
         </p>

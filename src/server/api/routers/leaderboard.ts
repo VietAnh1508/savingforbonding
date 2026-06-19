@@ -16,7 +16,7 @@ const leaderboardUserSelect = {
 async function fetchLeaderboardUsers(db: PrismaClient) {
   try {
     return await db.user.findMany({
-      orderBy: [{ totalPoints: "desc" }, { name: "asc" }],
+      orderBy: [{ totalPoints: "desc" }],
       select: {
         ...leaderboardUserSelect,
         createdAt: true,
@@ -29,7 +29,7 @@ async function fetchLeaderboardUsers(db: PrismaClient) {
     );
 
     return db.user.findMany({
-      orderBy: [{ totalPoints: "desc" }, { name: "asc" }],
+      orderBy: [{ totalPoints: "desc" }],
       select: leaderboardUserSelect,
     });
   }
@@ -61,7 +61,7 @@ export const leaderboardRouter = createTRPCRouter({
         ? new Date(Math.max(...candidates.map((d) => d.getTime())))
         : null;
 
-    const entries = users.map((user, index) => {
+    const unsortedEntries = users.map((user) => {
       const createdAt =
         "createdAt" in user && user.createdAt instanceof Date
           ? user.createdAt
@@ -71,7 +71,6 @@ export const leaderboardRouter = createTRPCRouter({
       const incorrect = user.votes.filter((v) => v.isCorrect === false).length;
 
       return {
-        rank: index + 1,
         id: user.id,
         name: user.name,
         image: user.image,
@@ -85,6 +84,17 @@ export const leaderboardRouter = createTRPCRouter({
         missedPredictions: completedMatchCount - correct - incorrect,
       };
     });
+
+    const entries = unsortedEntries
+      .sort((a, b) => {
+        if (b.beers !== a.beers) return b.beers - a.beers;
+        if (b.incorrectPredictions !== a.incorrectPredictions)
+          return b.incorrectPredictions - a.incorrectPredictions;
+        if (b.missedPredictions !== a.missedPredictions)
+          return b.missedPredictions - a.missedPredictions;
+        return (a.name ?? "").localeCompare(b.name ?? "");
+      })
+      .map((entry, index) => ({ ...entry, rank: index + 1 }));
 
     return { entries, lastUpdated };
   }),
