@@ -16,10 +16,10 @@ export default async function AdminPage({
 
   if (!isAdmin) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#0a1f0a] to-[#0d1117] text-white">
-        <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/5 p-8">
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="w-full max-w-sm rounded-2xl border border-foreground/10 bg-foreground/5 p-8">
           <h1 className="mb-2 text-2xl font-bold">Admin Login</h1>
-          <p className="mb-6 text-sm text-white/60">
+          <p className="mb-6 text-sm text-foreground/60">
             Manage World Cup matches and beer odds ratios
           </p>
           {error && (
@@ -31,7 +31,7 @@ export default async function AdminPage({
               type="password"
               required
               placeholder="Admin password"
-              className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2"
+              className="w-full rounded-lg border border-foreground/10 bg-foreground/10 px-3 py-2 text-foreground placeholder:text-foreground/40"
             />
             <button
               type="submit"
@@ -40,7 +40,7 @@ export default async function AdminPage({
               Sign in
             </button>
           </form>
-          <p className="mt-4 text-center text-xs text-white/40">
+          <p className="mt-4 text-center text-xs text-foreground/40">
             Set <code>ADMIN_PASSWORD</code> in your <code>.env</code> file
           </p>
         </div>
