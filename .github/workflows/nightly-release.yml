@@ -1,0 +1,52 @@
+name: Nightly Release develop → main
+
+on:
+  schedule:
+    - cron: '0 22 * * *'
+      timezone: 'Asia/Bangkok'
+  workflow_dispatch:        # allow manual trigger from Actions UI
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Merge develop into main and create release
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          git fetch origin main develop
+
+          ahead=$(git rev-list --count origin/main..origin/develop)
+          if [ "$ahead" -eq 0 ]; then
+            echo "develop is up-to-date with main — skipping."
+            exit 0
+          fi
+
+          TAG="nightly-$(date -u '+%Y-%m-%d')"
+
+          if git ls-remote --tags origin "$TAG" | grep -q "$TAG"; then
+            echo "Release $TAG already exists — skipping."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout main
+          git merge --no-edit origin/develop
+          git push origin main
+
+          NOTES=$(git log --pretty="* %s" origin/main~$ahead..origin/main)
+
+          gh release create "$TAG" \
+            --title "Nightly release $(date -u '+%Y-%m-%d')" \
+            --notes "$NOTES" \
+            --target main
