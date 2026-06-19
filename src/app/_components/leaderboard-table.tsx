@@ -3,7 +3,7 @@ import Image from "next/image";
 import { formatJoiningDate } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
-type Entry = RouterOutputs["leaderboard"]["global"][number];
+type Entry = RouterOutputs["leaderboard"]["global"]["entries"][number];
 
 function titleForRank(rank: number): string | null {
   switch (rank) {
