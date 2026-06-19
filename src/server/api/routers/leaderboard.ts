@@ -37,12 +37,31 @@ async function fetchLeaderboardUsers(db: PrismaClient) {
 
 export const leaderboardRouter = createTRPCRouter({
   global: publicProcedure.query(async ({ ctx }) => {
-    const [users, completedMatchCount] = await Promise.all([
-      fetchLeaderboardUsers(ctx.db),
-      ctx.db.match.count({ where: { status: "COMPLETED" } }),
-    ]);
+    const [users, completedMatchCount, lastVoteUpdate, lastMatchUpdate] =
+      await Promise.all([
+        fetchLeaderboardUsers(ctx.db),
+        ctx.db.match.count({ where: { status: "COMPLETED" } }),
+        ctx.db.vote.findFirst({
+          where: { isCorrect: { not: null } },
+          orderBy: { updatedAt: "desc" },
+          select: { updatedAt: true },
+        }),
+        ctx.db.match.findFirst({
+          orderBy: { updatedAt: "desc" },
+          select: { updatedAt: true },
+        }),
+      ]);
 
-    return users.map((user, index) => {
+    const candidates = [
+      lastVoteUpdate?.updatedAt,
+      lastMatchUpdate?.updatedAt,
+    ].filter((d): d is Date => d instanceof Date);
+    const lastUpdated =
+      candidates.length > 0
+        ? new Date(Math.max(...candidates.map((d) => d.getTime())))
+        : null;
+
+    const entries = users.map((user, index) => {
       const createdAt =
         "createdAt" in user && user.createdAt instanceof Date
           ? user.createdAt
@@ -66,6 +85,8 @@ export const leaderboardRouter = createTRPCRouter({
         missedPredictions: completedMatchCount - correct - incorrect,
       };
     });
+
+    return { entries, lastUpdated };
   }),
 
   totalBeerPool: publicProcedure.query(async ({ ctx }) => {
