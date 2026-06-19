@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { MatchCard } from "~/app/_components/match-card";
-import { formatMatchDate, toVietnamDatetimeLocal } from "~/lib/match";
+import {
+  formatMatchDate,
+  MATCH_DISPLAY_TIMEZONE,
+  toVietnamDatetimeLocal,
+} from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listUpcoming"][number];
@@ -26,17 +30,34 @@ function groupByDate(matches: Match[]) {
     .map((key) => ({ dateKey: key, matches: grouped[key]! }));
 }
 
-function MatchList({
-  matches,
-  emptyMessage,
-  isSignedIn,
-}: {
-  matches: Match[];
-  emptyMessage: string;
-  isSignedIn: boolean;
-}) {
-  const groups = groupByDate(matches);
+function formatTabDate(dateKey: string): { weekday: string; date: string } {
+  const date = new Date(`${dateKey}T12:00:00+07:00`);
+  const weekday = date.toLocaleDateString("en-GB", {
+    weekday: "short",
+    timeZone: MATCH_DISPLAY_TIMEZONE,
+  });
+  const dayMonth = date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    timeZone: MATCH_DISPLAY_TIMEZONE,
+  });
+  return { weekday, date: dayMonth };
+}
 
+// Where a section must be (from viewport top) to be considered "active"
+const SCROLL_SPY_THRESHOLD = 165;
+// Where to land the section top after a tab click (header height + breathing room)
+const SCROLL_TARGET_OFFSET = 170;
+
+function MatchList({
+  groups,
+  isSignedIn,
+  emptyMessage,
+}: {
+  groups: ReturnType<typeof groupByDate>;
+  isSignedIn: boolean;
+  emptyMessage: string;
+}) {
   if (groups.length === 0) {
     return (
       <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-12 text-center">
@@ -48,11 +69,11 @@ function MatchList({
   return (
     <div className="space-y-8">
       {groups.map(({ dateKey, matches: dayMatches }) => (
-        <section key={dateKey}>
+        <section key={dateKey} id={`date-section-${dateKey}`}>
           <h2 className="mb-4 text-xl font-semibold text-emerald-400">
             {formatMatchDate(dayMatches[0]!.kickoffAt)}
           </h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {dayMatches.map((match) => (
               <MatchCard key={match.id} match={match} isSignedIn={isSignedIn} />
             ))}
@@ -65,13 +86,85 @@ function MatchList({
 
 export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
   const [activeTab, setActiveTab] = useState<TabId>("upcoming");
+  const [activeDateKey, setActiveDateKey] = useState<string>("");
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const isProgrammaticScrollRef = useRef(false);
+  const userClickedDateRef = useRef(false);
 
   const { data: matches = [] } = api.match.listUpcoming.useQuery();
 
-  const upcoming = matches.filter((m) =>
-    ["SCHEDULED", "LIVE", "POSTPONED"].includes(m.status),
+  const upcoming = useMemo(
+    () =>
+      matches.filter((m) =>
+        ["SCHEDULED", "LIVE", "POSTPONED"].includes(m.status),
+      ),
+    [matches],
   );
-  const completed = matches.filter((m) => m.status === "COMPLETED");
+  const completed = useMemo(
+    () => matches.filter((m) => m.status === "COMPLETED"),
+    [matches],
+  );
+
+  const activeMatches = activeTab === "upcoming" ? upcoming : completed;
+  const groups = useMemo(() => groupByDate(activeMatches), [activeMatches]);
+
+  // Reset active date when the tab or groups change
+  useEffect(() => {
+    setActiveDateKey(groups[0]?.dateKey ?? "");
+  }, [activeTab, groups]);
+
+  // Scroll-spy: update active date tab based on scroll position
+  useEffect(() => {
+    if (groups.length <= 1) return;
+
+    const handleScroll = () => {
+      if (isProgrammaticScrollRef.current) return;
+      let next = groups[0]!.dateKey;
+      for (const { dateKey } of groups) {
+        const el = document.getElementById(`date-section-${dateKey}`);
+        if (el && el.getBoundingClientRect().top <= SCROLL_SPY_THRESHOLD) {
+          next = dateKey;
+        }
+      }
+      setActiveDateKey(next);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [groups]);
+
+  // Auto-center the active date tab in the tab bar, and scroll the match list
+  // when the change was triggered by a user click (not the scroll-spy).
+  useEffect(() => {
+    tabRefs.current[activeDateKey]?.scrollIntoView({
+      inline: "center",
+      behavior: "smooth",
+      block: "nearest",
+    });
+
+    if (!userClickedDateRef.current) return;
+    userClickedDateRef.current = false;
+
+    const el = document.getElementById(`date-section-${activeDateKey}`);
+    if (!el) return;
+
+    isProgrammaticScrollRef.current = true;
+    const top =
+      el.getBoundingClientRect().top + window.scrollY - SCROLL_TARGET_OFFSET;
+    window.scrollTo({ top, behavior: "smooth" });
+
+    const done = () => {
+      isProgrammaticScrollRef.current = false;
+    };
+    window.addEventListener("scrollend", done, { once: true });
+    setTimeout(done, 700);
+  }, [activeDateKey]);
+
+  const selectDate = (dateKey: string) => {
+    userClickedDateRef.current = true;
+    setActiveDateKey(dateKey);
+  };
 
   if (matches.length === 0) {
     return (
@@ -91,8 +184,9 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="flex items-baseline gap-3 text-3xl font-bold">
+      {/* Combined sticky header: tab switcher + date tabs */}
+      <div className="sticky top-[56px] md:top-[73px] z-40 -mx-4 border-b border-foreground/10 bg-white/90 px-4 pt-2 pb-2 backdrop-blur-sm dark:bg-black/90">
+        <h1 className="mb-2 flex items-baseline gap-3 text-2xl font-bold">
           <button
             type="button"
             onClick={() => setActiveTab("upcoming")}
@@ -100,39 +194,66 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
           >
             Upcoming
           </button>
-          <span className="text-foreground/20">/</span>
+          <span className="text-foreground/20">|</span>
           <button
             type="button"
             onClick={() => setActiveTab("completed")}
-            className={`text-xl transition ${activeTab === "completed" ? "" : "text-foreground/30 hover:text-foreground/50"}`}
+            className={`transition ${activeTab === "completed" ? "" : "text-foreground/30 hover:text-foreground/50"}`}
           >
             Completed
             {completed.length > 0 && (
-              <span className="ml-2 font-normal text-foreground/40">
+              <span className="ml-2 text-sm font-normal text-foreground/40">
                 ({completed.length})
               </span>
             )}
           </button>
         </h1>
-        <p className="mt-2 text-foreground/60">
-          Predict World Cup outcomes — win or lose, you owe beer
-        </p>
+
+        {groups.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {groups.map(({ dateKey }) => {
+              const isActive = dateKey === activeDateKey;
+              const { weekday, date } = formatTabDate(dateKey);
+              return (
+                <button
+                  key={dateKey}
+                  ref={(el) => {
+                    tabRefs.current[dateKey] = el;
+                  }}
+                  onClick={() => selectDate(dateKey)}
+                  className={`shrink-0 rounded-lg px-3 py-1.5 text-center transition-colors ${
+                    isActive
+                      ? "bg-emerald-400 text-black"
+                      : "bg-foreground/5 text-foreground/60 hover:bg-foreground/10"
+                  }`}
+                >
+                  <div className="text-[10px] uppercase tracking-wide">
+                    {weekday}
+                  </div>
+                  <div className="text-sm font-semibold">{date}</div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {activeTab === "upcoming" && (
+      <p className="mt-4 text-foreground/60">
+        Predict World Cup outcomes — win or lose, you owe beer
+      </p>
+
+      <div>
         <MatchList
-          matches={upcoming}
-          emptyMessage="No upcoming matches found."
+          groups={groups}
+          emptyMessage={
+            activeTab === "upcoming"
+              ? "No upcoming matches found."
+              : "No completed matches yet."
+          }
           isSignedIn={isSignedIn}
         />
-      )}
-      {activeTab === "completed" && (
-        <MatchList
-          matches={completed}
-          emptyMessage="No completed matches yet."
-          isSignedIn={isSignedIn}
-        />
-      )}
+      </div>
     </div>
   );
 }
+
