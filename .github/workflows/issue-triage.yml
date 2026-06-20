@@ -12,11 +12,11 @@ jobs:
       issues: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Cache Claude Code
         id: claude-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.local
           key: claude-code-${{ runner.os }}-v1
@@ -36,17 +36,20 @@ jobs:
 
             Opened by: ${{ github.event.issue.user.login }}
 
-            Post a friendly, plain-language comment — written for the person who filed the issue, not a developer. Do not mention code, file paths, technical terms, or implementation details.
+            Write a friendly, plain-language comment — written for the person who filed the issue, not a developer. Do not mention code, file paths, technical terms, or implementation details.
 
             The comment should include:
 
             1. **Understanding**: Restate the request in 1–2 sentences to confirm you've understood what they want.
             2. **Questions** (omit if the request is already fully clear): Ask only what you need to know about the *desired outcome* — what it should look like, how it should behave, what problem it solves. Do not ask about how it would be built.
 
-            After writing the comment, privately assess the complexity (do not include this in the comment):
+            Assess the complexity privately (do not include this in the comment):
             - **trivial** — a small, focused change: swap an image, change a label, adjust a colour, toggle a minor behaviour
             - **simple** — affects several parts of the app or involves a new section/screen
             - **complex** — a significant new feature, changes to core game rules (voting, scoring, leaderboard), or requires design decisions before work can begin
 
             If complexity is **trivial** AND there are no outstanding questions, append this exact line at the end of your comment:
             Reply @claude go ahead to auto-implement
+
+            Once you have written the comment, post it by running:
+            gh issue comment ${{ github.event.issue.number }} --body '<your comment here>'

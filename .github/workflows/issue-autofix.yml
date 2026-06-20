@@ -26,13 +26,13 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: develop
 
       - name: Cache Claude Code
         id: claude-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.local
           key: claude-code-${{ runner.os }}-v1
