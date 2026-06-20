@@ -87,6 +87,16 @@ export function UserMenu({
               <p className="truncate text-xs text-foreground/50">{email}</p>
             )}
           </Link>
+          <a
+            href="https://github.com/VietAnh1508/savingforbonding/issues"
+            target="_blank"
+            rel="noopener noreferrer"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="block border-b border-foreground/10 px-4 py-3 text-sm transition-colors hover:bg-foreground/10"
+          >
+            Give feedback
+          </a>
           <Link
             href="/api/auth/signout"
             role="menuitem"

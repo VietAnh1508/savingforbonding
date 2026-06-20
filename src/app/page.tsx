@@ -12,7 +12,7 @@ export default async function Home() {
   return (
     <HydrateClient>
       <Nav />
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 pb-8">
         <MatchTabs isSignedIn={!!session?.user} />
       </main>
     </HydrateClient>
