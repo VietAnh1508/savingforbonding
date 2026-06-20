@@ -6,7 +6,7 @@ import { api, HydrateClient } from "~/trpc/server";
 export default async function Home() {
   const [session] = await Promise.all([
     auth(),
-    api.match.listMatches.prefetch({ filter: "upcoming" }),
+    api.match.listMatches.prefetch({}),
   ]);
 
   return (

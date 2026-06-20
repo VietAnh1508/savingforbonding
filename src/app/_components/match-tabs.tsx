@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { MatchStatus } from "../../../generated/prisma";
 
 import { MatchCard } from "~/app/_components/match-card";
 import {
@@ -91,12 +92,22 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
   const isProgrammaticScrollRef = useRef(false);
   const userClickedDateRef = useRef(false);
 
-  const { data: upcoming = [] } = api.match.listMatches.useQuery({
-    filter: "upcoming",
-  });
-  const { data: completed = [] } = api.match.listMatches.useQuery({
-    filter: "completed",
-  });
+  const { data: allMatches = [] } = api.match.listMatches.useQuery({});
+
+  const upcoming = useMemo(
+    () =>
+      allMatches.filter(
+        (m) =>
+          m.status === MatchStatus.SCHEDULED ||
+          m.status === MatchStatus.LIVE ||
+          m.status === MatchStatus.POSTPONED,
+      ),
+    [allMatches],
+  );
+  const completed = useMemo(
+    () => allMatches.filter((m) => m.status === MatchStatus.COMPLETED),
+    [allMatches],
+  );
 
   const activeMatches = activeTab === "upcoming" ? upcoming : completed;
   const groups = useMemo(() => groupByDate(activeMatches), [activeMatches]);
