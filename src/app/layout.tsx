@@ -3,6 +3,7 @@ import "~/styles/globals.css";
 import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 
+import type { PropsWithChildren } from "react";
 import { ThemeProvider } from "~/app/_components/theme-provider";
 import { ToastProvider } from "~/app/_components/toast";
 import { TRPCReactProvider } from "~/trpc/react";
@@ -18,7 +19,7 @@ const geist = Geist({
   variable: "--font-geist-sans",
 });
 
-export default function RootLayout({ children }: React.PropsWithChildren) {
+export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="en" className={`${geist.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased">
