@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { LeaderboardTable } from "~/app/_components/leaderboard-table";
@@ -43,18 +44,26 @@ export function LeaderboardTabs({
 
       {activeTab === "allTime" && (
         <>
-          {global.lastUpdated && (
-            <p className="mb-3 text-right text-xs text-foreground/40">
-              Last updated:{" "}
-              {global.lastUpdated.toLocaleString("en-AU", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
-          )}
+          <div className="mb-3 flex items-center justify-between text-xs">
+            <Link
+              href="/rules"
+              className="font-medium text-emerald-600 hover:underline dark:text-emerald-400"
+            >
+              Tie-breaker rules →
+            </Link>
+            {global.lastUpdated && (
+              <span className="text-foreground/40">
+                Last updated:{" "}
+                {global.lastUpdated.toLocaleString("en-AU", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            )}
+          </div>
           <LeaderboardTable entries={global.entries} beersLabel="Total Beers" />
         </>
       )}
