@@ -10,7 +10,7 @@ import {
 } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
-type Match = RouterOutputs["match"]["listUpcoming"][number];
+type Match = RouterOutputs["match"]["listMatches"][number];
 
 type TabId = "upcoming" | "completed";
 
@@ -45,9 +45,9 @@ function formatTabDate(dateKey: string): { weekday: string; date: string } {
 }
 
 // Where a section must be (from viewport top) to be considered "active"
-const SCROLL_SPY_THRESHOLD = 165;
+const SCROLL_SPY_THRESHOLD = 185;
 // Where to land the section top after a tab click (header height + breathing room)
-const SCROLL_TARGET_OFFSET = 170;
+const SCROLL_TARGET_OFFSET = 185;
 
 function MatchList({
   groups,
@@ -91,19 +91,12 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
   const isProgrammaticScrollRef = useRef(false);
   const userClickedDateRef = useRef(false);
 
-  const { data: matches = [] } = api.match.listUpcoming.useQuery();
-
-  const upcoming = useMemo(
-    () =>
-      matches.filter((m) =>
-        ["SCHEDULED", "LIVE", "POSTPONED"].includes(m.status),
-      ),
-    [matches],
-  );
-  const completed = useMemo(
-    () => matches.filter((m) => m.status === "COMPLETED"),
-    [matches],
-  );
+  const { data: upcoming = [] } = api.match.listMatches.useQuery({
+    filter: "upcoming",
+  });
+  const { data: completed = [] } = api.match.listMatches.useQuery({
+    filter: "completed",
+  });
 
   const activeMatches = activeTab === "upcoming" ? upcoming : completed;
   const groups = useMemo(() => groupByDate(activeMatches), [activeMatches]);
@@ -147,9 +140,11 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
     userClickedDateRef.current = false;
 
     const el = document.getElementById(`date-section-${activeDateKey}`);
-    if (!el) return;
+    if (!el) {
+      isProgrammaticScrollRef.current = false;
+      return;
+    }
 
-    isProgrammaticScrollRef.current = true;
     const top =
       el.getBoundingClientRect().top + window.scrollY - SCROLL_TARGET_OFFSET;
     window.scrollTo({ top, behavior: "smooth" });
@@ -163,10 +158,11 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
 
   const selectDate = (dateKey: string) => {
     userClickedDateRef.current = true;
+    isProgrammaticScrollRef.current = true;
     setActiveDateKey(dateKey);
   };
 
-  if (matches.length === 0) {
+  if (upcoming.length === 0) {
     return (
       <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-12 text-center">
         <p className="text-lg text-foreground/60">No matches found.</p>
@@ -185,7 +181,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
   return (
     <div>
       {/* Combined sticky header: tab switcher + date tabs */}
-      <div className="sticky top-[56px] md:top-[73px] z-40 -mx-4 border-b border-foreground/10 bg-white/90 px-4 pt-2 pb-2 backdrop-blur-sm dark:bg-black/90">
+      <div className="sticky top-[56px] md:top-[73px] z-40 w-screen ml-[calc(50%_-_50vw)] border-b border-foreground/10 bg-white/90 pl-[calc(50vw_-_50%)] pr-[calc(50vw_-_50%)] pt-2 pb-2 backdrop-blur-sm dark:bg-black/90">
         <h1 className="mb-2 flex items-baseline gap-3 text-2xl font-bold">
           <button
             type="button"
@@ -202,7 +198,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
           >
             Completed
             {completed.length > 0 && (
-              <span className="ml-2 text-sm font-normal text-foreground/40">
+              <span className="ml-2 text-base font-normal text-foreground/40">
                 ({completed.length})
               </span>
             )}
@@ -221,7 +217,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
                     tabRefs.current[dateKey] = el;
                   }}
                   onClick={() => selectDate(dateKey)}
-                  className={`shrink-0 rounded-lg px-3 py-1.5 text-center transition-colors ${
+                  className={`shrink-0 rounded-lg px-5 py-1.5 text-center transition-colors ${
                     isActive
                       ? "bg-emerald-400 text-black"
                       : "bg-foreground/5 text-foreground/60 hover:bg-foreground/10"

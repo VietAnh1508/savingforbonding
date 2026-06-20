@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { BackLink } from "~/app/admin/_components/back-link";
 import { BeerStakes } from "~/app/_components/beer-stakes";
 import { BettingRatios } from "~/app/_components/betting-ratios";
 import { MatchStatusBadge } from "~/app/_components/match-status-badge";
@@ -26,6 +27,9 @@ export default async function MatchPage({
     <HydrateClient>
       <Nav />
       <main className="container mx-auto max-w-2xl px-4 py-8">
+        <div className="mb-6">
+          <BackLink href="/" />
+        </div>
         <div className="mb-2 text-sm text-foreground/50">{match.tournament}</div>
 
         <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-8">

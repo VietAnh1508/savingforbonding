@@ -1,14 +1,11 @@
 import { cookies } from "next/headers";
 
+import type { PropsWithChildren } from "react";
 import { Nav } from "~/app/_components/nav";
 import { ADMIN_COOKIE } from "~/lib/admin";
 import { adminLogout } from "./actions";
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AdminLayout({ children }: PropsWithChildren) {
   const cookieStore = await cookies();
   const isAdmin = cookieStore.get(ADMIN_COOKIE)?.value === "1";
 

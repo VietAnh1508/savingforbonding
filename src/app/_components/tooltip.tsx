@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type PropsWithChildren } from "react";
 
-type TooltipProps = React.PropsWithChildren<{ label: string }>;
+type TooltipProps = PropsWithChildren<{ label: string }>;
 
 export function Tooltip({ label, children }: TooltipProps) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);

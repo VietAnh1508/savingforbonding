@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { Spinner } from "~/app/_components/spinner";
 import { api } from "~/trpc/react";
 
 type FifaSyncResult = {
@@ -51,9 +52,8 @@ export function FifaSyncBanner() {
             FIFA World Cup 2026
           </h2>
           <p className="text-sm text-foreground/60">
-            Safe to run anytime. Preserves beer ratios and votes
-            <br />
-            Only updates schedule, teams, scores, and results from FIFA.
+            Runs automatically every day at 12:00 ICT. Safe to trigger manually
+            anytime — preserves beer ratios and votes.
           </p>
         </div>
         <button
@@ -62,9 +62,15 @@ export function FifaSyncBanner() {
           disabled={syncPending}
           className="cursor-pointer rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500 disabled:opacity-50"
         >
-          {syncPending ? "Syncing..." : "Sync from FIFA"}
+          {syncPending ? <Spinner /> : "Sync from FIFA"}
         </button>
       </div>
+
+      {syncPending && (
+        <p className="text-sm text-foreground/60">
+          Syncing in progress — you can navigate away, the sync will complete in the background.
+        </p>
+      )}
 
       {syncResult && (
         <p className="text-sm text-emerald-700 dark:text-emerald-300">

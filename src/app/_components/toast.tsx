@@ -4,8 +4,9 @@ import {
   createContext,
   useCallback,
   useContext,
-  useState,
   useEffect,
+  useState,
+  type PropsWithChildren,
 } from "react";
 import ReactDOM from "react-dom";
 
@@ -27,7 +28,7 @@ const ToastContext = createContext<ToastAPI | null>(null);
 
 let counter = 0;
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({ children }: PropsWithChildren) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const dismiss = useCallback((id: string) => {
@@ -60,10 +61,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ToastContext.Provider value={api}>
+    <ToastContext value={api}>
       {children}
       <ToastPortal toasts={toasts} onDismiss={dismiss} />
-    </ToastContext.Provider>
+    </ToastContext>
   );
 }
 
@@ -101,9 +102,7 @@ function ToastItem({
       style={{ transition: "opacity 0.25s, transform 0.25s" }}
       className={[
         "pointer-events-auto flex cursor-pointer items-center gap-3 overflow-hidden rounded-lg border border-foreground/10 bg-card py-2.5 pr-4 text-sm shadow-lg",
-        toast.visible
-          ? "translate-y-0 opacity-100"
-          : "translate-y-2 opacity-0",
+        toast.visible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
       ].join(" ")}
     >
       <span

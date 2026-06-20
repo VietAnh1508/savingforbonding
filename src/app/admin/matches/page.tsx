@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { BackLink } from "~/app/admin/_components/back-link";
 import { MatchesPanel } from "~/app/admin/_components/matches-panel";
 import { ADMIN_COOKIE } from "~/lib/admin";
 import { HydrateClient } from "~/trpc/server";
@@ -13,12 +13,7 @@ export default async function MatchesPage() {
   return (
     <HydrateClient>
       <div className="space-y-6">
-        <Link
-          href="/admin"
-          className="text-sm text-foreground/50 transition hover:text-foreground/80"
-        >
-          ← Back
-        </Link>
+        <BackLink href="/admin" />
         <MatchesPanel />
       </div>
     </HydrateClient>

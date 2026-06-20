@@ -6,7 +6,7 @@ import { Spinner } from "~/app/_components/spinner";
 import { useToast } from "~/app/_components/toast";
 import { api, type RouterOutputs } from "~/trpc/react";
 
-type Match = RouterOutputs["match"]["listUpcoming"][number];
+type Match = RouterOutputs["match"]["listMatches"][number];
 
 export function QuickVoteButton({ match }: { match: Match }) {
   const [open, setOpen] = useState(false);
@@ -26,7 +26,7 @@ export function QuickVoteButton({ match }: { match: Match }) {
 
   const castVote = api.vote.cast.useMutation({
     onSuccess: () => {
-      void utils.match.listUpcoming.invalidate();
+      void utils.match.listMatches.invalidate();
       toast.success("Prediction saved!");
     },
   });

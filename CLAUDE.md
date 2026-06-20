@@ -39,6 +39,7 @@ Required in `.env`:
 - `DATABASE_URL` — SQLite path (e.g. `file:./db.sqlite`) or Turso `libsql://` URL
 - `AUTH_SECRET` — NextAuth secret (required in production)
 - `ADMIN_PASSWORD` — Admin panel password (defaults to `admin123`)
+- `CRON_SECRET` — Secret for Vercel cron job auth (generate with `openssl rand -hex 32`)
 
 Optional (Turso remote DB):
 - `TURSO_DATABASE_URL` / `TURSO_API_KEY`
@@ -75,7 +76,10 @@ Pages are async server components that call `api.*.prefetch()` to populate the R
 
 ### FIFA fixture sync
 
-`src/server/services/fifa-api.ts` calls `api.fifa.com/api/v3`. There are no cron jobs; syncing is triggered manually via the admin panel or `npm run sync:fifa` (which runs `prisma/seed.ts`). The `/api/admin/sync-fifa` POST endpoint does the same and requires admin auth.
+`src/server/services/fifa-api.ts` calls `api.fifa.com/api/v3`. Syncing happens two ways:
+
+- **Automatic (daily):** A Vercel cron job hits `GET /api/cron/sync-fifa` at 12:00 ICT (05:00 UTC) every day. Auth is via `Authorization: Bearer <CRON_SECRET>` header. Configured in `vercel.json`.
+- **Manual (on-demand):** Admin panel button POSTs to `/api/admin/sync-fifa` (requires admin cookie), or run `npm run sync:fifa` locally.
 
 ### Voting / beer logic
 

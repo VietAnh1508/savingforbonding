@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { BackLink } from "~/app/admin/_components/back-link";
 import { UsersPanel } from "~/app/admin/_components/users-panel";
 import { auth } from "~/server/auth";
 import { ADMIN_COOKIE } from "~/lib/admin";
@@ -16,12 +16,7 @@ export default async function UsersPage() {
   return (
     <HydrateClient>
       <div className="space-y-6">
-        <Link
-          href="/admin"
-          className="text-sm text-foreground/50 transition hover:text-foreground/80"
-        >
-          ← Back
-        </Link>
+        <BackLink href="/admin" />
         <UsersPanel currentUserId={session?.user?.id} />
       </div>
     </HydrateClient>

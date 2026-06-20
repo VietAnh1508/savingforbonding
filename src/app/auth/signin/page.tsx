@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { ForgotPasswordModal } from "~/app/_components/forgot-password-modal";
 import { PasswordInput } from "~/app/_components/password-input";
 import { SubmitButton } from "~/app/_components/submit-button";
 import { signInWithCredentials } from "~/app/auth/actions";
@@ -70,6 +71,10 @@ export default async function SignInPage({
               className="w-full rounded-xl border border-foreground/10 bg-foreground/10 px-4 py-3 text-foreground placeholder:text-foreground/40 focus:border-emerald-500/50 focus:outline-none"
               placeholder="Your password"
             />
+          </div>
+
+          <div className="flex justify-end">
+            <ForgotPasswordModal />
           </div>
 
           <SubmitButton>Sign in</SubmitButton>
