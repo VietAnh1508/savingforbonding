@@ -45,9 +45,9 @@ function formatTabDate(dateKey: string): { weekday: string; date: string } {
 }
 
 // Where a section must be (from viewport top) to be considered "active"
-const SCROLL_SPY_THRESHOLD = 165;
+const SCROLL_SPY_THRESHOLD = 185;
 // Where to land the section top after a tab click (header height + breathing room)
-const SCROLL_TARGET_OFFSET = 170;
+const SCROLL_TARGET_OFFSET = 185;
 
 function MatchList({
   groups,
@@ -147,9 +147,11 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
     userClickedDateRef.current = false;
 
     const el = document.getElementById(`date-section-${activeDateKey}`);
-    if (!el) return;
+    if (!el) {
+      isProgrammaticScrollRef.current = false;
+      return;
+    }
 
-    isProgrammaticScrollRef.current = true;
     const top =
       el.getBoundingClientRect().top + window.scrollY - SCROLL_TARGET_OFFSET;
     window.scrollTo({ top, behavior: "smooth" });
@@ -163,6 +165,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
 
   const selectDate = (dateKey: string) => {
     userClickedDateRef.current = true;
+    isProgrammaticScrollRef.current = true;
     setActiveDateKey(dateKey);
   };
 
@@ -185,7 +188,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
   return (
     <div>
       {/* Combined sticky header: tab switcher + date tabs */}
-      <div className="sticky top-[56px] md:top-[73px] z-40 -mx-4 border-b border-foreground/10 bg-white/90 px-4 pt-2 pb-2 backdrop-blur-sm dark:bg-black/90">
+      <div className="sticky top-[56px] md:top-[73px] z-40 w-screen ml-[calc(50%_-_50vw)] border-b border-foreground/10 bg-white/90 pl-[calc(50vw_-_50%)] pr-[calc(50vw_-_50%)] pt-2 pb-2 backdrop-blur-sm dark:bg-black/90">
         <h1 className="mb-2 flex items-baseline gap-3 text-2xl font-bold">
           <button
             type="button"
@@ -221,7 +224,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
                     tabRefs.current[dateKey] = el;
                   }}
                   onClick={() => selectDate(dateKey)}
-                  className={`shrink-0 rounded-lg px-3 py-1.5 text-center transition-colors ${
+                  className={`shrink-0 rounded-lg px-5 py-1.5 text-center transition-colors ${
                     isActive
                       ? "bg-emerald-400 text-black"
                       : "bg-foreground/5 text-foreground/60 hover:bg-foreground/10"
