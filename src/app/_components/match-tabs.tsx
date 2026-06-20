@@ -10,7 +10,7 @@ import {
 } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
-type Match = RouterOutputs["match"]["listUpcoming"][number];
+type Match = RouterOutputs["match"]["listMatches"][number];
 
 type TabId = "upcoming" | "completed";
 
@@ -91,19 +91,12 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
   const isProgrammaticScrollRef = useRef(false);
   const userClickedDateRef = useRef(false);
 
-  const { data: matches = [] } = api.match.listUpcoming.useQuery();
-
-  const upcoming = useMemo(
-    () =>
-      matches.filter((m) =>
-        ["SCHEDULED", "LIVE", "POSTPONED"].includes(m.status),
-      ),
-    [matches],
-  );
-  const completed = useMemo(
-    () => matches.filter((m) => m.status === "COMPLETED"),
-    [matches],
-  );
+  const { data: upcoming = [] } = api.match.listMatches.useQuery({
+    filter: "upcoming",
+  });
+  const { data: completed = [] } = api.match.listMatches.useQuery({
+    filter: "completed",
+  });
 
   const activeMatches = activeTab === "upcoming" ? upcoming : completed;
   const groups = useMemo(() => groupByDate(activeMatches), [activeMatches]);
@@ -169,7 +162,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
     setActiveDateKey(dateKey);
   };
 
-  if (matches.length === 0) {
+  if (upcoming.length === 0) {
     return (
       <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-12 text-center">
         <p className="text-lg text-foreground/60">No matches found.</p>
@@ -205,7 +198,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
           >
             Completed
             {completed.length > 0 && (
-              <span className="ml-2 text-sm font-normal text-foreground/40">
+              <span className="ml-2 text-base font-normal text-foreground/40">
                 ({completed.length})
               </span>
             )}

@@ -9,7 +9,7 @@ import { TeamFlag } from "~/app/_components/team-flag";
 import { formatKickoffTime, formatRatioValue } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
-type Match = RouterOutputs["match"]["listUpcoming"][number];
+type Match = RouterOutputs["match"]["listMatches"][number];
 
 function predictedTeamClass(isPredicted: boolean) {
   return isPredicted

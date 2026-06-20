@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { isKnownCountry } from "~/lib/country-flag";
 import { isVotingOpen } from "~/lib/match";
 import {
   createTRPCRouter,
@@ -11,24 +12,22 @@ import {
 } from "~/server/services/match-vote-counts";
 
 export const matchRouter = createTRPCRouter({
-  listUpcoming: publicProcedure
-    .input(
-      z
-        .object({
-          limit: z.number().min(1).max(100).default(50),
-        })
-        .optional(),
-    )
+  listMatches: publicProcedure
+    .input(z.object({ filter: z.enum(["upcoming", "completed"]) }))
     .query(async ({ ctx, input }) => {
-      const limit = input?.limit ?? 50;
+      const statuses =
+        input.filter === "completed"
+          ? ["COMPLETED" as const]
+          : ["SCHEDULED" as const, "LIVE" as const, "POSTPONED" as const];
 
-      const matches = await ctx.db.match.findMany({
-        where: {
-          status: { in: ["SCHEDULED", "LIVE", "POSTPONED", "COMPLETED"] },
-        },
-        orderBy: { kickoffAt: "asc" },
-        take: limit,
-      });
+      const matches = (
+        await ctx.db.match.findMany({
+          where: { status: { in: statuses } },
+          orderBy: { kickoffAt: "asc" },
+        })
+      ).filter(
+        (m) => isKnownCountry(m.homeCountry) && isKnownCountry(m.awayCountry),
+      );
 
       const matchIds = matches.map((match) => match.id);
 
