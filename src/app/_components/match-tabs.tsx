@@ -99,7 +99,7 @@ function MatchList({
                         : "bg-emerald-600 text-white hover:bg-emerald-500"
                     }`}
                   >
-                    {hasAnyVote ? "Update batch" : "Batch predict"}
+                    {hasAnyVote ? "Edit predictions" : "Predict all"}
                   </button>
                 )}
               </div>
@@ -130,6 +130,8 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const isProgrammaticScrollRef = useRef(false);
   const userClickedDateRef = useRef(false);
+  const pillBarRef = useRef<HTMLDivElement | null>(null);
+  const [pillOverflow, setPillOverflow] = useState({ left: false, right: false });
 
   const { data: allMatches = [] } = api.match.listMatches.useQuery({});
 
@@ -206,6 +208,25 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
     setTimeout(done, 700);
   }, [activeDateKey]);
 
+  // Track scroll position of the pill bar to show/hide edge fade masks.
+  useEffect(() => {
+    const el = pillBarRef.current;
+    if (!el) return;
+    const update = () => {
+      setPillOverflow({
+        left: el.scrollLeft > 4,
+        right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
+      });
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [groups]);
+
   const selectDate = (dateKey: string) => {
     userClickedDateRef.current = true;
     isProgrammaticScrollRef.current = true;
@@ -256,7 +277,14 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
         </h1>
 
         {groups.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="relative">
+            {pillOverflow.left && (
+              <div className="pointer-events-none absolute left-0 top-0 h-full w-10 bg-gradient-to-r from-white dark:from-black z-10" />
+            )}
+            {pillOverflow.right && (
+              <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-white dark:from-black z-10" />
+            )}
+          <div ref={pillBarRef} className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {groups.map(({ dateKey }) => {
               const isActive = dateKey === activeDateKey;
               const { weekday, date } = formatTabDate(dateKey);
@@ -280,6 +308,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
                 </button>
               );
             })}
+          </div>
           </div>
         )}
       </div>
