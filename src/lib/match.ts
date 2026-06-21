@@ -137,17 +137,6 @@ export function describeHandicapRule(
   return `${awayCountry} +${formatRatioValue(awayRatio)} handicap. (2) wins unless home overcomes the line; (X) on a tie after handicap; (1) if home covers.`;
 }
 
-export function outcomeLabel(outcome: VoteOutcome): string {
-  switch (outcome) {
-    case "HOME_WIN":
-      return "Home Win (1)";
-    case "DRAW":
-      return "Draw (X)";
-    case "AWAY_WIN":
-      return "Away Win (2)";
-  }
-}
-
 export function outcomeShort(outcome: VoteOutcome): string {
   switch (outcome) {
     case "HOME_WIN":
@@ -156,6 +145,21 @@ export function outcomeShort(outcome: VoteOutcome): string {
       return "X";
     case "AWAY_WIN":
       return "2";
+  }
+}
+
+export function outcomeLabel(
+  outcome: VoteOutcome,
+  homeCountry: string,
+  awayCountry: string,
+): string {
+  switch (outcome) {
+    case "HOME_WIN":
+      return homeCountry;
+    case "DRAW":
+      return "Draw";
+    case "AWAY_WIN":
+      return awayCountry;
   }
 }
 
@@ -218,3 +222,4 @@ export function formatMatchDateTime(date: Date): string {
 export function formatJoiningDate(date: Date): string {
   return joiningDateFormatter.format(date);
 }
+
