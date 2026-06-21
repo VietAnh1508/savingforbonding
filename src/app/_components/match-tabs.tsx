@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { MatchStatus } from "../../../generated/prisma";
 
+import { DayPredictModal } from "~/app/_components/day-predict-modal";
 import { MatchCard } from "~/app/_components/match-card";
 import {
   formatMatchDate,
@@ -58,6 +60,8 @@ function MatchList({
   isSignedIn: boolean;
   emptyMessage: string;
 }) {
+  const [modalDateKey, setModalDateKey] = useState<string | null>(null);
+
   if (groups.length === 0) {
     return (
       <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-12 text-center">
@@ -66,21 +70,57 @@ function MatchList({
     );
   }
 
+  const modalGroup = modalDateKey
+    ? groups.find((g) => g.dateKey === modalDateKey)
+    : null;
+
   return (
-    <div className="space-y-8">
-      {groups.map(({ dateKey, matches: dayMatches }) => (
-        <section key={dateKey} id={`date-section-${dateKey}`}>
-          <h2 className="mb-4 text-xl font-semibold text-emerald-400">
-            {formatMatchDate(dayMatches[0]!.kickoffAt)}
-          </h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {dayMatches.map((match) => (
-              <MatchCard key={match.id} match={match} isSignedIn={isSignedIn} />
-            ))}
-          </div>
-        </section>
-      ))}
-    </div>
+    <>
+      <div className="space-y-8">
+        {groups.map(({ dateKey, matches: dayMatches }) => {
+          const hasVotable = dayMatches.some((m) => m.votingOpen);
+          const hasAnyVote = dayMatches.some(
+            (m) => m.votingOpen && m.userVoteOutcome != null,
+          );
+
+          return (
+            <section key={dateKey} id={`date-section-${dateKey}`}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-emerald-400">
+                  {formatMatchDate(dayMatches[0]!.kickoffAt)}
+                </h2>
+                {isSignedIn && hasVotable && (
+                  <button
+                    type="button"
+                    onClick={() => setModalDateKey(dateKey)}
+                    className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
+                      hasAnyVote
+                        ? "border border-emerald-500/50 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
+                        : "bg-emerald-600 text-white hover:bg-emerald-500"
+                    }`}
+                  >
+                    {hasAnyVote ? "Edit predictions" : "Predict all"}
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {dayMatches.map((match) => (
+                  <MatchCard key={match.id} match={match} />
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+
+      {modalGroup && (
+        <DayPredictModal
+          matches={modalGroup.matches}
+          dateLabel={formatMatchDate(modalGroup.matches[0]!.kickoffAt)}
+          onClose={() => setModalDateKey(null)}
+        />
+      )}
+    </>
   );
 }
 
@@ -90,13 +130,25 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const isProgrammaticScrollRef = useRef(false);
   const userClickedDateRef = useRef(false);
+  const pillBarRef = useRef<HTMLDivElement | null>(null);
+  const [pillOverflow, setPillOverflow] = useState({ left: false, right: false });
 
-  const { data: upcoming = [] } = api.match.listMatches.useQuery({
-    filter: "upcoming",
-  });
-  const { data: completed = [] } = api.match.listMatches.useQuery({
-    filter: "completed",
-  });
+  const { data: allMatches = [] } = api.match.listMatches.useQuery({});
+
+  const upcoming = useMemo(
+    () =>
+      allMatches.filter(
+        (m) =>
+          m.status === MatchStatus.SCHEDULED ||
+          m.status === MatchStatus.LIVE ||
+          m.status === MatchStatus.POSTPONED,
+      ),
+    [allMatches],
+  );
+  const completed = useMemo(
+    () => allMatches.filter((m) => m.status === MatchStatus.COMPLETED),
+    [allMatches],
+  );
 
   const activeMatches = activeTab === "upcoming" ? upcoming : completed;
   const groups = useMemo(() => groupByDate(activeMatches), [activeMatches]);
@@ -156,6 +208,25 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
     setTimeout(done, 700);
   }, [activeDateKey]);
 
+  // Track scroll position of the pill bar to show/hide edge fade masks.
+  useEffect(() => {
+    const el = pillBarRef.current;
+    if (!el) return;
+    const update = () => {
+      setPillOverflow({
+        left: el.scrollLeft > 4,
+        right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
+      });
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [groups]);
+
   const selectDate = (dateKey: string) => {
     userClickedDateRef.current = true;
     isProgrammaticScrollRef.current = true;
@@ -206,7 +277,14 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
         </h1>
 
         {groups.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="relative">
+            {pillOverflow.left && (
+              <div className="pointer-events-none absolute left-0 top-0 h-full w-10 bg-gradient-to-r from-white dark:from-black z-10" />
+            )}
+            {pillOverflow.right && (
+              <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-white dark:from-black z-10" />
+            )}
+          <div ref={pillBarRef} className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {groups.map(({ dateKey }) => {
               const isActive = dateKey === activeDateKey;
               const { weekday, date } = formatTabDate(dateKey);
@@ -231,6 +309,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
               );
             })}
           </div>
+          </div>
         )}
       </div>
 
@@ -252,4 +331,3 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
     </div>
   );
 }
-

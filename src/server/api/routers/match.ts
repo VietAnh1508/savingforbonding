@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { MatchStatus } from "../../../../generated/prisma";
 import { isKnownCountry } from "~/lib/country-flag";
 import { isVotingOpen } from "~/lib/match";
 import {
@@ -13,16 +14,18 @@ import {
 
 export const matchRouter = createTRPCRouter({
   listMatches: publicProcedure
-    .input(z.object({ filter: z.enum(["upcoming", "completed"]) }))
+    .input(z.object({ filter: z.enum(["upcoming", "completed"]).optional() }))
     .query(async ({ ctx, input }) => {
-      const statuses =
-        input.filter === "completed"
-          ? ["COMPLETED" as const]
-          : ["SCHEDULED" as const, "LIVE" as const, "POSTPONED" as const];
+      let statuses: MatchStatus[] | undefined;
+      if (input.filter === "completed") {
+        statuses = [MatchStatus.COMPLETED];
+      } else if (input.filter === "upcoming") {
+        statuses = [MatchStatus.SCHEDULED, MatchStatus.LIVE, MatchStatus.POSTPONED];
+      }
 
       const matches = (
         await ctx.db.match.findMany({
-          where: { status: { in: statuses } },
+          where: statuses ? { status: { in: statuses } } : undefined,
           orderBy: { kickoffAt: "asc" },
         })
       ).filter(

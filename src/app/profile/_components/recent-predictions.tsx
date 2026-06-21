@@ -1,4 +1,4 @@
-import { BEER_NO_BET, formatBeers, outcomeShort } from "~/lib/match";
+import { BEER_NO_BET, formatBeers, outcomeLabel } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
 type VoteItem =
@@ -53,7 +53,7 @@ export function RecentPredictions({ items }: { items: VoteItem[] }) {
                 </div>
                 <div className="text-sm text-foreground/50">
                   {item.kind === "vote"
-                    ? `Predicted: ${outcomeShort(item.outcome)}`
+                    ? `Predicted: ${outcomeLabel(item.outcome, item.homeCountry, item.awayCountry)}`
                     : "No prediction"}
                 </div>
               </div>

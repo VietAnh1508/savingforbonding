@@ -1,8 +1,5 @@
-import {
-  describeHandicapRule,
-  formatRatioValue,
-  hasBettingHandicap,
-} from "~/lib/match";
+import { RatioDisplay } from "~/app/_components/ratio-display";
+import { describeHandicapRule, hasBettingHandicap } from "~/lib/match";
 
 export function BettingRatios({
   homeCountry,
@@ -15,7 +12,6 @@ export function BettingRatios({
   homeRatio: number;
   awayRatio: number;
 }) {
-  const ratioDisplay = `${formatRatioValue(homeRatio)}/${formatRatioValue(awayRatio)}`;
   const handicapRule = describeHandicapRule(
     homeCountry,
     awayCountry,
@@ -30,9 +26,7 @@ export function BettingRatios({
       </h3>
       <div className="flex items-center justify-center gap-4">
         <span className="text-sm font-medium">{homeCountry}</span>
-        <span className="font-mono text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-          {ratioDisplay}
-        </span>
+        <RatioDisplay homeRatio={homeRatio} awayRatio={awayRatio} size="lg" />
         <span className="text-sm font-medium">{awayCountry}</span>
       </div>
       {handicapRule ? (

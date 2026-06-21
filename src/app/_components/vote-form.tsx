@@ -1,6 +1,6 @@
 "use client";
 
-import { BEER_NO_BET, formatBeers, outcomeShort } from "~/lib/match";
+import { BEER_NO_BET, formatBeers, outcomeLabel } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { type VoteOutcome } from "../../../generated/prisma";
 import { useToast } from "./toast";
@@ -75,24 +75,13 @@ export function VoteForm({
     },
   });
 
-  function label(outcome: VoteOutcome) {
-    switch (outcome) {
-      case "HOME_WIN":
-        return homeCountry;
-      case "DRAW":
-        return "Draw";
-      case "AWAY_WIN":
-        return awayCountry;
-    }
-  }
-
   if (!votingOpen) {
     return (
       <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-center text-red-700 dark:text-red-300">
         Voting is locked for this match
         {currentVote && (
           <p className="mt-2 text-sm">
-            Your prediction: <strong>{outcomeShort(currentVote)}</strong>
+            Your prediction: <strong>{outcomeLabel(currentVote, homeCountry, awayCountry)}</strong>
           </p>
         )}
       </div>
@@ -119,23 +108,14 @@ export function VoteForm({
                 : "border-foreground/10 bg-foreground/5 hover:border-emerald-500/50 hover:bg-foreground/10"
             }`}
           >
-            {outcome === "DRAW" ? (
-              <>
-                <div className="text-2xl font-bold">
-                  {outcomeShort(outcome)}
-                </div>
-                <div className="mt-1 text-xs text-foreground/60">
-                  {label(outcome)}
-                </div>
-              </>
-            ) : (
-              <div className="font-semibold">{label(outcome)}</div>
-            )}
+            <div className="font-semibold">{outcomeLabel(outcome, homeCountry, awayCountry)}</div>
           </button>
         ))}
       </div>
       {castVote.error && (
-        <p className="text-sm text-red-600 dark:text-red-400">{castVote.error.message}</p>
+        <p className="text-sm text-red-600 dark:text-red-400">
+          {castVote.error.message}
+        </p>
       )}
       {currentVote && (
         <p className="text-center text-sm text-foreground/50">
@@ -145,3 +125,4 @@ export function VoteForm({
     </div>
   );
 }
+

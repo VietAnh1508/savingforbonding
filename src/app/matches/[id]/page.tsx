@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 
-import { BackLink } from "~/app/admin/_components/back-link";
 import { BeerStakes } from "~/app/_components/beer-stakes";
 import { BettingRatios } from "~/app/_components/betting-ratios";
 import { MatchStatusBadge } from "~/app/_components/match-status-badge";
@@ -8,6 +7,7 @@ import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
 import { Nav } from "~/app/_components/nav";
 import { TeamFlag } from "~/app/_components/team-flag";
 import { VoteForm } from "~/app/_components/vote-form";
+import { BackLink } from "~/app/admin/_components/back-link";
 import { formatMatchDateTime } from "~/lib/match";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
@@ -30,9 +30,21 @@ export default async function MatchPage({
         <div className="mb-6">
           <BackLink href="/" />
         </div>
-        <div className="mb-2 text-sm text-foreground/50">{match.tournament}</div>
+        <div className="mb-2 text-sm text-foreground/50">
+          {match.tournament}
+        </div>
 
         <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-8">
+          <div className="mb-8 flex items-center justify-between">
+            <MatchStatusBadge status={match.status} />
+            <time
+              dateTime={match.kickoffAt.toISOString()}
+              className="text-sm text-foreground/50"
+            >
+              {formatMatchDateTime(match.kickoffAt)}
+            </time>
+          </div>
+
           <div className="flex items-center justify-between gap-6">
             <div className="flex flex-1 flex-col items-center gap-3 text-center">
               <TeamFlag country={match.homeCountry} size="md" />
@@ -45,15 +57,10 @@ export default async function MatchPage({
                   {match.homeScore} - {match.awayScore}
                 </span>
               ) : (
-                <span className="text-2xl font-bold text-foreground/40">vs</span>
+                <span className="text-2xl font-bold text-foreground/40">
+                  vs
+                </span>
               )}
-              <time
-                dateTime={match.kickoffAt.toISOString()}
-                className="text-sm text-foreground/50"
-              >
-                {formatMatchDateTime(match.kickoffAt)}
-              </time>
-              <MatchStatusBadge status={match.status} />
             </div>
 
             <div className="flex flex-1 flex-col items-center gap-3 text-center">

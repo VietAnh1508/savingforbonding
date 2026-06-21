@@ -16,6 +16,19 @@ async function main() {
     },
   });
   console.log("testuser@test.com / changeme123 (mustChangePassword=true)");
+
+  const auditHash = await bcrypt.hash("devpassword123", 12);
+  await db.user.upsert({
+    where: { email: "ux-audit@dev.local" },
+    update: { passwordHash: auditHash, mustChangePassword: false },
+    create: {
+      email: "ux-audit@dev.local",
+      name: "UX Audit Bot",
+      passwordHash: auditHash,
+      mustChangePassword: false,
+    },
+  });
+  console.log("ux-audit@dev.local / devpassword123 (mustChangePassword=false)");
 }
 
 main()

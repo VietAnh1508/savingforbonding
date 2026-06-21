@@ -34,10 +34,7 @@ export function validateBettingRatios(
   return null;
 }
 
-export function isVotingOpen(
-  kickoffAt: Date,
-  status: MatchStatus,
-): boolean {
+export function isVotingOpen(kickoffAt: Date, status: MatchStatus): boolean {
   if (status === "COMPLETED" || status === "CANCELLED" || status === "LIVE") {
     return false;
   }
@@ -140,17 +137,6 @@ export function describeHandicapRule(
   return `${awayCountry} +${formatRatioValue(awayRatio)} handicap. (2) wins unless home overcomes the line; (X) on a tie after handicap; (1) if home covers.`;
 }
 
-export function outcomeLabel(outcome: VoteOutcome): string {
-  switch (outcome) {
-    case "HOME_WIN":
-      return "Home Win (1)";
-    case "DRAW":
-      return "Draw (X)";
-    case "AWAY_WIN":
-      return "Away Win (2)";
-  }
-}
-
 export function outcomeShort(outcome: VoteOutcome): string {
   switch (outcome) {
     case "HOME_WIN":
@@ -159,6 +145,21 @@ export function outcomeShort(outcome: VoteOutcome): string {
       return "X";
     case "AWAY_WIN":
       return "2";
+  }
+}
+
+export function outcomeLabel(
+  outcome: VoteOutcome,
+  homeCountry: string,
+  awayCountry: string,
+): string {
+  switch (outcome) {
+    case "HOME_WIN":
+      return homeCountry;
+    case "DRAW":
+      return "Draw";
+    case "AWAY_WIN":
+      return awayCountry;
   }
 }
 
@@ -188,8 +189,6 @@ const matchDateFormatter = new Intl.DateTimeFormat("en-GB", {
 const matchTimeFormatter = new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit",
   minute: "2-digit",
-  timeZone: MATCH_DISPLAY_TIMEZONE,
-  timeZoneName: "short",
 });
 
 const matchDateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -199,8 +198,6 @@ const matchDateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   hour: "2-digit",
   minute: "2-digit",
-  timeZone: MATCH_DISPLAY_TIMEZONE,
-  timeZoneName: "short",
 });
 
 const joiningDateFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -225,3 +222,4 @@ export function formatMatchDateTime(date: Date): string {
 export function formatJoiningDate(date: Date): string {
   return joiningDateFormatter.format(date);
 }
+

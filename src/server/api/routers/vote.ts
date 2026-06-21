@@ -48,6 +48,52 @@ export const voteRouter = createTRPCRouter({
       });
     }),
 
+  castBatch: protectedProcedure
+    .input(
+      z.array(
+        z.object({
+          matchId: z.string(),
+          outcome: voteOutcomeSchema,
+        }),
+      ),
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (input.length === 0) return { saved: 0, skipped: 0 };
+
+      const matches = await ctx.db.match.findMany({
+        where: { id: { in: input.map((v) => v.matchId) } },
+      });
+
+      const openMatchIds = new Set(
+        matches
+          .filter((m) => isVotingOpen(m.kickoffAt, m.status))
+          .map((m) => m.id),
+      );
+
+      const votable = input.filter((v) => openMatchIds.has(v.matchId));
+
+      await Promise.all(
+        votable.map((v) =>
+          ctx.db.vote.upsert({
+            where: {
+              userId_matchId: {
+                userId: ctx.session.user.id,
+                matchId: v.matchId,
+              },
+            },
+            create: {
+              userId: ctx.session.user.id,
+              matchId: v.matchId,
+              outcome: v.outcome,
+            },
+            update: { outcome: v.outcome },
+          }),
+        ),
+      );
+
+      return { saved: votable.length, skipped: input.length - votable.length };
+    }),
+
   getMyVotes: protectedProcedure
     .input(
       z

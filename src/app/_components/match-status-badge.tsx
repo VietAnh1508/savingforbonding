@@ -9,7 +9,7 @@ const STYLES: Record<MatchStatus, string> = {
 };
 
 const LABELS: Record<MatchStatus, string> = {
-  SCHEDULED: "UP COMING",
+  SCHEDULED: "UPCOMING",
   LIVE: "LIVE",
   COMPLETED: "COMPLETED",
   POSTPONED: "POSTPONED",
