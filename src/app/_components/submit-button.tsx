@@ -12,7 +12,7 @@ export function SubmitButton({ children }: PropsWithChildren) {
     <button
       type="submit"
       disabled={pending}
-      className="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/20 px-4 py-3 font-semibold text-emerald-700 dark:text-emerald-300 transition hover:cursor-grab hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending && <Spinner />}
       {children}

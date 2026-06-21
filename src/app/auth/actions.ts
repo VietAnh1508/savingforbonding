@@ -30,7 +30,7 @@ export async function signInWithCredentials(formData: FormData) {
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      redirect("/auth/signin?error=InvalidCredentials");
+      redirect(`/auth/signin?error=InvalidCredentials&email=${encodeURIComponent(email)}`);
     }
     throw error;
   }
