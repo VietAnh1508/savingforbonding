@@ -4,9 +4,9 @@ import Link from "next/link";
 
 import { MatchStatusBadge } from "~/app/_components/match-status-badge";
 import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
-import { QuickVoteButton } from "~/app/_components/quick-vote-button";
+import { RatioDisplay } from "~/app/_components/ratio-display";
 import { TeamFlag } from "~/app/_components/team-flag";
-import { formatKickoffTime, formatRatioValue } from "~/lib/match";
+import { formatKickoffTime } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listMatches"][number];
@@ -26,15 +26,15 @@ function formatMatchScore(match: Match): string {
     return `${match.homeScore} - ${match.awayScore}`;
   }
 
-  return "TBD - TBD";
+  return "vs";
 }
 
-export function MatchCard({ match, isSignedIn }: { match: Match; isSignedIn: boolean }) {
+export function MatchCard({ match }: { match: Match }) {
   const prediction = match.userVoteOutcome;
   const predictsHomeWin = prediction === "HOME_WIN";
   const predictsAwayWin = prediction === "AWAY_WIN";
   const predictsDraw = prediction === "DRAW";
-  const scoreIsTbd = formatMatchScore(match) === "TBD - TBD";
+  const scoreIsTbd = formatMatchScore(match) === "vs";
 
   return (
     <Link
@@ -43,7 +43,9 @@ export function MatchCard({ match, isSignedIn }: { match: Match; isSignedIn: boo
     >
       <div className="mb-3 flex items-center justify-between">
         <MatchStatusBadge status={match.status} />
-        {match.votingOpen && isSignedIn && <QuickVoteButton match={match} />}
+        <span className="text-xs text-foreground/50">
+          {formatKickoffTime(match.kickoffAt)}
+        </span>
       </div>
 
       <div className="flex items-center justify-between gap-4">
@@ -67,18 +69,12 @@ export function MatchCard({ match, isSignedIn }: { match: Match; isSignedIn: boo
           >
             {formatMatchScore(match)}
           </span>
-          <span className="font-mono text-xs text-emerald-600/80 dark:text-emerald-400/80">
-            {formatRatioValue(match.homeRatio)}/
-            {formatRatioValue(match.awayRatio)}
-          </span>
+          <RatioDisplay homeRatio={match.homeRatio} awayRatio={match.awayRatio} />
           {predictsDraw && (
             <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
               predict draw
             </span>
           )}
-          <span className="text-xs text-foreground/50">
-            {formatKickoffTime(match.kickoffAt)}
-          </span>
         </div>
 
         <div

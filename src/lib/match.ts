@@ -34,10 +34,7 @@ export function validateBettingRatios(
   return null;
 }
 
-export function isVotingOpen(
-  kickoffAt: Date,
-  status: MatchStatus,
-): boolean {
+export function isVotingOpen(kickoffAt: Date, status: MatchStatus): boolean {
   if (status === "COMPLETED" || status === "CANCELLED" || status === "LIVE") {
     return false;
   }
@@ -188,8 +185,6 @@ const matchDateFormatter = new Intl.DateTimeFormat("en-GB", {
 const matchTimeFormatter = new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit",
   minute: "2-digit",
-  timeZone: MATCH_DISPLAY_TIMEZONE,
-  timeZoneName: "short",
 });
 
 const matchDateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -199,8 +194,6 @@ const matchDateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   hour: "2-digit",
   minute: "2-digit",
-  timeZone: MATCH_DISPLAY_TIMEZONE,
-  timeZoneName: "short",
 });
 
 const joiningDateFormatter = new Intl.DateTimeFormat("en-GB", {

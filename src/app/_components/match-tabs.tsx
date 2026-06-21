@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MatchStatus } from "../../../generated/prisma";
 
+import { DayPredictModal } from "~/app/_components/day-predict-modal";
 import { MatchCard } from "~/app/_components/match-card";
 import {
   formatMatchDate,
@@ -59,6 +60,8 @@ function MatchList({
   isSignedIn: boolean;
   emptyMessage: string;
 }) {
+  const [modalDateKey, setModalDateKey] = useState<string | null>(null);
+
   if (groups.length === 0) {
     return (
       <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-12 text-center">
@@ -67,21 +70,57 @@ function MatchList({
     );
   }
 
+  const modalGroup = modalDateKey
+    ? groups.find((g) => g.dateKey === modalDateKey)
+    : null;
+
   return (
-    <div className="space-y-8">
-      {groups.map(({ dateKey, matches: dayMatches }) => (
-        <section key={dateKey} id={`date-section-${dateKey}`}>
-          <h2 className="mb-4 text-xl font-semibold text-emerald-400">
-            {formatMatchDate(dayMatches[0]!.kickoffAt)}
-          </h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {dayMatches.map((match) => (
-              <MatchCard key={match.id} match={match} isSignedIn={isSignedIn} />
-            ))}
-          </div>
-        </section>
-      ))}
-    </div>
+    <>
+      <div className="space-y-8">
+        {groups.map(({ dateKey, matches: dayMatches }) => {
+          const hasVotable = dayMatches.some((m) => m.votingOpen);
+          const hasAnyVote = dayMatches.some(
+            (m) => m.votingOpen && m.userVoteOutcome != null,
+          );
+
+          return (
+            <section key={dateKey} id={`date-section-${dateKey}`}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-emerald-400">
+                  {formatMatchDate(dayMatches[0]!.kickoffAt)}
+                </h2>
+                {isSignedIn && hasVotable && (
+                  <button
+                    type="button"
+                    onClick={() => setModalDateKey(dateKey)}
+                    className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
+                      hasAnyVote
+                        ? "border border-emerald-500/50 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
+                        : "bg-emerald-600 text-white hover:bg-emerald-500"
+                    }`}
+                  >
+                    {hasAnyVote ? "Update batch" : "Batch predict"}
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {dayMatches.map((match) => (
+                  <MatchCard key={match.id} match={match} />
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+
+      {modalGroup && (
+        <DayPredictModal
+          matches={modalGroup.matches}
+          dateLabel={formatMatchDate(modalGroup.matches[0]!.kickoffAt)}
+          onClose={() => setModalDateKey(null)}
+        />
+      )}
+    </>
   );
 }
 
@@ -263,4 +302,3 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
     </div>
   );
 }
-
