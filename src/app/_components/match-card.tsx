@@ -11,6 +11,54 @@ import { type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listMatches"][number];
 
+type VoteResult = Match["userVoteResult"];
+
+function MatchCardFooter({
+  isSignedIn,
+  isCompleted,
+  voteResult,
+  prediction,
+  homeCountry,
+  awayCountry,
+  voteCounts,
+}: {
+  isSignedIn: boolean;
+  isCompleted: boolean;
+  voteResult: VoteResult;
+  prediction: Match["userVoteOutcome"];
+  homeCountry: string;
+  awayCountry: string;
+  voteCounts: Match["voteCounts"];
+}) {
+  if (isSignedIn && isCompleted && voteResult) {
+    if (voteResult.isCorrect === null) {
+      return <p className="text-center text-xs text-foreground/50">Pending result</p>;
+    }
+    if (voteResult.isCorrect) {
+      return (
+        <p className="text-center text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          Correct — {formatBeers(voteResult.points)}
+        </p>
+      );
+    }
+    return (
+      <p className="text-center text-xs font-medium text-red-600 dark:text-red-400">
+        Wrong — {formatBeers(voteResult.points)}
+      </p>
+    );
+  }
+
+  if (isSignedIn && isCompleted && !prediction) {
+    return (
+      <p className="text-center text-xs font-medium text-amber-600 dark:text-amber-400">
+        No bet — {formatBeers(2)}
+      </p>
+    );
+  }
+
+  return <MatchVoteCounts homeCountry={homeCountry} awayCountry={awayCountry} voteCounts={voteCounts} />;
+}
+
 function predictedTeamClass(isPredicted: boolean) {
   return isPredicted
     ? "rounded-full border-2 border-emerald-400 px-3 py-2"
@@ -29,7 +77,7 @@ function formatMatchScore(match: Match): string {
   return "vs";
 }
 
-export function MatchCard({ match }: { match: Match }) {
+export function MatchCard({ match, isSignedIn = false }: { match: Match; isSignedIn?: boolean }) {
   const prediction = match.userVoteOutcome;
   const predictsHomeWin = prediction === "HOME_WIN";
   const predictsAwayWin = prediction === "AWAY_WIN";
@@ -93,29 +141,15 @@ export function MatchCard({ match }: { match: Match }) {
       </div>
 
       <div className="mt-4 border-t border-foreground/10 pt-3">
-        {isCompleted && voteResult ? (
-          voteResult.isCorrect === null ? (
-            <p className="text-center text-xs text-foreground/50">Pending result</p>
-          ) : voteResult.isCorrect ? (
-            <p className="text-center text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              Correct — {formatBeers(voteResult.points)}
-            </p>
-          ) : (
-            <p className="text-center text-xs font-medium text-red-600 dark:text-red-400">
-              Wrong — {formatBeers(voteResult.points)}
-            </p>
-          )
-        ) : isCompleted && !prediction ? (
-          <p className="text-center text-xs font-medium text-amber-600 dark:text-amber-400">
-            No bet — {formatBeers(2)}
-          </p>
-        ) : (
-          <MatchVoteCounts
-            homeCountry={match.homeCountry}
-            awayCountry={match.awayCountry}
-            voteCounts={match.voteCounts}
-          />
-        )}
+        <MatchCardFooter
+          isSignedIn={isSignedIn}
+          isCompleted={isCompleted}
+          voteResult={voteResult}
+          prediction={prediction}
+          homeCountry={match.homeCountry}
+          awayCountry={match.awayCountry}
+          voteCounts={match.voteCounts}
+        />
       </div>
     </Link>
   );
