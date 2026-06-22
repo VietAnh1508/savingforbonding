@@ -6,7 +6,7 @@ import { MatchStatusBadge } from "~/app/_components/match-status-badge";
 import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
 import { RatioDisplay } from "~/app/_components/ratio-display";
 import { TeamFlag } from "~/app/_components/team-flag";
-import { formatKickoffTime } from "~/lib/match";
+import { formatBeers, formatKickoffTime } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listMatches"][number];
@@ -35,6 +35,8 @@ export function MatchCard({ match }: { match: Match }) {
   const predictsAwayWin = prediction === "AWAY_WIN";
   const predictsDraw = prediction === "DRAW";
   const scoreIsTbd = formatMatchScore(match) === "vs";
+  const isCompleted = match.status === "COMPLETED";
+  const voteResult = match.userVoteResult;
 
   return (
     <Link
@@ -91,11 +93,29 @@ export function MatchCard({ match }: { match: Match }) {
       </div>
 
       <div className="mt-4 border-t border-foreground/10 pt-3">
-        <MatchVoteCounts
-          homeCountry={match.homeCountry}
-          awayCountry={match.awayCountry}
-          voteCounts={match.voteCounts}
-        />
+        {isCompleted && voteResult ? (
+          voteResult.isCorrect === null ? (
+            <p className="text-center text-xs text-foreground/50">Pending result</p>
+          ) : voteResult.isCorrect ? (
+            <p className="text-center text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              Correct — {formatBeers(voteResult.points)}
+            </p>
+          ) : (
+            <p className="text-center text-xs font-medium text-red-600 dark:text-red-400">
+              Wrong — {formatBeers(voteResult.points)}
+            </p>
+          )
+        ) : isCompleted && !prediction ? (
+          <p className="text-center text-xs font-medium text-amber-600 dark:text-amber-400">
+            No bet — {formatBeers(2)}
+          </p>
+        ) : (
+          <MatchVoteCounts
+            homeCountry={match.homeCountry}
+            awayCountry={match.awayCountry}
+            voteCounts={match.voteCounts}
+          />
+        )}
       </div>
     </Link>
   );
