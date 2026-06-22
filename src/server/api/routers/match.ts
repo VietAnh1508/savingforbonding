@@ -45,17 +45,18 @@ export const matchRouter = createTRPCRouter({
               userId: ctx.session.user.id,
               matchId: { in: matchIds },
             },
-            select: { matchId: true, outcome: true },
+            select: { matchId: true, outcome: true, isCorrect: true, points: true },
           })
         : [];
 
       const userVoteByMatchId = new Map(
-        userVotes.map((vote) => [vote.matchId, vote.outcome]),
+        userVotes.map((vote) => [vote.matchId, vote]),
       );
 
       return matches.map((match) => ({
         ...match,
-        userVoteOutcome: userVoteByMatchId.get(match.id) ?? null,
+        userVoteOutcome: userVoteByMatchId.get(match.id)?.outcome ?? null,
+        userVoteResult: userVoteByMatchId.get(match.id) ?? null,
         voteCounts:
           voteCountsByMatchId.get(match.id) ?? emptyMatchVoteCounts(),
         votingOpen: isVotingOpen(match.kickoffAt, match.status),

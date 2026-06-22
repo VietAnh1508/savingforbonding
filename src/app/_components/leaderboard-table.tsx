@@ -1,17 +1,9 @@
-import React from "react";
 import Image from "next/image";
 
-import { MedalIcon } from "~/app/_components/icons/medal-icon";
 import { formatJoiningDate } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
 type Entry = RouterOutputs["leaderboard"]["global"]["entries"][number];
-
-const RANK_ICONS: Record<number, React.ReactElement> = {
-  1: <MedalIcon size={28} variant="gold" />,
-  2: <MedalIcon size={28} variant="silver" />,
-  3: <MedalIcon size={28} variant="bronze" />,
-};
 
 const RANK_BADGE_CLASSES: Record<number, string> = {
   1: "bg-yellow-400/20 text-yellow-700 dark:bg-yellow-400/15 dark:text-yellow-300",
@@ -32,9 +24,11 @@ function titleForRank(rank: number): string | null {
 export function LeaderboardTable({
   entries,
   beersLabel = "Beers",
+  currentUserId,
 }: {
   entries: Entry[];
   beersLabel?: string;
+  currentUserId?: string;
 }) {
   if (entries.length === 0) {
     return (
@@ -56,18 +50,22 @@ export function LeaderboardTable({
           </tr>
         </thead>
         <tbody>
-          {entries.map((entry) => (
+          {entries.map((entry) => {
+            const isCurrentUser = !!currentUserId && entry.id === currentUserId;
+            return (
             <tr
               key={entry.id}
-              className="border-b border-foreground/5 transition hover:bg-foreground/5"
+              className={`border-b border-foreground/5 transition ${
+                isCurrentUser
+                  ? "border-l-2 border-l-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/15"
+                  : "hover:bg-foreground/5"
+              }`}
             >
               <td className="px-2 py-3 sm:px-4">
                 <div className="flex justify-center">
-                  {RANK_ICONS[entry.rank] ?? (
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-sm font-bold text-foreground/60">
-                      {entry.rank}
-                    </span>
-                  )}
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-sm font-bold text-foreground/60">
+                    {entry.rank}
+                  </span>
                 </div>
               </td>
               <td className="px-2 py-3 sm:px-4">
@@ -89,6 +87,11 @@ export function LeaderboardTable({
                     <span className="font-medium">
                       {entry.name ?? "Anonymous"}
                     </span>
+                    {isCurrentUser && (
+                      <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                        You
+                      </span>
+                    )}
                     {titleForRank(entry.rank) && (
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${RANK_BADGE_CLASSES[entry.rank]}`}>
                         {titleForRank(entry.rank)}
@@ -119,7 +122,8 @@ export function LeaderboardTable({
                 {formatJoiningDate(entry.joiningDate)}
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>

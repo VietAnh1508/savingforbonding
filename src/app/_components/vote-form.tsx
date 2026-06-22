@@ -76,21 +76,68 @@ export function VoteForm({
   });
 
   if (!votingOpen) {
+    const userVote = match?.userVote;
+    const isCorrect = userVote?.isCorrect;
+    const points = userVote?.points ?? 0;
+
+    if (!currentVote) {
+      return (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-center text-amber-700 dark:text-amber-300">
+          <p className="font-medium">Voting is locked</p>
+          <p className="mt-1 text-sm">
+            You didn't place a bet — that's {formatBeers(BEER_NO_BET)}
+          </p>
+        </div>
+      );
+    }
+
+    if (isCorrect === null) {
+      return (
+        <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4 text-center">
+          <p className="text-sm text-foreground/50">Voting is locked</p>
+          <p className="mt-2 font-medium">
+            Your prediction:{" "}
+            <strong>
+              {outcomeLabel(currentVote, homeCountry, awayCountry)}
+            </strong>
+          </p>
+          <p className="mt-1 text-sm text-foreground/50">Pending result</p>
+        </div>
+      );
+    }
+
+    if (isCorrect) {
+      return (
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center text-emerald-700 dark:text-emerald-300">
+          <p className="text-lg font-semibold">Correct</p>
+          <p className="mt-1 text-sm">
+            You picked{" "}
+            <strong>
+              {outcomeLabel(currentVote, homeCountry, awayCountry)}
+            </strong>{" "}
+            — {formatBeers(points)}
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-center text-red-700 dark:text-red-300">
-        Voting is locked for this match
-        {currentVote && (
-          <p className="mt-2 text-sm">
-            Your prediction: <strong>{outcomeLabel(currentVote, homeCountry, awayCountry)}</strong>
-          </p>
-        )}
+        <p className="text-lg font-semibold">Wrong</p>
+        <p className="mt-1 text-sm">
+          You picked{" "}
+          <strong>{outcomeLabel(currentVote, homeCountry, awayCountry)}</strong>{" "}
+          — {formatBeers(points)}
+        </p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Place your vote</h3>
+      <h3 className="text-lg font-semibold">
+        {currentVote ? "Change your prediction" : "Place your vote"}
+      </h3>
       <p className="text-sm text-foreground/50">
         Required for every match — skip it and you owe{" "}
         {formatBeers(BEER_NO_BET)} anyway.
@@ -108,7 +155,9 @@ export function VoteForm({
                 : "border-foreground/10 bg-foreground/5 hover:border-emerald-500/50 hover:bg-foreground/10"
             }`}
           >
-            <div className="font-semibold">{outcomeLabel(outcome, homeCountry, awayCountry)}</div>
+            <div className="font-semibold">
+              {outcomeLabel(outcome, homeCountry, awayCountry)}
+            </div>
           </button>
         ))}
       </div>
@@ -125,4 +174,3 @@ export function VoteForm({
     </div>
   );
 }
-

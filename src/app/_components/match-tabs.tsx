@@ -105,7 +105,7 @@ function MatchList({
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {dayMatches.map((match) => (
-                  <MatchCard key={match.id} match={match} />
+                  <MatchCard key={match.id} match={match} isSignedIn={isSignedIn} />
                 ))}
               </div>
             </section>

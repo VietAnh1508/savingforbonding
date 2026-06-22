@@ -17,9 +17,11 @@ const TABS: { id: TabId; label: string }[] = [
 export function LeaderboardTabs({
   global,
   beerPool,
+  currentUserId,
 }: {
   global: RouterOutputs["leaderboard"]["global"];
   beerPool: RouterOutputs["leaderboard"]["totalBeerPool"];
+  currentUserId?: string;
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("allTime");
 
@@ -64,7 +66,11 @@ export function LeaderboardTabs({
               </span>
             )}
           </div>
-          <LeaderboardTable entries={global.entries} beersLabel="Total Beers" />
+          <LeaderboardTable
+            entries={global.entries}
+            beersLabel="Total Beers"
+            currentUserId={currentUserId}
+          />
         </>
       )}
 

@@ -6,10 +6,58 @@ import { MatchStatusBadge } from "~/app/_components/match-status-badge";
 import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
 import { RatioDisplay } from "~/app/_components/ratio-display";
 import { TeamFlag } from "~/app/_components/team-flag";
-import { formatKickoffTime } from "~/lib/match";
+import { formatBeers, formatKickoffTime } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listMatches"][number];
+
+type VoteResult = Match["userVoteResult"];
+
+function MatchCardFooter({
+  isSignedIn,
+  isCompleted,
+  voteResult,
+  prediction,
+  homeCountry,
+  awayCountry,
+  voteCounts,
+}: {
+  isSignedIn: boolean;
+  isCompleted: boolean;
+  voteResult: VoteResult;
+  prediction: Match["userVoteOutcome"];
+  homeCountry: string;
+  awayCountry: string;
+  voteCounts: Match["voteCounts"];
+}) {
+  if (isSignedIn && isCompleted && voteResult) {
+    if (voteResult.isCorrect === null) {
+      return <p className="text-center text-xs text-foreground/50">Pending result</p>;
+    }
+    if (voteResult.isCorrect) {
+      return (
+        <p className="text-center text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          Correct — {formatBeers(voteResult.points)}
+        </p>
+      );
+    }
+    return (
+      <p className="text-center text-xs font-medium text-red-600 dark:text-red-400">
+        Wrong — {formatBeers(voteResult.points)}
+      </p>
+    );
+  }
+
+  if (isSignedIn && isCompleted && !prediction) {
+    return (
+      <p className="text-center text-xs font-medium text-amber-600 dark:text-amber-400">
+        No bet — {formatBeers(2)}
+      </p>
+    );
+  }
+
+  return <MatchVoteCounts homeCountry={homeCountry} awayCountry={awayCountry} voteCounts={voteCounts} />;
+}
 
 function predictedTeamClass(isPredicted: boolean) {
   return isPredicted
@@ -29,12 +77,14 @@ function formatMatchScore(match: Match): string {
   return "vs";
 }
 
-export function MatchCard({ match }: { match: Match }) {
+export function MatchCard({ match, isSignedIn = false }: { match: Match; isSignedIn?: boolean }) {
   const prediction = match.userVoteOutcome;
   const predictsHomeWin = prediction === "HOME_WIN";
   const predictsAwayWin = prediction === "AWAY_WIN";
   const predictsDraw = prediction === "DRAW";
   const scoreIsTbd = formatMatchScore(match) === "vs";
+  const isCompleted = match.status === "COMPLETED";
+  const voteResult = match.userVoteResult;
 
   return (
     <Link
@@ -91,7 +141,11 @@ export function MatchCard({ match }: { match: Match }) {
       </div>
 
       <div className="mt-4 border-t border-foreground/10 pt-3">
-        <MatchVoteCounts
+        <MatchCardFooter
+          isSignedIn={isSignedIn}
+          isCompleted={isCompleted}
+          voteResult={voteResult}
+          prediction={prediction}
           homeCountry={match.homeCountry}
           awayCountry={match.awayCountry}
           voteCounts={match.voteCounts}

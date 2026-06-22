@@ -62,13 +62,15 @@ export function FifaSyncBanner() {
           disabled={syncPending}
           className="cursor-pointer rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500 disabled:opacity-50"
         >
-          {syncPending ? <Spinner /> : "Sync from FIFA"}
+          {syncPending ? <Spinner /> : null}
+          Sync from FIFA
         </button>
       </div>
 
       {syncPending && (
         <p className="text-sm text-foreground/60">
-          Syncing in progress — you can navigate away, the sync will complete in the background.
+          Syncing in progress — you can navigate away, the sync will complete in
+          the background.
         </p>
       )}
 
@@ -86,7 +88,9 @@ export function FifaSyncBanner() {
         </p>
       )}
 
-      {syncError && <p className="text-sm text-red-600 dark:text-red-300">{syncError}</p>}
+      {syncError && (
+        <p className="text-sm text-red-600 dark:text-red-300">{syncError}</p>
+      )}
     </div>
   );
 }

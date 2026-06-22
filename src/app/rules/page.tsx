@@ -15,12 +15,12 @@ export default function RulesPage() {
         <div className="mt-8 rounded-xl border border-foreground/10 bg-foreground/5 p-4 text-sm text-foreground/70">
           <h3 className="mb-2 font-semibold text-foreground/90">Leaderboard Tiebreakers</h3>
           <p className="mb-3">
-            When two players have the same number of beers, ranking is decided by:
+            Tied players share the same rank. If a further tiebreaker is needed:
           </p>
           <ol className="list-inside list-decimal space-y-1">
-            <li>More <span className="text-red-600 dark:text-red-300">wrong predictions</span> comes first</li>
-            <li>More <span className="text-foreground/50">missed predictions</span> comes first</li>
-            <li>Alphabetical name order</li>
+            <li>Most <span className="text-red-600 dark:text-red-300">wrong predictions</span> ranks lower</li>
+            <li>Most <span className="text-foreground/50">missed predictions</span> ranks lower</li>
+            <li>Players still tied share the same rank</li>
           </ol>
         </div>
       </main>

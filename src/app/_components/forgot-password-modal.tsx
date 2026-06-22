@@ -10,7 +10,7 @@ export function ForgotPasswordModal() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="font-medium text-foreground/50 hover:text-foreground/70 transition"
+        className="cursor-pointer text-sm text-foreground/50 hover:text-foreground/70 transition"
       >
         Forgot password?
       </button>

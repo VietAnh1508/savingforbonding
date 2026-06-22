@@ -85,16 +85,28 @@ export const leaderboardRouter = createTRPCRouter({
       };
     });
 
-    const entries = unsortedEntries
-      .sort((a, b) => {
-        if (b.beers !== a.beers) return b.beers - a.beers;
-        if (b.incorrectPredictions !== a.incorrectPredictions)
-          return b.incorrectPredictions - a.incorrectPredictions;
-        if (b.missedPredictions !== a.missedPredictions)
-          return b.missedPredictions - a.missedPredictions;
-        return (a.name ?? "").localeCompare(b.name ?? "");
-      })
-      .map((entry, index) => ({ ...entry, rank: index + 1 }));
+    const sorted = unsortedEntries.sort((a, b) => {
+      if (b.beers !== a.beers) return b.beers - a.beers;
+      if (b.incorrectPredictions !== a.incorrectPredictions)
+        return b.incorrectPredictions - a.incorrectPredictions;
+      if (b.missedPredictions !== a.missedPredictions)
+        return b.missedPredictions - a.missedPredictions;
+      return 0;
+    });
+
+    const entries: Array<(typeof sorted)[number] & { rank: number }> = [];
+    for (let i = 0; i < sorted.length; i++) {
+      const entry = sorted[i]!;
+      const prev = entries[i - 1];
+      const rank =
+        prev &&
+        prev.beers === entry.beers &&
+        prev.incorrectPredictions === entry.incorrectPredictions &&
+        prev.missedPredictions === entry.missedPredictions
+          ? prev.rank
+          : i + 1;
+      entries.push({ ...entry, rank });
+    }
 
     return { entries, lastUpdated };
   }),

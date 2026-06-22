@@ -65,9 +65,8 @@ export function NavMenu({ isLoggedIn, userName, userEmail }: NavClientProps) {
         )}
       </div>
 
-      {/* Mobile: theme toggle → hamburger → user menu */}
+      {/* Mobile: hamburger → user menu */}
       <div className="flex items-center gap-2 md:hidden">
-        <ThemeToggle />
         <button
           className="flex flex-col items-center justify-center gap-1 p-1"
           onClick={() => setOpen((v) => !v)}
@@ -100,6 +99,10 @@ export function NavMenu({ isLoggedIn, userName, userEmail }: NavClientProps) {
       {open && (
         <div className="absolute left-0 right-0 top-full z-200 flex flex-col gap-4 border-b border-foreground/10 bg-white/95 px-6 py-5 backdrop-blur-sm dark:bg-black/90 md:hidden">
           {links}
+          <div className="flex items-center justify-between border-t border-foreground/10 pt-1">
+            <span className="text-sm text-foreground/60">Theme</span>
+            <ThemeToggle />
+          </div>
         </div>
       )}
     </>

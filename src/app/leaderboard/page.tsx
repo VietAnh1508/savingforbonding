@@ -1,11 +1,13 @@
 import { LeaderboardTabs } from "~/app/_components/leaderboard-tabs";
 import { Nav } from "~/app/_components/nav";
+import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
 export default async function LeaderboardPage() {
-  const [global, beerPool] = await Promise.all([
+  const [global, beerPool, session] = await Promise.all([
     api.leaderboard.global(),
     api.leaderboard.totalBeerPool(),
+    auth(),
   ]);
 
   return (
@@ -17,7 +19,11 @@ export default async function LeaderboardPage() {
           Who owes the most beer? Higher is more generous.
         </p>
 
-        <LeaderboardTabs global={global} beerPool={beerPool} />
+        <LeaderboardTabs
+          global={global}
+          beerPool={beerPool}
+          currentUserId={session?.user?.id}
+        />
       </main>
     </HydrateClient>
   );
