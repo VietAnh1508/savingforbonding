@@ -32,9 +32,11 @@ function titleForRank(rank: number): string | null {
 export function LeaderboardTable({
   entries,
   beersLabel = "Beers",
+  currentUserId,
 }: {
   entries: Entry[];
   beersLabel?: string;
+  currentUserId?: string;
 }) {
   if (entries.length === 0) {
     return (
@@ -56,10 +58,16 @@ export function LeaderboardTable({
           </tr>
         </thead>
         <tbody>
-          {entries.map((entry) => (
+          {entries.map((entry) => {
+            const isCurrentUser = !!currentUserId && entry.id === currentUserId;
+            return (
             <tr
               key={entry.id}
-              className="border-b border-foreground/5 transition hover:bg-foreground/5"
+              className={`border-b border-foreground/5 transition ${
+                isCurrentUser
+                  ? "border-l-2 border-l-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/15"
+                  : "hover:bg-foreground/5"
+              }`}
             >
               <td className="px-2 py-3 sm:px-4">
                 <div className="flex justify-center">
@@ -89,6 +97,11 @@ export function LeaderboardTable({
                     <span className="font-medium">
                       {entry.name ?? "Anonymous"}
                     </span>
+                    {isCurrentUser && (
+                      <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                        You
+                      </span>
+                    )}
                     {titleForRank(entry.rank) && (
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${RANK_BADGE_CLASSES[entry.rank]}`}>
                         {titleForRank(entry.rank)}
@@ -119,7 +132,8 @@ export function LeaderboardTable({
                 {formatJoiningDate(entry.joiningDate)}
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>
