@@ -77,22 +77,23 @@ export default async function SignInPage({
             />
           </div>
 
-          <div className="flex justify-end">
-            <ForgotPasswordModal />
-          </div>
-
           <SubmitButton>Sign in</SubmitButton>
         </form>
 
-        <p className="mt-6 text-center text-sm text-foreground/50">
-          No account yet?{" "}
-          <Link
-            href="/auth/signup"
-            className="font-medium text-emerald-400 hover:text-emerald-300"
-          >
-            Create one
-          </Link>
-        </p>
+        <div className="mt-6 space-y-2 text-center text-sm text-foreground/50">
+          <p>
+            <ForgotPasswordModal />
+          </p>
+          <p>
+            No account yet?{" "}
+            <Link
+              href="/auth/signup"
+              className="font-medium text-emerald-400 hover:text-emerald-300"
+            >
+              Create one
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

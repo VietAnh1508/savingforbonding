@@ -23,11 +23,14 @@ type VoteItem =
 export function RecentPredictions({ items }: { items: VoteItem[] }) {
   return (
     <section className="flex min-h-0 flex-1 flex-col">
-      <h2 className="mb-4 text-xl font-semibold">Recent Predictions</h2>
+      <h2 className="mb-4 text-xl font-semibold">Match History</h2>
       {items.length === 0 ? (
         <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-8 text-center text-foreground/50">
           No predictions yet.{" "}
-          <a href="/" className="text-emerald-600 dark:text-emerald-400 hover:underline">
+          <a
+            href="/"
+            className="text-emerald-600 dark:text-emerald-400 hover:underline"
+          >
             Browse matches
           </a>
         </div>

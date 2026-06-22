@@ -35,7 +35,7 @@ export default async function MatchPage({
         </div>
 
         <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-8">
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-8 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
             <MatchStatusBadge status={match.status} />
             <time
               dateTime={match.kickoffAt.toISOString()}
@@ -79,15 +79,6 @@ export default async function MatchPage({
         </div>
 
         <div className="mt-8 space-y-8">
-          <BeerStakes />
-
-          <BettingRatios
-            homeCountry={match.homeCountry}
-            awayCountry={match.awayCountry}
-            homeRatio={match.homeRatio}
-            awayRatio={match.awayRatio}
-          />
-
           {session?.user ? (
             <VoteForm
               matchId={match.id}
@@ -108,6 +99,15 @@ export default async function MatchPage({
               </p>
             </div>
           )}
+
+          <BettingRatios
+            homeCountry={match.homeCountry}
+            awayCountry={match.awayCountry}
+            homeRatio={match.homeRatio}
+            awayRatio={match.awayRatio}
+          />
+
+          <BeerStakes />
         </div>
       </main>
     </HydrateClient>
