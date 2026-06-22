@@ -1,17 +1,9 @@
-import React from "react";
 import Image from "next/image";
 
-import { MedalIcon } from "~/app/_components/icons/medal-icon";
 import { formatJoiningDate } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
 type Entry = RouterOutputs["leaderboard"]["global"]["entries"][number];
-
-const RANK_ICONS: Record<number, React.ReactElement> = {
-  1: <MedalIcon size={28} variant="gold" />,
-  2: <MedalIcon size={28} variant="silver" />,
-  3: <MedalIcon size={28} variant="bronze" />,
-};
 
 const RANK_BADGE_CLASSES: Record<number, string> = {
   1: "bg-yellow-400/20 text-yellow-700 dark:bg-yellow-400/15 dark:text-yellow-300",
@@ -71,11 +63,9 @@ export function LeaderboardTable({
             >
               <td className="px-2 py-3 sm:px-4">
                 <div className="flex justify-center">
-                  {RANK_ICONS[entry.rank] ?? (
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-sm font-bold text-foreground/60">
-                      {entry.rank}
-                    </span>
-                  )}
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-sm font-bold text-foreground/60">
+                    {entry.rank}
+                  </span>
                 </div>
               </td>
               <td className="px-2 py-3 sm:px-4">
