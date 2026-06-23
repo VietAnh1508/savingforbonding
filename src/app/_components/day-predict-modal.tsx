@@ -169,6 +169,11 @@ export function DayPredictModal({
                     </button>
                   ))}
                 </div>
+                <div className="grid grid-cols-3 gap-2 text-center text-xs text-foreground/40">
+                  <span>{match.voteCounts.home} voter{match.voteCounts.home === 1 ? "" : "s"}</span>
+                  <span>{match.voteCounts.draw} voter{match.voteCounts.draw === 1 ? "" : "s"}</span>
+                  <span>{match.voteCounts.away} voter{match.voteCounts.away === 1 ? "" : "s"}</span>
+                </div>
               </div>
             );
           })}
