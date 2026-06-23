@@ -99,6 +99,15 @@ Pages are async server components that call `api.*.prefetch()` to populate the R
 - `src/trpc/react.tsx` — client-side tRPC + React Query provider setup
 - `prisma/schema.prisma` — complete data model
 
+## Commit Convention
+
+Follow Conventional Commits: `<type>(<scope>): <description>`
+
+Types: `feat`, `fix`, `chore`, `refactor`, `docs`, `style`, `test`
+
+- Subject line: imperative mood, ≤72 chars, no trailing period
+- Body: explain *why*, not what — omit if the subject line is self-explanatory
+
 ## Notes
 
 - `TECHNICAL_BRIEF.md` documents an earlier design (PostgreSQL, OAuth, Football-Data.org API, Vercel crons). The actual implementation differs — trust the code, not the brief.
