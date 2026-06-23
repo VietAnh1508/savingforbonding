@@ -72,27 +72,39 @@ export const matchRouter = createTRPCRouter({
 
       if (!match) return null;
 
-      const userVote = ctx.session?.user
-        ? await ctx.db.vote.findUnique({
-            where: {
-              userId_matchId: {
-                userId: ctx.session.user.id,
-                matchId: match.id,
+      const [userVote, voteCountsByMatchId, allVotes] = await Promise.all([
+        ctx.session?.user
+          ? ctx.db.vote.findUnique({
+              where: {
+                userId_matchId: {
+                  userId: ctx.session.user.id,
+                  matchId: match.id,
+                },
               },
-            },
-          })
-        : null;
-
-      const voteCountsByMatchId = await getVoteCountsByMatchId(ctx.db, [
-        match.id,
+            })
+          : null,
+        getVoteCountsByMatchId(ctx.db, [match.id]),
+        ctx.db.vote.findMany({
+          where: { matchId: match.id },
+          select: {
+            outcome: true,
+            user: { select: { id: true, name: true } },
+          },
+        }),
       ]);
+
+      const voters = {
+        home: allVotes.filter((v) => v.outcome === "HOME_WIN").map((v) => v.user),
+        draw: allVotes.filter((v) => v.outcome === "DRAW").map((v) => v.user),
+        away: allVotes.filter((v) => v.outcome === "AWAY_WIN").map((v) => v.user),
+      };
 
       return {
         ...match,
         votingOpen: isVotingOpen(match.kickoffAt, match.status),
         userVote,
-        voteCounts:
-          voteCountsByMatchId.get(match.id) ?? emptyMatchVoteCounts(),
+        voteCounts: voteCountsByMatchId.get(match.id) ?? emptyMatchVoteCounts(),
+        voters,
       };
     }),
 });

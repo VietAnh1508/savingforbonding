@@ -4,6 +4,7 @@ import { BeerStakes } from "~/app/_components/beer-stakes";
 import { BettingRatios } from "~/app/_components/betting-ratios";
 import { MatchStatusBadge } from "~/app/_components/match-status-badge";
 import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
+import { VoterList } from "~/app/_components/voter-list";
 import { Nav } from "~/app/_components/nav";
 import { TeamFlag } from "~/app/_components/team-flag";
 import { VoteForm } from "~/app/_components/vote-form";
@@ -75,6 +76,7 @@ export default async function MatchPage({
               awayCountry={match.awayCountry}
               voteCounts={match.voteCounts}
             />
+            {match.status === "COMPLETED" && <VoterList voters={match.voters} />}
           </div>
         </div>
 
