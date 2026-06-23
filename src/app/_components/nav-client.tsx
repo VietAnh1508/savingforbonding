@@ -107,7 +107,7 @@ export function NavMenu({ isLoggedIn, userName, userEmail }: NavClientProps) {
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-label="Toggle menu"
-          className="flex flex-col items-center justify-center gap-1 rounded-md p-2 transition hover:bg-foreground/5"
+          className="flex h-10 flex-col items-center justify-center gap-1 rounded-md p-2 transition hover:bg-foreground/5"
         >
           <span
             className={`block h-0.5 w-5 bg-foreground transition-all duration-200 ${open ? "translate-y-1.5 rotate-45" : ""}`}

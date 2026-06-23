@@ -94,11 +94,6 @@ export function LeaderboardTable({
                     <span className="font-medium">
                       {entry.name ?? "Anonymous"}
                     </span>
-                    {isCurrentUser && (
-                      <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
-                        You
-                      </span>
-                    )}
                     {titleForRank(rankOrder[entry.rank] ?? 0) && (
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${RANK_BADGE_CLASSES[rankOrder[entry.rank] ?? 0]}`}>
                         {titleForRank(rankOrder[entry.rank] ?? 0)}
