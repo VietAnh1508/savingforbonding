@@ -104,7 +104,7 @@ export const leaderboardRouter = createTRPCRouter({
         prev.incorrectPredictions === entry.incorrectPredictions &&
         prev.missedPredictions === entry.missedPredictions
           ? prev.rank
-          : i + 1;
+          : (prev ? prev.rank + 1 : 1);
       entries.push({ ...entry, rank });
     }
 
