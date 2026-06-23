@@ -38,6 +38,13 @@ export function LeaderboardTable({
     );
   }
 
+  const rankOrder = [...new Set(entries.map((e) => e.rank))]
+    .sort((a, b) => a - b)
+    .reduce<Record<number, number>>((acc, rank, i) => {
+      acc[rank] = i + 1;
+      return acc;
+    }, {});
+
   return (
     <div className="overflow-hidden rounded-xl border border-foreground/10">
       <table className="w-full">
@@ -92,9 +99,9 @@ export function LeaderboardTable({
                         You
                       </span>
                     )}
-                    {titleForRank(entry.rank) && (
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${RANK_BADGE_CLASSES[entry.rank]}`}>
-                        {titleForRank(entry.rank)}
+                    {titleForRank(rankOrder[entry.rank] ?? 0) && (
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${RANK_BADGE_CLASSES[rankOrder[entry.rank] ?? 0]}`}>
+                        {titleForRank(rankOrder[entry.rank] ?? 0)}
                       </span>
                     )}
                   </div>
