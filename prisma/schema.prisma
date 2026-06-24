@@ -102,6 +102,19 @@ model User {
     accounts      Account[]
     sessions      Session[]
     votes         Vote[]
+    following     UserFollow[] @relation("FollowerFollows")
+    followers     UserFollow[] @relation("FollowingFollows")
+}
+
+model UserFollow {
+    id          String   @id @default(cuid())
+    followerId  String
+    followingId String
+    follower    User     @relation("FollowerFollows", fields: [followerId], references: [id], onDelete: Cascade)
+    following   User     @relation("FollowingFollows", fields: [followingId], references: [id], onDelete: Cascade)
+    createdAt   DateTime @default(now())
+
+    @@unique([followerId, followingId])
 }
 
 model VerificationToken {

@@ -11,10 +11,11 @@ export default async function ProfilePage() {
   const session = await auth();
   if (!session?.user) redirect("/auth/signin");
 
-  const [stats, votes, missedMatches] = await Promise.all([
+  const [stats, votes, missedMatches, followers] = await Promise.all([
     api.vote.getMyStats(),
     api.vote.getMyVotes({ limit: 20 }),
     api.vote.getMyMissedMatches({ limit: 20 }),
+    api.vote.getMyFollowers(),
   ]);
 
   const voteItems = votes.map((v) => ({
@@ -91,6 +92,41 @@ export default async function ProfilePage() {
               </div>
               <div className="text-xs text-foreground/50">Correct / Wrong / Missed</div>
             </div>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-foreground/50">
+              Followers
+            </h2>
+            {followers.length === 0 ? (
+              <p className="text-sm text-foreground/40">
+                Nobody is following you yet.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {followers.map(({ follower }) => (
+                  <div
+                    key={follower.id}
+                    className="flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1.5"
+                  >
+                    {follower.image ? (
+                      <Image
+                        src={follower.image}
+                        alt={follower.name ?? "User"}
+                        width={20}
+                        height={20}
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-xs">
+                        {(follower.name ?? "?")[0]}
+                      </div>
+                    )}
+                    <span className="text-sm">{follower.name ?? "Anonymous"}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <RecentPredictions items={allItems} />

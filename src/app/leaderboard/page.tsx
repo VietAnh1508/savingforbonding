@@ -10,6 +10,10 @@ export default async function LeaderboardPage() {
     auth(),
   ]);
 
+  if (session?.user) {
+    await api.vote.getFollowing.prefetch();
+  }
+
   return (
     <HydrateClient>
       <Nav />
