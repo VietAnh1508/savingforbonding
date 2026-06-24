@@ -1,7 +1,7 @@
-import { type PrismaClient } from "../../../../generated/prisma";
 import { BEER_NO_BET } from "~/lib/match";
 import { resolveUserJoiningDate } from "~/lib/user-joining-date";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { type PrismaClient } from "../../../../generated/prisma";
 
 const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
 function toVNDate(date: Date): string {
@@ -75,6 +75,8 @@ export const leaderboardRouter = createTRPCRouter({
 
       const correct = user.votes.filter((v) => v.isCorrect === true).length;
       const incorrect = user.votes.filter((v) => v.isCorrect === false).length;
+      const totalVotes = correct + incorrect;
+      const accuracy = totalVotes > 0 ? correct / totalVotes : 0;
 
       return {
         id: user.id,
@@ -88,11 +90,13 @@ export const leaderboardRouter = createTRPCRouter({
         correctPredictions: correct,
         incorrectPredictions: incorrect,
         missedPredictions: completedMatchCount - correct - incorrect,
+        accuracy,
       };
     });
 
     const sorted = unsortedEntries.sort((a, b) => {
       if (b.beers !== a.beers) return b.beers - a.beers;
+      if (a.accuracy !== b.accuracy) return a.accuracy - b.accuracy;
       if (b.incorrectPredictions !== a.incorrectPredictions)
         return b.incorrectPredictions - a.incorrectPredictions;
       if (b.missedPredictions !== a.missedPredictions)
@@ -104,13 +108,19 @@ export const leaderboardRouter = createTRPCRouter({
     for (let i = 0; i < sorted.length; i++) {
       const entry = sorted[i]!;
       const prev = entries[i - 1];
-      const rank =
-        prev &&
+      let rank: number;
+      if (!prev) {
+        rank = 1;
+      } else if (
         prev.beers === entry.beers &&
+        prev.accuracy === entry.accuracy &&
         prev.incorrectPredictions === entry.incorrectPredictions &&
         prev.missedPredictions === entry.missedPredictions
-          ? prev.rank
-          : (prev ? prev.rank + 1 : 1);
+      ) {
+        rank = prev.rank;
+      } else {
+        rank = prev.rank + 1;
+      }
       entries.push({ ...entry, rank });
     }
 
@@ -167,3 +177,4 @@ export const leaderboardRouter = createTRPCRouter({
     });
   }),
 });
+

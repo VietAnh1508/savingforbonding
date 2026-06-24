@@ -18,6 +18,7 @@ export default function RulesPage() {
             Tied players share the same rank. If a further tiebreaker is needed:
           </p>
           <ol className="list-inside list-decimal space-y-1">
+            <li>Lower <span className="text-amber-600 dark:text-amber-400">accuracy</span> (correct ÷ voted) ranks lower</li>
             <li>Most <span className="text-red-600 dark:text-red-300">wrong predictions</span> ranks lower</li>
             <li>Most <span className="text-foreground/50">missed predictions</span> ranks lower</li>
             <li>Players still tied share the same rank</li>

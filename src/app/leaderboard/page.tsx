@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { LeaderboardTabs } from "~/app/_components/leaderboard-tabs";
 import { Nav } from "~/app/_components/nav";
 import { auth } from "~/server/auth";
@@ -22,6 +24,13 @@ export default async function LeaderboardPage() {
         <p className="mb-8 text-foreground/60">
           Who owes the most beer? Higher is more generous.
         </p>
+
+        <div className="mb-6 rounded-xl border border-blue-500/20 bg-blue-500/10 px-4 py-3 text-sm text-blue-700 dark:text-blue-300">
+          <span className="font-semibold">Ranking updated:</span> tiebreaks now consider prediction accuracy (correct votes ÷ total voted).{" "}
+          <Link href="/rules" className="underline underline-offset-2 hover:opacity-80">
+            See the Rules page for details.
+          </Link>
+        </div>
 
         <LeaderboardTabs
           global={global}
