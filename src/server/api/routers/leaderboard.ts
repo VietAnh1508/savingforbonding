@@ -1,6 +1,12 @@
 import { type PrismaClient } from "../../../../generated/prisma";
+import { BEER_NO_BET } from "~/lib/match";
 import { resolveUserJoiningDate } from "~/lib/user-joining-date";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+
+const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
+function toVNDate(date: Date): string {
+  return new Date(date.getTime() + VN_OFFSET_MS).toISOString().slice(0, 10);
+}
 
 const leaderboardUserSelect = {
   id: true,
@@ -127,5 +133,37 @@ export const leaderboardRouter = createTRPCRouter({
       contributorCount: contributors,
       userCount: aggregate._count._all,
     };
+  }),
+
+  beerByDay: publicProcedure.query(async ({ ctx }) => {
+    const [completedMatches, totalUsers] = await Promise.all([
+      ctx.db.match.findMany({
+        where: { status: "COMPLETED" },
+        select: {
+          kickoffAt: true,
+          votes: {
+            where: { isCorrect: { not: null } },
+            select: { points: true },
+          },
+        },
+        orderBy: { kickoffAt: "asc" },
+      }),
+      ctx.db.user.count(),
+    ]);
+
+    const dayMap = new Map<string, number>();
+    for (const match of completedMatches) {
+      const date = toVNDate(match.kickoffAt);
+      const voteBeerSum = match.votes.reduce((sum, v) => sum + v.points, 0);
+      const noBetBeers = (totalUsers - match.votes.length) * BEER_NO_BET;
+      dayMap.set(date, (dayMap.get(date) ?? 0) + voteBeerSum + noBetBeers);
+    }
+
+    const days = [...dayMap.entries()].sort(([a], [b]) => a.localeCompare(b));
+    let cumulative = 0;
+    return days.map(([date, daily]) => {
+      cumulative += daily;
+      return { date, daily, cumulative };
+    });
   }),
 });

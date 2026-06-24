@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { BeerAccumulationChart } from "~/app/_components/beer-accumulation-chart";
 import { LeaderboardTable } from "~/app/_components/leaderboard-table";
-import { formatBeers } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
 type TabId = "allTime" | "beerPool";
@@ -75,21 +75,20 @@ export function LeaderboardTabs({
       )}
 
       {activeTab === "beerPool" && (
-        <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-10 text-center">
-          <p className="text-sm font-medium uppercase tracking-wide text-foreground/50">
-            Community Beer Pool
-          </p>
-          <p className="mt-4 text-6xl font-bold text-amber-600 dark:text-amber-400">
-            🍺 {beerPool.totalBeers}
-          </p>
-          <p className="mt-3 text-lg text-foreground/80">
-            {formatBeers(beerPool.totalBeers)} pledged across the group
-          </p>
-          <p className="mt-6 text-sm text-foreground/50">
-            {beerPool.contributorCount} of {beerPool.userCount} player
-            {beerPool.userCount === 1 ? "" : "s"} on the board
-          </p>
-        </div>
+        <>
+          <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-10 text-center">
+            <p className="text-sm font-medium uppercase tracking-wide text-foreground/50">
+              Community Beer Pool
+            </p>
+            <p className="mt-4 text-6xl font-bold text-amber-600 dark:text-amber-400">
+              🍺 {beerPool.totalBeers}
+            </p>
+            <p className="mt-3 text-lg text-foreground/80">
+              beers pledged across the group
+            </p>
+          </div>
+          <BeerAccumulationChart />
+        </>
       )}
     </div>
   );
