@@ -277,7 +277,7 @@ export function LeaderboardTable({
                         />
                       ) : (
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-sm">
-                          {(entry.name ?? "?")[0]}
+                          {[...(entry.name ?? "?")][0]}
                         </div>
                       )}
                       <div className="flex flex-col gap-0.5">
