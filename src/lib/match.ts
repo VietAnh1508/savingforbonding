@@ -72,7 +72,7 @@ export function adjustedScores(
 ): { home: number; away: number } {
   return {
     home: homeRatio > 0 ? homeScore - homeRatio : homeScore,
-    away: awayRatio > 0 ? awayScore + awayRatio : awayScore,
+    away: awayRatio > 0 ? awayScore - awayRatio : awayScore,
   };
 }
 
@@ -134,7 +134,7 @@ export function describeHandicapRule(
     return `${homeCountry} -${formatRatioValue(homeRatio)} handicap. (1) wins only if home beats the line; (X) on a tie after handicap; (2) if away covers.`;
   }
 
-  return `${awayCountry} +${formatRatioValue(awayRatio)} handicap. (2) wins unless home overcomes the line; (X) on a tie after handicap; (1) if home covers.`;
+  return `${awayCountry} -${formatRatioValue(awayRatio)} handicap. (2) wins only if away beats the line; (X) on a tie after handicap; (1) if home covers.`;
 }
 
 export function outcomeShort(outcome: VoteOutcome): string {

@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { adminLogin } from "~/app/admin/actions";
 import { FifaSyncBanner } from "~/app/admin/_components/fifa-sync-banner";
+import { RepairBeerTotalsButton } from "~/app/admin/_components/repair-beer-totals-button";
 import { ADMIN_COOKIE } from "~/lib/admin";
 
 export default async function AdminPage({
@@ -51,6 +52,7 @@ export default async function AdminPage({
   return (
     <div className="space-y-6">
       <FifaSyncBanner />
+      <RepairBeerTotalsButton />
       <Link
         href="/admin/matches"
         className="block rounded-xl border border-foreground/10 bg-foreground/5 p-6 transition hover:bg-foreground/10"
