@@ -68,7 +68,9 @@ export function LeaderboardTable({
   currentUserId?: string;
 }) {
   const [pendingFollowId, setPendingFollowId] = useState<string | null>(null);
-  const [pendingUnfollowId, setPendingUnfollowId] = useState<string | null>(null);
+  const [pendingUnfollowId, setPendingUnfollowId] = useState<string | null>(
+    null,
+  );
   const [backfill, setBackfill] = useState(false);
 
   const toast = useToast();
@@ -196,10 +198,15 @@ export function LeaderboardTable({
         <table className="w-full">
           <thead>
             <tr className="border-b border-foreground/10 bg-foreground/5 text-left text-sm text-foreground/60">
-              <th className="px-2 py-3 text-center font-medium sm:px-4">Rank</th>
-              <th className="px-2 py-3 font-medium sm:px-4">Player</th>
-              <th className="px-4 py-3 text-right font-medium">{beersLabel}</th>
-              <th className="hidden px-4 py-3 font-medium sm:table-cell">Joining Date</th>
+              <th className="w-8 px-1 py-3 text-center font-medium sm:px-2">Copy</th>
+              <th className="px-1 py-3 text-center font-medium sm:px-2">
+                Rank
+              </th>
+              <th className="px-1 py-3 font-medium sm:px-2">Player</th>
+              <th className="w-px whitespace-nowrap px-4 py-3 text-right font-medium">{beersLabel}</th>
+              <th className="hidden w-px whitespace-nowrap px-4 py-3 font-medium sm:table-cell">
+                Joining Date
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -220,14 +227,45 @@ export function LeaderboardTable({
                       : "hover:bg-foreground/5"
                   }`}
                 >
-                  <td className="px-2 py-3 sm:px-4">
+                  <td className="px-1 py-3 sm:px-2">
+                    <div className="flex justify-center">
+                      {canFollow ? (
+                        <span className="group relative">
+                          <button
+                            type="button"
+                            onClick={() => handleFollowClick(entry.id)}
+                            aria-label={
+                              isFollowing
+                                ? `Unfollow ${entry.name ?? "user"}`
+                                : `Follow ${entry.name ?? "user"}`
+                            }
+                            className={`cursor-pointer rounded p-0.5 transition ${
+                              isFollowing
+                                ? "text-emerald-500 hover:text-emerald-400"
+                                : "text-foreground/30 hover:text-foreground/60"
+                            }`}
+                          >
+                            <StarIcon filled={isFollowing} />
+                          </button>
+                          <span className="pointer-events-none absolute bottom-full left-0 z-10 mb-1 hidden whitespace-nowrap rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-normal text-white shadow-lg ring-1 ring-white/10 group-hover:block">
+                            {isFollowing
+                              ? `Unfollow ${entry.name ?? "player"}`
+                              : `Copy votes from ${entry.name ?? "player"}`}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="h-5 w-5" />
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-1 py-3 sm:px-2">
                     <div className="flex justify-center">
                       <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-sm font-bold text-foreground/60">
                         {entry.rank}
                       </span>
                     </div>
                   </td>
-                  <td className="px-2 py-3 sm:px-4">
+                  <td className="px-1 py-3 sm:px-2">
                     <div className="flex items-center gap-3">
                       {entry.image ? (
                         <Image
@@ -256,26 +294,8 @@ export function LeaderboardTable({
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-right font-bold text-amber-600 dark:text-amber-400">
-                    <div className="flex items-center justify-end gap-2">
-                      {canFollow && (
-                        <button
-                          type="button"
-                          onClick={() => handleFollowClick(entry.id)}
-                          aria-label={
-                            isFollowing
-                              ? `Unfollow ${entry.name ?? "user"}`
-                              : `Follow ${entry.name ?? "user"}`
-                          }
-                          className={`cursor-pointer rounded p-0.5 transition ${
-                            isFollowing
-                              ? "text-emerald-500 hover:text-emerald-400"
-                              : "text-foreground/30 hover:text-foreground/60"
-                          }`}
-                        >
-                          <StarIcon filled={isFollowing} />
-                        </button>
-                      )}
+                  <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-amber-600 dark:text-amber-400">
+                    <div className="flex items-center justify-end">
                       <span
                         className="group relative inline-block cursor-help outline-none"
                         tabIndex={0}
@@ -293,11 +313,25 @@ export function LeaderboardTable({
                           <span className="text-white/40">
                             {entry.missedPredictions}
                           </span>
+                          <span className="ml-2 text-amber-400">
+                            (
+                            {entry.correctPredictions +
+                              entry.incorrectPredictions >
+                            0
+                              ? Math.round(
+                                  (entry.correctPredictions /
+                                    (entry.correctPredictions +
+                                      entry.incorrectPredictions)) *
+                                    100,
+                                )
+                              : 0}
+                            %)
+                          </span>
                         </span>
                       </span>
                     </div>
                   </td>
-                  <td className="hidden px-4 py-3 text-sm text-foreground/60 sm:table-cell">
+                  <td className="hidden whitespace-nowrap px-4 py-3 text-sm text-foreground/60 sm:table-cell">
                     {formatJoiningDate(entry.joiningDate)}
                   </td>
                 </tr>
@@ -309,3 +343,4 @@ export function LeaderboardTable({
     </>
   );
 }
+
