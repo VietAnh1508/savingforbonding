@@ -16,35 +16,22 @@ Developer replies: "@claude go ahead"
 Claude implements the fix + opens a PR (~2 minutes)
 ```
 
-```mermaid
-sequenceDiagram
-    actor User as User / Colleague
-    participant GH as GitHub Issues
-    participant Triage as issue-triage workflow
-    participant Claude as Claude (claude-code-action)
-    participant Autofix as issue-autofix workflow
-    participant PR as Pull Request
-
-    User->>GH: Opens new issue
-    GH->>Triage: Triggers on issues.opened
-    Triage->>Claude: Run triage prompt
-    Claude->>GH: Posts friendly acknowledgement comment
-    note over Claude,GH: If trivial & unambiguous,<br/>appends "Reply @claude go ahead<br/>to auto-implement"
-
-    alt Trivial issue — human approves
-        User->>GH: Replies "@claude go ahead"
-        GH->>Autofix: Triggers on issue_comment.created
-        note over Autofix: Guards: commenter must be OWNER<br/>or COLLABORATOR, not a Bot,<br/>and comment must be on an issue (not a PR)
-        Autofix->>Claude: Run autofix prompt (max 30 turns)
-        Claude->>Claude: gh issue view — read full context
-        Claude->>Claude: Implement changes (Read/Write/Edit)
-        Claude->>Claude: npm run typecheck — fix any errors
-        Claude->>Claude: git — create branch off develop
-        Claude->>PR: gh pr create → opens PR against develop
-        Claude->>GH: Posts comment linking to the PR
-    else Complex or ambiguous issue
-        User->>GH: Discusses, clarifies, or handles manually
-    end
+```
+ User              GitHub Issues      issue-triage       issue-autofix        PR
+  │                    │                   │                   │               │
+  ├── opens issue ─────►                   │                   │               │
+  │                    ├── triggers ───────►                   │               │
+  │                    │◄── comment ───────┤                   │               │
+  │                    │    (if trivial: "Reply @claude go ahead")             │
+  │                    │                   │                   │               │
+  ├── "@claude go ahead" ─────────────────────────────────────►                │
+  │                    │   guard: OWNER/COLLABORATOR, not Bot, on issue        │
+  │                    │                   │   reads issue ────►               │
+  │                    │                   │   implements      │               │
+  │                    │                   │   typecheck       │               │
+  │                    │                   │   git branch      │               │
+  │                    │                   │                   ├── opens PR ───►
+  │                    │◄────────────────────────── PR link ───┤               │
 ```
 
 Claude decides whether an issue is trivial. For trivial issues, the developer's only required action is replying with `@claude go ahead`.
@@ -54,6 +41,7 @@ Claude decides whether an issue is trivial. For trivial issues, the developer's 
 ### Getting a triage
 
 Every new issue is automatically triaged. Claude will:
+
 - Restate its understanding of the request in plain language
 - Ask clarifying questions only about the desired outcome
 - List files likely to change
@@ -92,10 +80,10 @@ The workflows use `anthropics/claude-code-action@v1`, which authenticates via a 
 
 Commit both files to `.github/workflows/`:
 
-| File | Trigger | Purpose |
-|------|---------|---------|
-| `issue-triage.yml` | `issues: [opened]` | Triages new issues; offers auto-fix if trivial |
-| `issue-autofix.yml` | `issue_comment: [created]` (filtered to "go ahead") | Implements fix + creates PR |
+| File                | Trigger                                             | Purpose                                        |
+| ------------------- | --------------------------------------------------- | ---------------------------------------------- |
+| `issue-triage.yml`  | `issues: [opened]`                                  | Triages new issues; offers auto-fix if trivial |
+| `issue-autofix.yml` | `issue_comment: [created]` (filtered to "go ahead") | Implements fix + creates PR                    |
 
 ### 3. Issue templates (optional but recommended)
 
@@ -105,15 +93,16 @@ The templates in `.github/ISSUE_TEMPLATE/` guide users to provide structured inp
 
 ### issue-triage.yml
 
-| Setting | Value |
-|---------|-------|
-| Trigger | `issues: [opened]` |
-| Permissions | `contents: read`, `issues: write`, `id-token: write` |
-| Claude tools | `gh issue comment:*`, `gh issue view:*` |
+| Setting      | Value                                                |
+| ------------ | ---------------------------------------------------- |
+| Trigger      | `issues: [opened]`                                   |
+| Permissions  | `contents: read`, `issues: write`, `id-token: write` |
+| Claude tools | `gh issue comment:*`, `gh issue view:*`              |
 
 Claude posts a comment that:
+
 - Restates the request in plain language (no technical jargon)
-- Asks clarifying questions only about the *desired outcome*, not the implementation
+- Asks clarifying questions only about the _desired outcome_, not the implementation
 - Privately classifies the issue as `trivial`, `simple`, or `complex`
 - Appends `Reply @claude go ahead to auto-implement` **only** when the issue is trivial and fully clear
 
@@ -121,18 +110,19 @@ This triage step acts as a natural gate: complex or ambiguous work stays in the 
 
 ### issue-autofix.yml
 
-| Setting | Value |
-|---------|-------|
-| Trigger | `issue_comment: [created]` |
+| Setting          | Value                                                                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Trigger          | `issue_comment: [created]`                                                                                                                                    |
 | Guard conditions | Comment contains `@claude go ahead`; commenter is not a Bot; comment is on an issue (not a PR); commenter's `author_association` is `OWNER` or `COLLABORATOR` |
-| Permissions | `contents: write`, `issues: write`, `pull-requests: write`, `id-token: write` |
-| Checkout branch | `develop` |
-| PR target | `develop` |
-| Max turns | 30 |
-| Claude tools | `Read`, `Write`, `Edit`, `gh issue view:*`, `gh issue comment:*`, `gh pr create:*`, `git:*`, `npm run typecheck:*` |
-| Env secrets | `DATABASE_URL`, `AUTH_SECRET`, `ADMIN_PASSWORD`, `TURSO_DATABASE_URL`, `TURSO_API_KEY` — all set to `""` |
+| Permissions      | `contents: write`, `issues: write`, `pull-requests: write`, `id-token: write`                                                                                 |
+| Checkout branch  | `develop`                                                                                                                                                     |
+| PR target        | `develop`                                                                                                                                                     |
+| Max turns        | 30                                                                                                                                                            |
+| Claude tools     | `Read`, `Write`, `Edit`, `gh issue view:*`, `gh issue comment:*`, `gh pr create:*`, `git:*`, `npm run typecheck:*`                                            |
+| Env secrets      | `DATABASE_URL`, `AUTH_SECRET`, `ADMIN_PASSWORD`, `TURSO_DATABASE_URL`, `TURSO_API_KEY` — all set to `""`                                                      |
 
 Claude's implementation loop:
+
 1. Reads the full issue thread (`gh issue view --comments`)
 2. Implements the change following project conventions (TypeScript, Next.js App Router, tRPC, Tailwind v4)
 3. Runs `npm run typecheck` and fixes any errors
@@ -164,10 +154,32 @@ Claude's implementation loop:
 
 - **`author_association` vs. `user.type`.** The triage workflow uses `user.type != 'Bot'` to exclude bots; `author_association` gatekeeps autofix. These are different fields — both checks are needed.
 - **`id-token: write` is required** for OIDC-based authentication inside `claude-code-action`. Without it, the action cannot exchange credentials and will fail silently or with a confusing error.
-- **Autofix fires on *any* matching comment.** If an owner types `@claude go ahead` on a complex issue, autofix will attempt it. The triage prompt withholds the trigger phrase from complex issues, but it's not a hard block.
+- **Autofix fires on _any_ matching comment.** If an owner types `@claude go ahead` on a complex issue, autofix will attempt it. The triage prompt withholds the trigger phrase from complex issues, but it's not a hard block.
 - **`npm run typecheck` is the only quality gate.** There is no test suite, so the TypeScript compiler is Claude's only automated feedback loop. It won't catch runtime behaviour regressions.
 - **`base_branch: develop`** tells `claude-code-action` which branch to diff against when creating a PR. Without this, it may default to `main` and the PR will include unrelated commits from `develop`.
 - **Triage fails when the issue reporter is not a repo collaborator.** When `claude-code-action` exchanges the GitHub OIDC token with Anthropic's backend, it checks whether the OIDC `actor` (the user who triggered the workflow — i.e., whoever opened the issue) has write access to the repository. External users who are not collaborators fail this check with `401 Unauthorized - User does not have write access on this repository`, and the workflow errors. In practice this means triage only works when the repo owner or a collaborator opens an issue. The fix is to authenticate via `ANTHROPIC_API_KEY` instead of `CLAUDE_CODE_OAUTH_TOKEN`. The OAuth token is tied to your personal GitHub identity, so Anthropic enforces that the triggering actor has write access to the repo as a security boundary — it won't act on repos the token owner can't control. An API key is an organisation-level credential with no GitHub identity attached, so this actor check does not apply. However, an API key requires a paid Anthropic API subscription, which is not currently available.
+
+  ```
+   External User   Actions Runner    Anthropic Backend   GitHub API
+        │                │                   │                │
+        ├─ open issue ──►│                   │                │
+        │                │                   │                │
+        │   actor = "ext-user" embedded in OIDC token         │
+        │                │                   │                │
+        │                ├── OIDC token ─────►                │
+        │                │   + OAuth token   │                │
+        │                │                   ├── does actor ──►
+        │                │                   │   have write   │
+        │                │                   │   access?      │
+        │                │                   │◄── no ─────────┤
+        │                │◄── 401 Unauth ────┤                │
+        │         ✗ workflow errors          │                │
+        │                │                   │                │
+     Fix: ANTHROPIC_API_KEY has no GitHub identity attached   │
+        │                ├── API key ────────►                │
+        │                │   (no actor check)│                │
+        │                │◄── ✓ authorized ──┤                │
+  ```
 
 ## Disabling
 
