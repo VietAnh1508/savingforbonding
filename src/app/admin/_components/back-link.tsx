@@ -1,6 +1,23 @@
-import Link from "next/link";
+"use client";
 
-export function BackLink({ href }: { href: string }) {
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+export function BackLink({ href }: { href?: string }) {
+  const router = useRouter();
+
+  if (!href) {
+    return (
+      <button
+        type="button"
+        onClick={() => router.back()}
+        className="text-sm text-foreground/50 transition hover:text-foreground/80"
+      >
+        ← Back
+      </button>
+    );
+  }
+
   return (
     <Link
       href={href}

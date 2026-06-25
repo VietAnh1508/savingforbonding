@@ -124,6 +124,10 @@ function MatchList({
   );
 }
 
+function syncUrl(tab: TabId) {
+  history.replaceState(null, "", tab !== "upcoming" ? `/?tab=${tab}` : "/");
+}
+
 export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
   const [activeTab, setActiveTab] = useState<TabId>("upcoming");
   const [activeDateKey, setActiveDateKey] = useState<string>("");
@@ -233,6 +237,12 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
     setActiveDateKey(dateKey);
   };
 
+  // Read tab from URL client-side after hydration to avoid SSR mismatch
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab === "completed") setActiveTab("completed");
+  }, []);
+
   if (upcoming.length === 0) {
     return (
       <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-12 text-center">
@@ -256,7 +266,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
         <h1 className="mb-2 flex items-baseline gap-3 text-2xl font-bold">
           <button
             type="button"
-            onClick={() => setActiveTab("upcoming")}
+            onClick={() => { syncUrl("upcoming"); setActiveTab("upcoming"); }}
             className={`transition ${activeTab === "upcoming" ? "" : "text-foreground/30 hover:text-foreground/50"}`}
           >
             Upcoming
@@ -264,7 +274,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
           <span className="text-foreground/20">|</span>
           <button
             type="button"
-            onClick={() => setActiveTab("completed")}
+            onClick={() => { syncUrl("completed"); setActiveTab("completed"); }}
             className={`transition ${activeTab === "completed" ? "" : "text-foreground/30 hover:text-foreground/50"}`}
           >
             Completed
