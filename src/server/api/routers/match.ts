@@ -3,6 +3,8 @@ import { z } from "zod";
 import { MatchStatus } from "../../../../generated/prisma";
 import { isKnownCountry } from "~/lib/country-flag";
 import { isVotingOpen } from "~/lib/match";
+
+const GROUP_STAGE_NAME = "First Stage";
 import {
   createTRPCRouter,
   publicProcedure,
@@ -25,7 +27,10 @@ export const matchRouter = createTRPCRouter({
 
       const matches = (
         await ctx.db.match.findMany({
-          where: statuses ? { status: { in: statuses } } : undefined,
+          where: {
+            ...(statuses ? { status: { in: statuses } } : undefined),
+            OR: [{ stage: null }, { stage: GROUP_STAGE_NAME }],
+          },
           orderBy: { kickoffAt: "asc" },
         })
       ).filter(

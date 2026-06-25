@@ -21,34 +21,46 @@ npm run dev          # Start dev server (Turbo mode)
 npm run build        # Production build
 npm run typecheck    # Type-check (only quality gate — no test suite)
 
-npm run db:push      # Apply schema to DB without migration
-npm run db:setup     # db:push + seed
-npm run db:seed      # Re-seed the database
-npm run db:studio    # Open Prisma Studio
-npm run db:generate  # Create a new Prisma migration
-npm run db:migrate   # Apply pending migrations (production)
+npm run db:push:turso   # Apply schema to the Turso DB (dev or prod — see below)
+npm run db:seed         # Re-seed the database
+npm run db:studio       # Open Prisma Studio
 
 npm run sync:fifa    # Manually pull latest FIFA fixture data
 ```
+
+### Database setup
+
+**Both local dev and production use Turso** (there is no local SQLite workflow). The only difference is which credentials are loaded:
+
+| Environment | Credentials file | Command |
+|-------------|-----------------|---------|
+| Dev         | `.env`          | `npm run db:push:turso` |
+| Production  | `.env.prod`     | `TURSO_DATABASE_URL="..." TURSO_API_KEY="<db-token>" npm run db:push:turso` |
+
+`db:push:turso` loads `.env` automatically via `--env-file=.env`. For production, pass the `.env.prod` values explicitly as shown above.
+
+The `TURSO_API_KEY` must be a **database auth token** (not a platform API token) — run `npm run turso:db-token` to mint one if needed.
+
+**Always push the schema before deploying code** that depends on new tables or columns.
 
 There are no tests. `npm run typecheck` is the only automated check.
 
 ## Environment Variables
 
-Required in `.env`:
-- `DATABASE_URL` — SQLite path (e.g. `file:./db.sqlite`) or Turso `libsql://` URL
+Required in `.env` (dev) and `.env.prod` (production):
+- `TURSO_DATABASE_URL` — Turso `libsql://` URL
+- `TURSO_API_KEY` — Turso database auth token (not a platform API token)
 - `AUTH_SECRET` — NextAuth secret (required in production)
 - `ADMIN_PASSWORD` — Admin panel password (defaults to `admin123`)
 - `CRON_SECRET` — Secret for Vercel cron job auth (generate with `openssl rand -hex 32`)
 
-Optional (Turso remote DB):
-- `TURSO_DATABASE_URL` / `TURSO_API_KEY`
+Note: `DATABASE_URL` in `.env` is a legacy field kept for schema validation; the app always connects via `TURSO_DATABASE_URL`.
 
 ## Architecture
 
 ### Data layer
 
-`prisma/schema.prisma` defines five models: `User`, `Match`, `Vote`, `Prediction`, `BettingRatio`. The database is SQLite locally; `src/server/create-prisma-client.ts` switches to Turso (`libsql://`) when `DATABASE_URL` starts with that prefix.
+`prisma/schema.prisma` defines the data models: `User`, `Match`, `Vote`, `Prediction`, `BettingRatio`, `UserFollow`. Both dev and production use Turso (libSQL). `prisma.config.ts` loads the Turso adapter when `PRISMA_USE_TURSO=1` is set alongside valid `TURSO_DATABASE_URL` + `TURSO_API_KEY` — the `db:push:turso` script sets this automatically.
 
 ### API layer (tRPC)
 
