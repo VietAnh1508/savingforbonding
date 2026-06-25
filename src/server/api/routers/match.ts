@@ -4,7 +4,20 @@ import { MatchStatus } from "../../../../generated/prisma";
 import { isKnownCountry } from "~/lib/country-flag";
 import { isVotingOpen } from "~/lib/match";
 
-const GROUP_STAGE_NAME = "First Stage";
+const STAGE_FLAGS: [string, string | undefined][] = [
+  ["First Stage", process.env.STAGE_FIRST_STAGE],
+  ["Round of 32", process.env.STAGE_ROUND_OF_32],
+  ["Round of 16", process.env.STAGE_ROUND_OF_16],
+  ["Quarter-final", process.env.STAGE_QUARTER_FINAL],
+  ["Semi-final", process.env.STAGE_SEMI_FINAL],
+  ["Play-off for third place", process.env.STAGE_THIRD_PLACE],
+  ["Final", process.env.STAGE_FINAL],
+];
+
+const ACTIVE_STAGES = STAGE_FLAGS
+  .filter(([, flag]) => flag === "true")
+  .map(([stage]) => stage);
+
 import {
   createTRPCRouter,
   publicProcedure,
@@ -29,7 +42,12 @@ export const matchRouter = createTRPCRouter({
         await ctx.db.match.findMany({
           where: {
             ...(statuses ? { status: { in: statuses } } : undefined),
-            OR: [{ stage: null }, { stage: GROUP_STAGE_NAME }],
+            OR: [
+              { stage: null },
+              ...(ACTIVE_STAGES.length > 0
+                ? [{ stage: { in: ACTIVE_STAGES } }]
+                : []),
+            ],
           },
           orderBy: { kickoffAt: "asc" },
         })
