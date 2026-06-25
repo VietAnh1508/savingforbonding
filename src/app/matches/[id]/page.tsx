@@ -29,7 +29,7 @@ export default async function MatchPage({
       <Nav />
       <main className="container mx-auto max-w-2xl px-4 py-8">
         <div className="mb-6">
-          <BackLink href="/" />
+          <BackLink />
         </div>
         <div className="mb-2 text-sm text-foreground/50">
           {match.tournament}
