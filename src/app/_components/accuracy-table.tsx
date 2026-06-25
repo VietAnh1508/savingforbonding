@@ -20,8 +20,9 @@ const RANK_TITLES: Record<number, string> = {
 
 function computeAccuracyRankedEntries(entries: Entry[]) {
   const sorted = [...entries].sort((a, b) => {
-    if (b.accuracy !== a.accuracy) return b.accuracy - a.accuracy;
-    return b.correctPredictions - a.correctPredictions;
+    if (b.correctPredictions !== a.correctPredictions)
+      return b.correctPredictions - a.correctPredictions;
+    return b.accuracy - a.accuracy;
   });
 
   const ranked: Array<Entry & { accuracyRank: number }> = [];
@@ -32,8 +33,8 @@ function computeAccuracyRankedEntries(entries: Entry[]) {
     if (!prev) {
       accuracyRank = 1;
     } else if (
-      prev.accuracy === entry.accuracy &&
-      prev.correctPredictions === entry.correctPredictions
+      prev.correctPredictions === entry.correctPredictions &&
+      prev.accuracy === entry.accuracy
     ) {
       accuracyRank = prev.accuracyRank;
     } else {
