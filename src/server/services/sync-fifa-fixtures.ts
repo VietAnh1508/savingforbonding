@@ -9,6 +9,7 @@ import {
   fetchWorldCupFixtures,
   fifaTeamName,
   fifaTournamentName,
+  localizedDescription,
   mapFifaMatchStatus,
   parseFifaKickoffToUtc,
 } from "~/server/services/fifa-api";
@@ -56,6 +57,7 @@ export async function syncFifaFixtures(
       lookupKqbdKickoff(fifaHome, fifaAway, kqbdKickoffLookup) ??
       parseFifaKickoffToUtc(fixture.Date);
     const tournament = fifaTournamentName(fixture);
+    const stage = localizedDescription(fixture.StageName);
 
     const fifaHomeScore = fixture.HomeTeamScore ?? fixture.Home?.Score ?? null;
     const fifaAwayScore = fixture.AwayTeamScore ?? fixture.Away?.Score ?? null;
@@ -86,6 +88,7 @@ export async function syncFifaFixtures(
           result,
           homeRatio: 0,
           awayRatio: 0,
+          stage,
         },
       });
       created++;
@@ -117,6 +120,7 @@ export async function syncFifaFixtures(
         status: fifaStatus,
         homeScore: fifaHomeScore,
         awayScore: fifaAwayScore,
+        stage,
       },
       deriveResult,
     );
@@ -146,6 +150,7 @@ export async function syncFifaFixtures(
         homeCountry: patch.homeCountry,
         awayCountry: patch.awayCountry,
         kickoffAt: patch.kickoffAt,
+        stage: patch.stage,
         ...(!isTransitioningToCompleted && {
           status: patch.status,
           homeScore: patch.homeScore,

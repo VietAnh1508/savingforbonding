@@ -35,6 +35,7 @@ model Match {
     result      VoteOutcome?
     homeRatio   Float        @default(0)
     awayRatio   Float        @default(0)
+    stage       String?
     votes       Vote[]
 
     createdAt DateTime @default(now())
