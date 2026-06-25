@@ -56,7 +56,7 @@ type FifaMatchesResponse = {
   ContinuationToken?: string;
 };
 
-function localizedDescription(
+export function localizedDescription(
   items: FifaLocalizedText[] | null | undefined,
 ): string | null {
   if (!items?.length) return null;

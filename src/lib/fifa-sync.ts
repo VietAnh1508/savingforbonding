@@ -85,6 +85,7 @@ export type FifaMatchPatch = {
   homeScore: number | null;
   awayScore: number | null;
   result: VoteOutcome | null;
+  stage: string | null;
 };
 
 export function buildFifaMatchPatch(
@@ -97,6 +98,7 @@ export function buildFifaMatchPatch(
     homeScore: number | null;
     awayScore: number | null;
     result: VoteOutcome | null;
+    stage: string | null;
   },
   fifa: {
     tournament: string;
@@ -106,6 +108,7 @@ export function buildFifaMatchPatch(
     status: MatchStatus;
     homeScore: number | null;
     awayScore: number | null;
+    stage: string | null;
   },
   deriveResult: (home: number, away: number) => VoteOutcome,
 ): { patch: FifaMatchPatch; teamsUpdated: boolean; changed: boolean } {
@@ -138,6 +141,7 @@ export function buildFifaMatchPatch(
     homeScore,
     awayScore,
     result,
+    stage: fifa.stage,
   };
 
   const teamsUpdated =
@@ -151,7 +155,8 @@ export function buildFifaMatchPatch(
     patch.status !== existing.status ||
     patch.homeScore !== existing.homeScore ||
     patch.awayScore !== existing.awayScore ||
-    patch.result !== existing.result;
+    patch.result !== existing.result ||
+    patch.stage !== existing.stage;
 
   return { patch, teamsUpdated, changed };
 }
