@@ -32,6 +32,22 @@ function groupByDate(matches: Match[]) {
     .map((key) => ({ dateKey: key, matches: grouped[key]! }));
 }
 
+type StageGroup = {
+  stage: string | null;
+  dateGroups: ReturnType<typeof groupByDate>;
+};
+
+function groupByStageAndDate(matches: Match[]): StageGroup[] {
+  const seenStages: (string | null)[] = [];
+  for (const m of matches) {
+    if (!seenStages.includes(m.stage)) seenStages.push(m.stage);
+  }
+  return seenStages.map((stage) => ({
+    stage,
+    dateGroups: groupByDate(matches.filter((m) => m.stage === stage)),
+  }));
+}
+
 function formatTabDate(dateKey: string): { weekday: string; date: string } {
   const date = new Date(`${dateKey}T12:00:00+07:00`);
   const weekday = date.toLocaleDateString("en-GB", {
@@ -52,17 +68,19 @@ const SCROLL_SPY_THRESHOLD = 185;
 const SCROLL_TARGET_OFFSET = 185;
 
 function MatchList({
-  groups,
+  stageGroups,
   isSignedIn,
   emptyMessage,
 }: {
-  groups: ReturnType<typeof groupByDate>;
+  stageGroups: StageGroup[];
   isSignedIn: boolean;
   emptyMessage: string;
 }) {
   const [modalDateKey, setModalDateKey] = useState<string | null>(null);
+  const showStageHeadings = stageGroups.length > 1;
+  const allDateGroups = stageGroups.flatMap((sg) => sg.dateGroups);
 
-  if (groups.length === 0) {
+  if (allDateGroups.length === 0) {
     return (
       <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-12 text-center">
         <p className="text-lg text-foreground/60">{emptyMessage}</p>
@@ -71,46 +89,61 @@ function MatchList({
   }
 
   const modalGroup = modalDateKey
-    ? groups.find((g) => g.dateKey === modalDateKey)
+    ? allDateGroups.find((g) => g.dateKey === modalDateKey)
     : null;
 
   return (
     <>
-      <div className="space-y-8">
-        {groups.map(({ dateKey, matches: dayMatches }) => {
-          const hasVotable = dayMatches.some((m) => m.votingOpen);
-          const hasAnyVote = dayMatches.some(
-            (m) => m.votingOpen && m.userVoteOutcome != null,
-          );
+      <div className={showStageHeadings ? "space-y-12" : "space-y-8"}>
+        {stageGroups.map(({ stage, dateGroups }) => (
+          <div key={stage ?? "__null__"}>
+            {showStageHeadings && (
+              <div className="mb-8 flex items-center gap-3">
+                <div className="h-px flex-1 bg-foreground/10" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-foreground/40">
+                  {stage ?? "Other"}
+                </span>
+                <div className="h-px flex-1 bg-foreground/10" />
+              </div>
+            )}
+            <div className="space-y-8">
+              {dateGroups.map(({ dateKey, matches: dayMatches }) => {
+                const hasVotable = dayMatches.some((m) => m.votingOpen);
+                const hasAnyVote = dayMatches.some(
+                  (m) => m.votingOpen && m.userVoteOutcome != null,
+                );
 
-          return (
-            <section key={dateKey} id={`date-section-${dateKey}`}>
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-emerald-400">
-                  {formatMatchDate(dayMatches[0]!.kickoffAt)}
-                </h2>
-                {isSignedIn && hasVotable && (
-                  <button
-                    type="button"
-                    onClick={() => setModalDateKey(dateKey)}
-                    className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
-                      hasAnyVote
-                        ? "border border-emerald-500/50 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
-                        : "bg-emerald-600 text-white hover:bg-emerald-500"
-                    }`}
-                  >
-                    {hasAnyVote ? "Edit predictions" : "Predict all"}
-                  </button>
-                )}
-              </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {dayMatches.map((match) => (
-                  <MatchCard key={match.id} match={match} isSignedIn={isSignedIn} />
-                ))}
-              </div>
-            </section>
-          );
-        })}
+                return (
+                  <section key={dateKey} id={`date-section-${dateKey}`}>
+                    <div className="mb-4 flex items-center justify-between">
+                      <h2 className="text-xl font-semibold text-emerald-400">
+                        {formatMatchDate(dayMatches[0]!.kickoffAt)}
+                      </h2>
+                      {isSignedIn && hasVotable && (
+                        <button
+                          type="button"
+                          onClick={() => setModalDateKey(dateKey)}
+                          className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
+                            hasAnyVote
+                              ? "border border-emerald-500/50 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
+                              : "bg-emerald-600 text-white hover:bg-emerald-500"
+                          }`}
+                        >
+                          {hasAnyVote ? "Edit predictions" : "Predict all"}
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {dayMatches.map((match) => (
+                        <MatchCard key={match.id} match={match} isSignedIn={isSignedIn} />
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       {modalGroup && (
@@ -156,6 +189,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
 
   const activeMatches = activeTab === "upcoming" ? upcoming : completed;
   const groups = useMemo(() => groupByDate(activeMatches), [activeMatches]);
+  const stageGroups = useMemo(() => groupByStageAndDate(activeMatches), [activeMatches]);
 
   // Reset active date when the tab or groups change
   useEffect(() => {
@@ -329,7 +363,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
 
       <div>
         <MatchList
-          groups={groups}
+          stageGroups={stageGroups}
           emptyMessage={
             activeTab === "upcoming"
               ? "No upcoming matches found."
