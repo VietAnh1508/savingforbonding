@@ -5,7 +5,10 @@ import Image from "next/image";
 import { formatJoiningDate } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
-import { RANK_BADGE_CLASSES } from "~/lib/leaderboard-constants";
+import {
+  formatAccuracy,
+  RANK_BADGE_CLASSES,
+} from "~/lib/leaderboard-constants";
 
 type Entry = RouterOutputs["leaderboard"]["global"]["entries"][number];
 
@@ -48,11 +51,11 @@ export function LeaderboardTable({
       <table className="w-full">
         <thead>
           <tr className="border-b border-foreground/10 bg-foreground/5 text-left text-sm text-foreground/60">
-            <th className="px-1 py-3 text-center font-medium sm:px-2">
-              Rank
-            </th>
+            <th className="px-1 py-3 text-center font-medium sm:px-2">Rank</th>
             <th className="px-1 py-3 font-medium sm:px-2">Player</th>
-            <th className="w-px whitespace-nowrap px-4 py-3 text-right font-medium">{beersLabel}</th>
+            <th className="w-px whitespace-nowrap px-4 py-3 text-right font-medium">
+              {beersLabel}
+            </th>
             <th className="hidden w-px whitespace-nowrap px-4 py-3 font-medium sm:table-cell">
               Joining Date
             </th>
@@ -60,8 +63,7 @@ export function LeaderboardTable({
         </thead>
         <tbody>
           {entries.map((entry) => {
-            const isCurrentUser =
-              !!currentUserId && entry.id === currentUserId;
+            const isCurrentUser = !!currentUserId && entry.id === currentUserId;
             const title = titleForRank(rankOrder[entry.rank] ?? 0);
 
             return (
@@ -130,16 +132,10 @@ export function LeaderboardTable({
                         </span>
                         <span className="ml-2 text-amber-400">
                           (
-                          {entry.correctPredictions +
-                            entry.incorrectPredictions >
-                          0
-                            ? Math.round(
-                                (entry.correctPredictions /
-                                  (entry.correctPredictions +
-                                    entry.incorrectPredictions)) *
-                                  100,
-                              )
-                            : 0}
+                          {formatAccuracy(
+                            entry.correctPredictions,
+                            entry.incorrectPredictions,
+                          )}
                           %)
                         </span>
                       </span>
