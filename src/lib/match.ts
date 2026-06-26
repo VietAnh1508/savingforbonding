@@ -189,6 +189,7 @@ const matchDateFormatter = new Intl.DateTimeFormat("en-GB", {
 const matchTimeFormatter = new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit",
   minute: "2-digit",
+  timeZone: MATCH_DISPLAY_TIMEZONE,
 });
 
 const matchDateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -198,6 +199,7 @@ const matchDateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   hour: "2-digit",
   minute: "2-digit",
+  timeZone: MATCH_DISPLAY_TIMEZONE,
 });
 
 const joiningDateFormatter = new Intl.DateTimeFormat("en-GB", {
