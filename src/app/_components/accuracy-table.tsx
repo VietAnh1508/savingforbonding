@@ -8,7 +8,7 @@ import { StarIcon } from "~/app/_components/icons/star-icon";
 import { useToast } from "~/app/_components/toast";
 import { api, type RouterOutputs } from "~/trpc/react";
 
-import { RANK_BADGE_CLASSES } from "~/lib/leaderboard-constants";
+import { formatAccuracy, RANK_BADGE_CLASSES } from "~/lib/leaderboard-constants";
 
 type Entry = RouterOutputs["leaderboard"]["global"]["entries"][number];
 
@@ -204,7 +204,6 @@ export function AccuracyTable({
                 !!currentUserId && entry.id === currentFollowingId;
               const canFollow = !!currentUserId && !isCurrentUser;
               const title = RANK_TITLES[entry.accuracyRank] ?? null;
-              const accuracyPct = Math.round(entry.accuracy * 100);
 
               return (
                 <tr
@@ -285,7 +284,7 @@ export function AccuracyTable({
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
-                    {accuracyPct}%
+                    {formatAccuracy(entry.correctPredictions, entry.incorrectPredictions)}%
                   </td>
                   <td className="hidden whitespace-nowrap px-4 py-3 text-sm sm:table-cell">
                     <span className="text-green-500">
