@@ -85,7 +85,7 @@ export function VoteForm({
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-center text-amber-700 dark:text-amber-300">
           <p className="font-medium">Voting is locked</p>
           <p className="mt-1 text-sm">
-            You didn't place a bet — that's {formatBeers(BEER_NO_BET)}
+            You didn't make a prediction — that's {formatBeers(BEER_NO_BET)}
           </p>
         </div>
       );
@@ -149,6 +149,7 @@ export function VoteForm({
             type="button"
             disabled={castVote.isPending}
             onClick={() => castVote.mutate({ matchId, outcome })}
+            aria-label={`Vote: ${outcomeLabel(outcome, homeCountry, awayCountry)}`}
             className={`cursor-pointer rounded-xl border p-4 text-center transition ${
               currentVote === outcome
                 ? "border-emerald-500 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"

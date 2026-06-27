@@ -5,7 +5,7 @@ export function BeerStakes() {
     <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-foreground/70">
       <h3 className="mb-2 font-semibold text-amber-700 dark:text-amber-300">🍺 Beer stakes</h3>
       <p className="mb-2">
-        Every match requires a bet. Miss it and you still owe beer. Win or lose
+        Every match requires a prediction. Miss it and you still owe beer. Win or lose
         is decided after the match handicap — not just the raw score.
       </p>
       <ul className="space-y-1">
@@ -17,7 +17,7 @@ export function BeerStakes() {
           <span className="text-foreground/40">(1 platform fee + 2 penalty)</span>
         </li>
         <li>
-          <span className="text-foreground/50">No bet</span> — {formatBeers(BEER_NO_BET)}
+          <span className="text-foreground/50">No pick</span> — {formatBeers(BEER_NO_BET)}
         </li>
       </ul>
     </div>

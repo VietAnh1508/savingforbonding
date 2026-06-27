@@ -30,7 +30,7 @@ export default async function SignInPage({
             ⚽ SavingForBonding
           </h1>
           <p className="mt-2 text-foreground/60">
-            Sign in with your email and password
+            Predict World Cup matches. Get it wrong — buy the beers.
           </p>
         </div>
 

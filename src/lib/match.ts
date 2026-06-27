@@ -8,9 +8,9 @@ export type MatchVoteCounts = {
 
 export const VOTE_LOCK_MINUTES = 5;
 
-/** Platform fee — paid on every bet (win or lose). */
+/** Platform fee — paid on every prediction (win or lose). */
 export const BEER_PLATFORM_FEE = 1;
-/** Extra penalty on a losing bet, on top of the platform fee. */
+/** Extra penalty on a wrong prediction, on top of the platform fee. */
 export const BEER_LOSE_PENALTY = 2;
 export const BEER_WIN = BEER_PLATFORM_FEE;
 export const BEER_LOSE = BEER_PLATFORM_FEE + BEER_LOSE_PENALTY;
