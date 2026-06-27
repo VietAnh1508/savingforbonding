@@ -51,7 +51,7 @@ function MatchCardFooter({
   if (isSignedIn && isCompleted && !prediction) {
     return (
       <p className="text-center text-xs font-medium text-amber-600 dark:text-amber-400">
-        No bet — {formatBeers(2)}
+        No pick — {formatBeers(2)}
       </p>
     );
   }

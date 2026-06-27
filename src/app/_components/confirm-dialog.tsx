@@ -1,6 +1,6 @@
 "use client";
 
-import { Spinner } from "./spinner";
+import { SpinnerIcon } from "./icons/spinner-icon";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -57,7 +57,7 @@ export function ConfirmDialog({
                 : "bg-foreground text-card hover:bg-foreground/90"
             }`}
           >
-            {loading && <Spinner className="h-3.5 w-3.5" />}
+            {loading && <SpinnerIcon className="h-3.5 w-3.5" />}
             {confirmLabel}
           </button>
         </div>

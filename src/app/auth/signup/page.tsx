@@ -68,6 +68,9 @@ export default async function SignUpPage({
               className="w-full rounded-xl border border-foreground/10 bg-foreground/10 px-4 py-3 text-foreground placeholder:text-foreground/40 focus:border-emerald-500/50 focus:outline-none"
               placeholder="you@example.com"
             />
+            <p className="mt-1.5 text-xs text-foreground/40">
+              Use your personal email, not your work one.
+            </p>
           </div>
 
           <div>

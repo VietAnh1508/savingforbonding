@@ -1,10 +1,14 @@
+import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
+
 export default function Loading() {
   return (
-    <main className="container mx-auto px-4 py-8">
-      <div className="animate-pulse space-y-4">
-        <div className="h-8 w-48 rounded bg-foreground/10" />
-        <div className="h-32 rounded bg-foreground/10" />
-        <div className="h-32 rounded bg-foreground/10" />
+    <main className="flex min-h-screen items-center justify-center">
+      <div>
+        <div className="relative h-8 w-80 overflow-hidden rounded-full border border-foreground/25 bg-foreground/10 shadow-inner">
+          <div className="absolute top-1/2 -translate-y-1/2 animate-ball-slide">
+            <SpinnerIcon className="h-6 w-6" />
+          </div>
+        </div>
       </div>
     </main>
   );

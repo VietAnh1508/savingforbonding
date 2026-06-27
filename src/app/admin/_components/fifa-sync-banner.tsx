@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Spinner } from "~/app/_components/spinner";
+import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
 import { api } from "~/trpc/react";
 
 type FifaSyncResult = {
@@ -62,8 +62,10 @@ export function FifaSyncBanner() {
           disabled={syncPending}
           className="cursor-pointer rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500 disabled:opacity-50"
         >
-          {syncPending ? <Spinner /> : null}
-          Sync from FIFA
+          <span className="flex items-center gap-2">
+            {syncPending && <SpinnerIcon />}
+            Sync from FIFA
+          </span>
         </button>
       </div>
 

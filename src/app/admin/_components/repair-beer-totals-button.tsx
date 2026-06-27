@@ -1,6 +1,6 @@
 "use client";
 
-import { Spinner } from "~/app/_components/spinner";
+import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
 import { api } from "~/trpc/react";
 
 export function RepairBeerTotalsButton() {
@@ -25,8 +25,10 @@ export function RepairBeerTotalsButton() {
           disabled={repair.isPending}
           className="cursor-pointer rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-amber-500 disabled:opacity-50"
         >
-          {repair.isPending ? <Spinner /> : null}
-          Repair totals
+          <span className="flex items-center gap-2">
+            {repair.isPending && <SpinnerIcon />}
+            Repair totals
+          </span>
         </button>
       </div>
 

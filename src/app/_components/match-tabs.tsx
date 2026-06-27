@@ -112,6 +112,9 @@ function MatchList({
                 const hasAnyVote = dayMatches.some(
                   (m) => m.votingOpen && m.userVoteOutcome != null,
                 );
+                const isVotingClosed =
+                  !hasVotable &&
+                  dayMatches.some((m) => m.status !== MatchStatus.COMPLETED);
 
                 return (
                   <section key={dateKey} id={`date-section-${dateKey}`}>
@@ -131,6 +134,11 @@ function MatchList({
                         >
                           {hasAnyVote ? "Edit predictions" : "Predict all"}
                         </button>
+                      )}
+                      {isSignedIn && isVotingClosed && (
+                        <span className="text-sm text-foreground/30">
+                          Voting closed
+                        </span>
                       )}
                     </div>
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
