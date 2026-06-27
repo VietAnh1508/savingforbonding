@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { Spinner } from "~/app/_components/spinner";
+import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
 import { useToast } from "~/app/_components/toast";
 import { api, type RouterOutputs } from "~/trpc/react";
 
@@ -55,7 +55,7 @@ export function QuickVoteButton({ match }: { match: Match }) {
             : "bg-emerald-600 text-white hover:bg-emerald-500"
         }`}
       >
-        {castVote.isPending && <Spinner className="h-3 w-3" />}
+        {castVote.isPending && <SpinnerIcon className="h-3 w-3" />}
         {currentVote ? "Change predicted" : "Predict"}
       </button>
 

@@ -8,7 +8,7 @@ import { VoterList } from "~/app/_components/voter-list";
 import { Nav } from "~/app/_components/nav";
 import { TeamFlag } from "~/app/_components/team-flag";
 import { VoteForm } from "~/app/_components/vote-form";
-import { BackLink } from "~/app/admin/_components/back-link";
+import { BackLink } from "~/app/_components/back-link";
 import { formatMatchDateTime } from "~/lib/match";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";

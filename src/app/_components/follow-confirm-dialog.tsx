@@ -1,6 +1,6 @@
 "use client";
 
-import { Spinner } from "./spinner";
+import { SpinnerIcon } from "./icons/spinner-icon";
 
 interface FollowConfirmDialogProps {
   open: boolean;
@@ -67,14 +67,14 @@ export function FollowConfirmDialog({
                 disabled={loading}
                 className="flex cursor-pointer items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {loading && <Spinner className="h-3.5 w-3.5" />}
+                {loading && <SpinnerIcon className="h-3.5 w-3.5" />}
                 Unfollow
               </button>
             </div>
           </>
         ) : matchCountLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Spinner className="h-6 w-6 text-foreground/40" />
+            <SpinnerIcon className="h-6 w-6 text-foreground/40" />
           </div>
         ) : (
           <>
@@ -134,7 +134,7 @@ export function FollowConfirmDialog({
                 disabled={loading}
                 className="flex cursor-pointer items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-card transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {loading && <Spinner className="h-3.5 w-3.5" />}
+                {loading && <SpinnerIcon className="h-3.5 w-3.5" />}
                 {isSwitching ? "Switch" : "Follow"}
               </button>
             </div>

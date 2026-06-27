@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { BackLink } from "~/app/admin/_components/back-link";
+import { BackLink } from "~/app/_components/back-link";
 import { UsersPanel } from "~/app/admin/_components/users-panel";
 import { auth } from "~/server/auth";
 import { ADMIN_COOKIE } from "~/lib/admin";

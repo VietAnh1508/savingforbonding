@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { BackLink } from "~/app/admin/_components/back-link";
+import { BackLink } from "~/app/_components/back-link";
 import { MatchesPanel } from "~/app/admin/_components/matches-panel";
 import { ADMIN_COOKIE } from "~/lib/admin";
 import { HydrateClient } from "~/trpc/server";

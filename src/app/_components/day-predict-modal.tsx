@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { RatioDisplay } from "~/app/_components/ratio-display";
-import { Spinner } from "~/app/_components/spinner";
+import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
 import { TeamFlag } from "~/app/_components/team-flag";
 import { useToast } from "~/app/_components/toast";
 import { formatKickoffTime } from "~/lib/match";
@@ -198,7 +198,7 @@ export function DayPredictModal({
               disabled={castBatch.isPending || selectedCount === 0}
               className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {castBatch.isPending && <Spinner className="h-4 w-4" />}
+              {castBatch.isPending && <SpinnerIcon className="h-4 w-4" />}
               Save predictions
             </button>
           </div>
