@@ -89,44 +89,42 @@ export const matchRouter = createTRPCRouter({
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const match = await ctx.db.match.findUnique({
-        where: { id: input.id },
-      });
-
-      if (!match) return null;
-
-      const [userVote, voteCountsByMatchId, allVotes] = await Promise.all([
-        ctx.session?.user
-          ? ctx.db.vote.findUnique({
-              where: {
-                userId_matchId: {
-                  userId: ctx.session.user.id,
-                  matchId: match.id,
-                },
-              },
-            })
-          : null,
-        getVoteCountsByMatchId(ctx.db, [match.id]),
+      const [match, allVotes, userVote] = await Promise.all([
+        ctx.db.match.findUnique({ where: { id: input.id } }),
         ctx.db.vote.findMany({
-          where: { matchId: match.id },
+          where: { matchId: input.id },
           select: {
             outcome: true,
             user: { select: { id: true, name: true } },
           },
         }),
+        ctx.session?.user
+          ? ctx.db.vote.findUnique({
+              where: {
+                userId_matchId: {
+                  userId: ctx.session.user.id,
+                  matchId: input.id,
+                },
+              },
+            })
+          : null,
       ]);
 
-      const voters = {
-        home: allVotes.filter((v) => v.outcome === "HOME_WIN").map((v) => v.user),
-        draw: allVotes.filter((v) => v.outcome === "DRAW").map((v) => v.user),
-        away: allVotes.filter((v) => v.outcome === "AWAY_WIN").map((v) => v.user),
-      };
+      if (!match) return null;
+
+      const voteCounts = emptyMatchVoteCounts();
+      const voters = { home: [] as { id: string; name: string | null }[], draw: [] as { id: string; name: string | null }[], away: [] as { id: string; name: string | null }[] };
+      for (const v of allVotes) {
+        if (v.outcome === "HOME_WIN") { voteCounts.home++; voters.home.push(v.user); }
+        else if (v.outcome === "DRAW") { voteCounts.draw++; voters.draw.push(v.user); }
+        else if (v.outcome === "AWAY_WIN") { voteCounts.away++; voters.away.push(v.user); }
+      }
 
       return {
         ...match,
         votingOpen: isVotingOpen(match.kickoffAt, match.status),
         userVote,
-        voteCounts: voteCountsByMatchId.get(match.id) ?? emptyMatchVoteCounts(),
+        voteCounts,
         voters,
       };
     }),
