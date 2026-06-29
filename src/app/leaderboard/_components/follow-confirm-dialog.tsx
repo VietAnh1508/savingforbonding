@@ -1,6 +1,6 @@
 "use client";
 
-import { SpinnerIcon } from "./icons/spinner-icon";
+import { SpinnerIcon } from "../../_components/icons/spinner-icon";
 
 interface FollowConfirmDialogProps {
   open: boolean;
@@ -109,8 +109,8 @@ export function FollowConfirmDialog({
                   className="mt-0.5 h-4 w-4 shrink-0 rounded accent-emerald-500"
                 />
                 <span className="text-sm text-foreground/70">
-                  Also copy {isSwitching ? `${displayName}'s` : "their"} existing
-                  votes for open matches
+                  Also copy {isSwitching ? `${displayName}'s` : "their"}{" "}
+                  existing votes for open matches
                   <span className="ml-1 text-foreground/40">
                     ({matchCount} match{matchCount === 1 ? "" : "es"} available
                     — only ones you haven&apos;t voted on yet)

@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { ForgotPasswordModal } from "~/app/_components/forgot-password-modal";
-import { PasswordInput } from "~/app/_components/password-input";
 import { SubmitButton } from "~/app/_components/submit-button";
+import { ForgotPasswordModal } from "~/app/auth/_components/forgot-password-modal";
+import { PasswordInput } from "~/app/auth/_components/password-input";
 import { signInWithCredentials } from "~/app/auth/actions";
 import { auth } from "~/server/auth";
 
@@ -36,8 +36,17 @@ export default async function SignInPage({
 
         {errorMessage && (
           <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-500/50 bg-red-500/15 px-4 py-3 text-sm text-red-600 dark:text-red-400">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 shrink-0">
-              <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="size-4 shrink-0"
+            >
+              <path
+                fillRule="evenodd"
+                d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                clipRule="evenodd"
+              />
             </svg>
             {errorMessage}
           </div>
@@ -45,7 +54,10 @@ export default async function SignInPage({
 
         <form action={signInWithCredentials} className="space-y-4">
           <div>
-            <label htmlFor="email" className="mb-1 block text-sm text-foreground/70">
+            <label
+              htmlFor="email"
+              className="mb-1 block text-sm text-foreground/70"
+            >
               Email
             </label>
             <input

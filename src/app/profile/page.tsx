@@ -1,8 +1,8 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
-import { EditProfileName } from "~/app/_components/edit-profile-name";
 import { Nav } from "~/app/_components/nav";
+import { EditProfileName } from "~/app/profile/_components/edit-profile-name";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 import { RecentPredictions } from "./_components/recent-predictions";
@@ -91,7 +91,9 @@ export default async function ProfilePage() {
                 <span className="mx-1 text-foreground/30">/</span>
                 <span className="text-yellow-300">{stats.missedVotes}</span>
               </div>
-              <div className="text-xs text-foreground/50">Correct / Wrong / Missed</div>
+              <div className="text-xs text-foreground/50">
+                Correct / Wrong / Missed
+              </div>
             </div>
           </div>
 
@@ -123,7 +125,9 @@ export default async function ProfilePage() {
                         {(follower.name ?? "?")[0]}
                       </div>
                     )}
-                    <span className="text-sm">{follower.name ?? "Anonymous"}</span>
+                    <span className="text-sm">
+                      {follower.name ?? "Anonymous"}
+                    </span>
                   </div>
                 ))}
               </div>

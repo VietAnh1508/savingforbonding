@@ -1,5 +1,5 @@
-import { LeaderboardTabs } from "~/app/_components/leaderboard-tabs";
 import { Nav } from "~/app/_components/nav";
+import { LeaderboardTabs } from "~/app/leaderboard/_components/leaderboard-tabs";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
