@@ -1,3 +1,4 @@
+import { StarIcon } from "~/app/_components/icons/star-icon";
 import { BEER_NO_BET, formatBeers, outcomeLabel } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
@@ -11,6 +12,7 @@ type VoteItem =
       outcome: RouterOutputs["vote"]["getMyVotes"][number]["outcome"];
       isCorrect: boolean | null;
       points: number;
+      hasStar: boolean;
     }
   | {
       kind: "missed";
@@ -60,7 +62,12 @@ export function RecentPredictions({ items }: { items: VoteItem[] }) {
                     : "No prediction"}
                 </div>
               </div>
-              <div className="ml-3 shrink-0">
+              <div className="ml-3 flex shrink-0 items-center gap-1.5">
+                {item.kind === "vote" && item.hasStar && (
+                  <span className="text-amber-500 dark:text-amber-400">
+                    <StarIcon filled />
+                  </span>
+                )}
                 {item.kind === "missed" ? (
                   <span className="rounded-full bg-yellow-500/20 px-3 py-1 text-sm text-yellow-700 dark:text-yellow-300">
                     🍺 {formatBeers(BEER_NO_BET)}
@@ -75,7 +82,9 @@ export function RecentPredictions({ items }: { items: VoteItem[] }) {
                         : "bg-red-500/20 text-red-700 dark:text-red-300"
                     }`}
                   >
-                    🍺 {formatBeers(item.points)}
+                    {item.isCorrect && item.points < 0
+                      ? `🍺 cleared ${formatBeers(-item.points)}`
+                      : `🍺 ${formatBeers(item.points)}`}
                   </span>
                 )}
               </div>

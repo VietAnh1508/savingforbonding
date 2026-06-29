@@ -16,6 +16,24 @@ export const BEER_WIN = BEER_PLATFORM_FEE;
 export const BEER_LOSE = BEER_PLATFORM_FEE + BEER_LOSE_PENALTY;
 export const BEER_NO_BET = 2;
 
+export const STARS_BY_STAGE: Record<string, number> = {
+  "Round of 32": 8,
+  "Round of 16": 4,
+  "Quarter-final": 2,
+  "Semi-final": 1,
+  "Play-off for third place": 1,
+  "Final": 1,
+};
+
+export function starsAllocatedForStage(stage: string | null): number {
+  return (stage !== null ? (STARS_BY_STAGE[stage] ?? 0) : 0);
+}
+
+export function beerCostForStarVote(isCorrect: boolean, stage: string | null): number {
+  const doubled = wrongPenaltyForStage(stage) * 2;
+  return isCorrect ? -doubled : doubled;
+}
+
 export const KNOCKOUT_STAGE_ORDER = [
   "Round of 32",
   "Round of 16",

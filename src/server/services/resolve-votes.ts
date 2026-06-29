@@ -1,5 +1,6 @@
 import { type PrismaClient } from "../../../generated/prisma";
 import {
+  beerCostForStarVote,
   beerCostForVote,
   deriveResult,
   isVoteCorrect,
@@ -60,20 +61,36 @@ export async function resolveMatchVotes(
       match.homeRatio,
       match.awayRatio,
     );
-    const beers = beerCostForVote(isCorrect, match.stage);
+    const beers = vote.hasStar
+      ? beerCostForStarVote(isCorrect, match.stage)
+      : beerCostForVote(isCorrect, match.stage);
 
     await db.vote.update({
       where: { id: vote.id },
       data: { isCorrect, points: beers },
     });
 
-    await db.user.update({
-      where: { id: vote.userId },
-      data: {
-        totalPoints: { increment: beers },
-        weeklyPoints: { increment: beers },
-      },
-    });
+    if (beers >= 0) {
+      await db.user.update({
+        where: { id: vote.userId },
+        data: {
+          totalPoints: { increment: beers },
+          weeklyPoints: { increment: beers },
+        },
+      });
+    } else {
+      const user = await db.user.findUnique({
+        where: { id: vote.userId },
+        select: { totalPoints: true, weeklyPoints: true },
+      });
+      await db.user.update({
+        where: { id: vote.userId },
+        data: {
+          totalPoints: Math.max(0, (user?.totalPoints ?? 0) + beers),
+          weeklyPoints: Math.max(0, (user?.weeklyPoints ?? 0) + beers),
+        },
+      });
+    }
     beersCharged += beers;
   }
 

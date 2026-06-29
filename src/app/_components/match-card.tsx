@@ -6,8 +6,12 @@ import { MatchStatusBadge } from "~/app/_components/match-status-badge";
 import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
 import { RatioDisplay } from "~/app/_components/ratio-display";
 import { TeamFlag } from "~/app/_components/team-flag";
-import { formatBeers, formatKickoffTime, noBetPenaltyForStage } from "~/lib/match";
-import { type RouterOutputs } from "~/trpc/react";
+import { StarIcon } from "~/app/_components/icons/star-icon";
+import { formatBeers, formatKickoffTime, noBetPenaltyForStage, starsAllocatedForStage } from "~/lib/match";
+import { api, type RouterOutputs } from "~/trpc/react";
+import { Tooltip } from "~/app/_components/tooltip";
+import { useToggleStar } from "~/app/hooks/use-toggle-star";
+import { useState } from "react";
 
 type Match = RouterOutputs["match"]["listMatches"][number];
 
@@ -33,18 +37,35 @@ function MatchCardFooter({
   stage: string | null;
 }) {
   if (isSignedIn && isCompleted && voteResult) {
+    const starIcon = voteResult.hasStar ? (
+      <span className="text-amber-500 dark:text-amber-400">
+        <StarIcon filled />
+      </span>
+    ) : null;
+
     if (voteResult.isCorrect === null) {
-      return <p className="text-center text-xs text-foreground/50">Pending result</p>;
+      return (
+        <p className="flex items-center justify-center gap-1 text-xs text-foreground/50">
+          {starIcon}
+          Pending result
+        </p>
+      );
     }
     if (voteResult.isCorrect) {
+      const display =
+        voteResult.points < 0
+          ? `cleared ${formatBeers(-voteResult.points)}`
+          : formatBeers(voteResult.points);
       return (
-        <p className="text-center text-xs font-medium text-emerald-600 dark:text-emerald-400">
-          Correct — {formatBeers(voteResult.points)}
+        <p className="flex items-center justify-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          {starIcon}
+          Correct — {display}
         </p>
       );
     }
     return (
-      <p className="text-center text-xs font-medium text-red-600 dark:text-red-400">
+      <p className="flex items-center justify-center gap-1 text-xs font-medium text-red-600 dark:text-red-400">
+        {starIcon}
         Wrong — {formatBeers(voteResult.points)}
       </p>
     );
@@ -88,6 +109,27 @@ export function MatchCard({ match, isSignedIn = false }: { match: Match; isSigne
   const isCompleted = match.status === "COMPLETED";
   const voteResult = match.userVoteResult;
 
+  // Star toggle — interactive when voting is open and user has a saved vote
+  const [localStar, setLocalStar] = useState<boolean | null>(null);
+  const isStarred = localStar ?? voteResult?.hasStar ?? false;
+  const starTogglePossible =
+    isSignedIn && match.votingOpen && !!prediction && starsAllocatedForStage(match.stage) > 0;
+  const { data: starAllotments } = api.vote.getStarAllotments.useQuery(undefined, {
+    enabled: starTogglePossible,
+  });
+  const starsRemaining = starAllotments?.find((a) => a.stage === match.stage)?.remaining ?? null;
+  const canToggleStar =
+    starTogglePossible &&
+    (isStarred || starsRemaining === null || starsRemaining > 0);
+  const showStar = isStarred || canToggleStar;
+
+  const utils = api.useUtils();
+  const toggleStar = useToggleStar({
+    onMutate: () => setLocalStar(!isStarred),
+    onError: () => setLocalStar(null),
+    onSettled: () => void utils.match.listMatches.invalidate(),
+  });
+
   return (
     <Link
       href={`/matches/${match.id}`}
@@ -95,7 +137,33 @@ export function MatchCard({ match, isSignedIn = false }: { match: Match; isSigne
     >
       <div className="mb-3 flex items-center justify-between">
         <MatchStatusBadge status={match.status} />
-        <span className="text-xs text-foreground/50">
+        <span className="flex items-center gap-1.5 text-xs text-foreground/50">
+          {showStar && (
+            canToggleStar ? (
+              <Tooltip label={isStarred ? "Remove star" : "Believe in your luck? Star this match and get double reward"}>
+                <button
+                  type="button"
+                  disabled={toggleStar.isPending}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleStar.mutate({ matchId: match.id });
+                  }}
+                  className={`transition ${
+                    isStarred
+                      ? "text-amber-500 dark:text-amber-400"
+                      : "text-foreground/25 hover:text-amber-400"
+                  }`}
+                >
+                  <StarIcon filled={isStarred} />
+                </button>
+              </Tooltip>
+            ) : (
+              <span className="text-amber-500 dark:text-amber-400">
+                <StarIcon filled />
+              </span>
+            )
+          )}
           {formatKickoffTime(match.kickoffAt)}
         </span>
       </div>
