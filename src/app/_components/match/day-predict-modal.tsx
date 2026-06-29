@@ -9,7 +9,7 @@ import { RatioDisplay } from "~/app/_components/match/ratio-display";
 import { useToast } from "~/app/_components/toast";
 import { Tooltip } from "~/app/_components/tooltip";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
-import { formatKickoffTime, starsAllocatedForStage } from "~/lib/match";
+import { formatKickoffTime, starsAllocatedForStage, voterLabel } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { type VoteOutcome } from "../../../../generated/prisma";
 
@@ -260,18 +260,9 @@ export function DayPredictModal({
                   showFlags
                 />
                 <div className="grid grid-cols-3 gap-2 text-center text-xs text-foreground/40">
-                  <span>
-                    {match.voteCounts.home} voter
-                    {match.voteCounts.home === 1 ? "" : "s"}
-                  </span>
-                  <span>
-                    {match.voteCounts.draw} voter
-                    {match.voteCounts.draw === 1 ? "" : "s"}
-                  </span>
-                  <span>
-                    {match.voteCounts.away} voter
-                    {match.voteCounts.away === 1 ? "" : "s"}
-                  </span>
+                  <span>{voterLabel(match.voteCounts.home)}</span>
+                  <span>{voterLabel(match.voteCounts.draw)}</span>
+                  <span>{voterLabel(match.voteCounts.away)}</span>
                 </div>
               </div>
             );

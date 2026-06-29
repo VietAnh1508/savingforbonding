@@ -263,3 +263,7 @@ export function formatMatchDateTime(date: Date): string {
 export function formatJoiningDate(date: Date): string {
   return joiningDateFormatter.format(date);
 }
+
+export function voterLabel(count: number): string {
+  return `${count} voter${count === 1 ? "" : "s"}`;
+}
