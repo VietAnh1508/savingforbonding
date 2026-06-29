@@ -3,12 +3,15 @@
 import Image from "next/image";
 import { useState } from "react";
 
-import { FollowConfirmDialog } from "~/app/_components/follow-confirm-dialog";
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { useToast } from "~/app/_components/toast";
+import { FollowConfirmDialog } from "~/app/leaderboard/_components/follow-confirm-dialog";
 import { api, type RouterOutputs } from "~/trpc/react";
 
-import { formatAccuracy, RANK_BADGE_CLASSES } from "~/lib/leaderboard-constants";
+import {
+  formatAccuracy,
+  RANK_BADGE_CLASSES,
+} from "~/lib/leaderboard-constants";
 
 type Entry = RouterOutputs["leaderboard"]["global"]["entries"][number];
 
@@ -284,7 +287,11 @@ export function AccuracyTable({
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
-                    {formatAccuracy(entry.correctPredictions, entry.incorrectPredictions)}%
+                    {formatAccuracy(
+                      entry.correctPredictions,
+                      entry.incorrectPredictions,
+                    )}
+                    %
                   </td>
                   <td className="hidden whitespace-nowrap px-4 py-3 text-sm sm:table-cell">
                     <span className="text-green-500">

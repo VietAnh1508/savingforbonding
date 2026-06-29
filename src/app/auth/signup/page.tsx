@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { PasswordInput } from "~/app/_components/password-input";
 import { SubmitButton } from "~/app/_components/submit-button";
+import { PasswordInput } from "~/app/auth/_components/password-input";
 import { signUp } from "~/app/auth/actions";
 import { auth } from "~/server/auth";
 
@@ -42,7 +42,10 @@ export default async function SignUpPage({
 
         <form action={signUp} className="space-y-4">
           <div>
-            <label htmlFor="name" className="mb-1 block text-sm text-foreground/70">
+            <label
+              htmlFor="name"
+              className="mb-1 block text-sm text-foreground/70"
+            >
               Name <span className="text-foreground/40">(optional)</span>
             </label>
             <input
@@ -56,7 +59,10 @@ export default async function SignUpPage({
           </div>
 
           <div>
-            <label htmlFor="email" className="mb-1 block text-sm text-foreground/70">
+            <label
+              htmlFor="email"
+              className="mb-1 block text-sm text-foreground/70"
+            >
               Email
             </label>
             <input

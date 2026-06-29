@@ -1,4 +1,4 @@
-import { RatioDisplay } from "~/app/_components/ratio-display";
+import { RatioDisplay } from "~/app/_components/match/ratio-display";
 import { describeHandicapRule, hasBettingHandicap } from "~/lib/match";
 
 export function BettingRatios({
@@ -44,3 +44,4 @@ export function BettingRatios({
     </div>
   );
 }
+

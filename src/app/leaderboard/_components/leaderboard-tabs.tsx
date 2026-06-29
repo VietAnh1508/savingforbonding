@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { AccuracyTable } from "~/app/_components/accuracy-table";
-import { BeerAccumulationChart } from "~/app/_components/beer-accumulation-chart";
-import { LeaderboardTable } from "~/app/_components/leaderboard-table";
+import { AccuracyTable } from "~/app/leaderboard/_components/accuracy-table";
+import { BeerAccumulationChart } from "~/app/leaderboard/_components/beer-accumulation-chart";
+import { LeaderboardTable } from "~/app/leaderboard/_components/leaderboard-table";
 import { type RouterOutputs } from "~/trpc/react";
 
 type TabId = "allTime" | "accuracy" | "beerPool";

@@ -1,8 +1,4 @@
-import { type MatchVoteCounts } from "~/lib/match";
-
-function voterLabel(count: number) {
-  return `${count} voter${count === 1 ? "" : "s"}`;
-}
+import { type MatchVoteCounts, voterLabel } from "~/lib/match";
 
 export function MatchVoteCounts({
   homeCountry,

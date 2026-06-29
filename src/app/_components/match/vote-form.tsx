@@ -1,6 +1,7 @@
 "use client";
 
 import { StarIcon } from "~/app/_components/icons/star-icon";
+import { OutcomePicker } from "~/app/_components/match/outcome-picker";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
 import {
   BEER_NO_BET,
@@ -10,10 +11,7 @@ import {
   wrongPenaltyForStage,
 } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
-import { type VoteOutcome } from "../../../generated/prisma";
-import { useToast } from "./toast";
-
-const OUTCOMES: VoteOutcome[] = ["HOME_WIN", "DRAW", "AWAY_WIN"];
+import { useToast } from "../toast";
 
 type MatchDetail = NonNullable<RouterOutputs["match"]["getById"]>;
 
@@ -224,26 +222,13 @@ export function VoteForm({
         Required for every match — skip it and you owe{" "}
         {formatBeers(BEER_NO_BET)} anyway.
       </p>
-      <div className="grid grid-cols-3 gap-3">
-        {OUTCOMES.map((outcome) => (
-          <button
-            key={outcome}
-            type="button"
-            disabled={castVote.isPending}
-            onClick={() => castVote.mutate({ matchId, outcome })}
-            aria-label={`Vote: ${outcomeLabel(outcome, homeCountry, awayCountry)}`}
-            className={`cursor-pointer rounded-xl border p-4 text-center transition ${
-              currentVote === outcome
-                ? "border-emerald-500 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
-                : "border-foreground/10 bg-foreground/5 hover:border-emerald-500/50 hover:bg-foreground/10"
-            }`}
-          >
-            <div className="font-semibold">
-              {outcomeLabel(outcome, homeCountry, awayCountry)}
-            </div>
-          </button>
-        ))}
-      </div>
+      <OutcomePicker
+        homeCountry={homeCountry}
+        awayCountry={awayCountry}
+        selectedOutcome={currentVote}
+        onSelect={(outcome) => castVote.mutate({ matchId, outcome })}
+        disabled={castVote.isPending}
+      />
       {castVote.error && (
         <p className="text-sm text-red-600 dark:text-red-400">
           {castVote.error.message}

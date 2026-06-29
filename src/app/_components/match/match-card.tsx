@@ -2,16 +2,21 @@
 
 import Link from "next/link";
 
-import { MatchStatusBadge } from "~/app/_components/match-status-badge";
-import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
-import { RatioDisplay } from "~/app/_components/ratio-display";
-import { TeamFlag } from "~/app/_components/team-flag";
+import { useState } from "react";
 import { StarIcon } from "~/app/_components/icons/star-icon";
-import { formatBeers, formatKickoffTime, noBetPenaltyForStage, starsAllocatedForStage } from "~/lib/match";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { MatchStatusBadge } from "~/app/_components/match-status-badge";
+import { MatchVoteCounts } from "~/app/_components/match/match-vote-counts";
+import { RatioDisplay } from "~/app/_components/match/ratio-display";
+import { TeamFlag } from "~/app/_components/match/team-flag";
 import { Tooltip } from "~/app/_components/tooltip";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
-import { useState } from "react";
+import {
+  formatBeers,
+  formatKickoffTime,
+  noBetPenaltyForStage,
+  starsAllocatedForStage,
+} from "~/lib/match";
+import { api, type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listMatches"][number];
 
@@ -79,7 +84,13 @@ function MatchCardFooter({
     );
   }
 
-  return <MatchVoteCounts homeCountry={homeCountry} awayCountry={awayCountry} voteCounts={voteCounts} />;
+  return (
+    <MatchVoteCounts
+      homeCountry={homeCountry}
+      awayCountry={awayCountry}
+      voteCounts={voteCounts}
+    />
+  );
 }
 
 function predictedTeamClass(isPredicted: boolean) {
@@ -100,7 +111,13 @@ function formatMatchScore(match: Match): string {
   return "vs";
 }
 
-export function MatchCard({ match, isSignedIn = false }: { match: Match; isSignedIn?: boolean }) {
+export function MatchCard({
+  match,
+  isSignedIn = false,
+}: {
+  match: Match;
+  isSignedIn?: boolean;
+}) {
   const prediction = match.userVoteOutcome;
   const predictsHomeWin = prediction === "HOME_WIN";
   const predictsAwayWin = prediction === "AWAY_WIN";
@@ -113,11 +130,18 @@ export function MatchCard({ match, isSignedIn = false }: { match: Match; isSigne
   const [localStar, setLocalStar] = useState<boolean | null>(null);
   const isStarred = localStar ?? voteResult?.hasStar ?? false;
   const starTogglePossible =
-    isSignedIn && match.votingOpen && !!prediction && starsAllocatedForStage(match.stage) > 0;
-  const { data: starAllotments } = api.vote.getStarAllotments.useQuery(undefined, {
-    enabled: starTogglePossible,
-  });
-  const starsRemaining = starAllotments?.find((a) => a.stage === match.stage)?.remaining ?? null;
+    isSignedIn &&
+    match.votingOpen &&
+    !!prediction &&
+    starsAllocatedForStage(match.stage) > 0;
+  const { data: starAllotments } = api.vote.getStarAllotments.useQuery(
+    undefined,
+    {
+      enabled: starTogglePossible,
+    },
+  );
+  const starsRemaining =
+    starAllotments?.find((a) => a.stage === match.stage)?.remaining ?? null;
   const canToggleStar =
     starTogglePossible &&
     (isStarred || starsRemaining === null || starsRemaining > 0);
@@ -138,9 +162,15 @@ export function MatchCard({ match, isSignedIn = false }: { match: Match; isSigne
       <div className="mb-3 flex items-center justify-between">
         <MatchStatusBadge status={match.status} />
         <span className="flex items-center gap-1.5 text-xs text-foreground/50">
-          {showStar && (
-            canToggleStar ? (
-              <Tooltip label={isStarred ? "Remove star" : "Believe in your luck? Star this match and get double reward"}>
+          {showStar &&
+            (canToggleStar ? (
+              <Tooltip
+                label={
+                  isStarred
+                    ? "Remove star"
+                    : "Believe in your luck? Star this match and get double reward"
+                }
+              >
                 <button
                   type="button"
                   disabled={toggleStar.isPending}
@@ -162,8 +192,7 @@ export function MatchCard({ match, isSignedIn = false }: { match: Match; isSigne
               <span className="text-amber-500 dark:text-amber-400">
                 <StarIcon filled />
               </span>
-            )
-          )}
+            ))}
           {formatKickoffTime(match.kickoffAt)}
         </span>
       </div>
@@ -189,7 +218,10 @@ export function MatchCard({ match, isSignedIn = false }: { match: Match; isSigne
           >
             {formatMatchScore(match)}
           </span>
-          <RatioDisplay homeRatio={match.homeRatio} awayRatio={match.awayRatio} />
+          <RatioDisplay
+            homeRatio={match.homeRatio}
+            awayRatio={match.awayRatio}
+          />
           {predictsDraw && (
             <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
               predict draw
@@ -225,3 +257,4 @@ export function MatchCard({ match, isSignedIn = false }: { match: Match; isSigne
     </Link>
   );
 }
+
