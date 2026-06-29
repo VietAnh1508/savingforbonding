@@ -24,14 +24,17 @@ export const STARS_BY_STAGE: Record<string, number> = {
   "Quarter-final": 2,
   "Semi-final": 1,
   "Play-off for third place": 1,
-  "Final": 1,
+  Final: 1,
 };
 
 export function starsAllocatedForStage(stage: string | null): number {
-  return (stage !== null ? (STARS_BY_STAGE[stage] ?? 0) : 0);
+  return stage !== null ? (STARS_BY_STAGE[stage] ?? 0) : 0;
 }
 
-export function beerCostForStarVote(isCorrect: boolean, stage: string | null): number {
+export function beerCostForStarVote(
+  isCorrect: boolean,
+  stage: string | null,
+): number {
   const doubled = wrongPenaltyForStage(stage) * 2;
   return isCorrect ? -doubled : doubled;
 }
@@ -54,11 +57,16 @@ export function wrongPenaltyForStage(stage: string | null): number {
 
 export function noBetPenaltyForStage(stage: string | null): number {
   const isKnockout =
-    KNOCKOUT_STAGE_ORDER.indexOf(stage as (typeof KNOCKOUT_STAGE_ORDER)[number]) !== -1;
+    KNOCKOUT_STAGE_ORDER.indexOf(
+      stage as (typeof KNOCKOUT_STAGE_ORDER)[number],
+    ) !== -1;
   return isKnockout ? wrongPenaltyForStage(stage) + 2 : BEER_NO_BET;
 }
 
-export function beerCostForVote(isCorrect: boolean, stage: string | null): number {
+export function beerCostForVote(
+  isCorrect: boolean,
+  stage: string | null,
+): number {
   return isCorrect ? BEER_WIN : wrongPenaltyForStage(stage);
 }
 
@@ -179,17 +187,6 @@ export function describeHandicapRule(
   return `${awayCountry} -${formatRatioValue(awayRatio)} handicap. (2) wins only if away beats the line; (X) on a tie after handicap; (1) if home covers.`;
 }
 
-export function outcomeShort(outcome: VoteOutcome): string {
-  switch (outcome) {
-    case "HOME_WIN":
-      return "1";
-    case "DRAW":
-      return "X";
-    case "AWAY_WIN":
-      return "2";
-  }
-}
-
 export function outcomeLabel(
   outcome: VoteOutcome,
   homeCountry: string,
@@ -266,4 +263,3 @@ export function formatMatchDateTime(date: Date): string {
 export function formatJoiningDate(date: Date): string {
   return joiningDateFormatter.format(date);
 }
-

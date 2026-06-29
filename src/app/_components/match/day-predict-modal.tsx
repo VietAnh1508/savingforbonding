@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
 import { StarIcon } from "~/app/_components/icons/star-icon";
+import { OutcomePicker } from "~/app/_components/match/outcome-picker";
 import { RatioDisplay } from "~/app/_components/match/ratio-display";
-import { TeamFlag } from "~/app/_components/match/team-flag";
 import { useToast } from "~/app/_components/toast";
 import { Tooltip } from "~/app/_components/tooltip";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
@@ -202,20 +202,6 @@ export function DayPredictModal({
               !locked &&
               (isStarred || starsRemaining > 0);
 
-            const options = [
-              {
-                outcome: "HOME_WIN" as VoteOutcome,
-                label: match.homeCountry,
-                flag: match.homeCountry,
-              },
-              { outcome: "DRAW" as VoteOutcome, label: "Draw", flag: null },
-              {
-                outcome: "AWAY_WIN" as VoteOutcome,
-                label: match.awayCountry,
-                flag: match.awayCountry,
-              },
-            ] as const;
-
             return (
               <div key={match.id} className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
@@ -264,26 +250,15 @@ export function DayPredictModal({
                   </div>
                 </div>
 
-                <div
-                  className={`grid grid-cols-3 gap-2 ${locked ? "opacity-40" : ""}`}
-                >
-                  {options.map(({ outcome, label, flag }) => (
-                    <button
-                      key={outcome}
-                      type="button"
-                      disabled={locked || castBatch.isPending}
-                      onClick={() => select(match.id, outcome)}
-                      className={`flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-center text-sm font-medium transition ${
-                        selected === outcome
-                          ? "border-emerald-500 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
-                          : "border-foreground/10 bg-foreground/5 hover:border-emerald-500/40 hover:bg-foreground/10"
-                      } disabled:cursor-not-allowed`}
-                    >
-                      {flag && <TeamFlag country={flag} size="sm" />}
-                      <span className="truncate">{label}</span>
-                    </button>
-                  ))}
-                </div>
+                <OutcomePicker
+                  homeCountry={match.homeCountry}
+                  awayCountry={match.awayCountry}
+                  selectedOutcome={selected}
+                  onSelect={(outcome) => select(match.id, outcome)}
+                  disabled={locked || castBatch.isPending}
+                  size="compact"
+                  showFlags
+                />
                 <div className="grid grid-cols-3 gap-2 text-center text-xs text-foreground/40">
                   <span>
                     {match.voteCounts.home} voter
