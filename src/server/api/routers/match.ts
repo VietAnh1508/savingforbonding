@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { MatchStatus } from "../../../../generated/prisma";
 import { isKnownCountry } from "~/lib/country-flag";
-import { isVotingOpen } from "~/lib/match";
+import { isVotingOpen, type MatchVoter } from "~/lib/match";
 
 const STAGE_FLAGS: [string, string | undefined][] = [
   ["First Stage", process.env.STAGE_FIRST_STAGE],
@@ -95,6 +95,7 @@ export const matchRouter = createTRPCRouter({
           where: { matchId: input.id },
           select: {
             outcome: true,
+            hasStar: true,
             user: { select: { id: true, name: true } },
           },
         }),
@@ -113,11 +114,12 @@ export const matchRouter = createTRPCRouter({
       if (!match) return null;
 
       const voteCounts = emptyMatchVoteCounts();
-      const voters = { home: [] as { id: string; name: string | null }[], draw: [] as { id: string; name: string | null }[], away: [] as { id: string; name: string | null }[] };
+      const voters: { home: MatchVoter[]; draw: MatchVoter[]; away: MatchVoter[] } = { home: [], draw: [], away: [] };
       for (const v of allVotes) {
-        if (v.outcome === "HOME_WIN") { voteCounts.home++; voters.home.push(v.user); }
-        else if (v.outcome === "DRAW") { voteCounts.draw++; voters.draw.push(v.user); }
-        else if (v.outcome === "AWAY_WIN") { voteCounts.away++; voters.away.push(v.user); }
+        const entry = { ...v.user, hasStar: v.hasStar };
+        if (v.outcome === "HOME_WIN") { voteCounts.home++; voters.home.push(entry); }
+        else if (v.outcome === "DRAW") { voteCounts.draw++; voters.draw.push(entry); }
+        else if (v.outcome === "AWAY_WIN") { voteCounts.away++; voters.away.push(entry); }
       }
 
       return {

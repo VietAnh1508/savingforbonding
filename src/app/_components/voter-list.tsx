@@ -1,13 +1,19 @@
-type Voter = { id: string; name: string | null };
+import { type MatchVoter } from "~/lib/match";
+import { StarIcon } from "~/app/_components/icons/star-icon";
 
-function VoterColumn({ voters, grow }: { voters: Voter[]; grow?: boolean }) {
+function VoterColumn({ voters, grow }: { voters: MatchVoter[]; grow?: boolean }) {
   return (
     <div className={`flex flex-col items-center gap-0.5 ${grow ? "min-w-0 flex-1" : ""}`}>
       {voters.length === 0 ? (
         <span className="text-xs text-foreground/30">—</span>
       ) : (
         voters.map((v) => (
-          <span key={v.id} className="text-xs text-foreground/60">
+          <span key={v.id} className="flex items-center gap-0.5 text-xs text-foreground/60">
+            {v.hasStar && (
+              <span className="[&_svg]:h-3 [&_svg]:w-3 text-amber-500 dark:text-amber-400">
+                <StarIcon filled />
+              </span>
+            )}
             {v.name}
           </span>
         ))
@@ -20,9 +26,9 @@ export function VoterList({
   voters,
 }: {
   voters: {
-    home: Voter[];
-    draw: Voter[];
-    away: Voter[];
+    home: MatchVoter[];
+    draw: MatchVoter[];
+    away: MatchVoter[];
   };
 }) {
   const total = voters.home.length + voters.draw.length + voters.away.length;

@@ -6,6 +6,8 @@ export type MatchVoteCounts = {
   away: number;
 };
 
+export type MatchVoter = { id: string; name: string | null; hasStar: boolean };
+
 export const VOTE_LOCK_MINUTES = 5;
 
 /** Platform fee — paid on every prediction (win or lose). */
