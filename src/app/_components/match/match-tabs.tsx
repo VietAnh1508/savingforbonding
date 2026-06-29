@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MatchStatus } from "../../../../generated/prisma";
 
+import { StarIcon } from "~/app/_components/icons/star-icon";
 import { DayPredictModal } from "~/app/_components/match/day-predict-modal";
 import { MatchCard } from "~/app/_components/match/match-card";
 import {
   formatMatchDate,
   MATCH_DISPLAY_TIMEZONE,
+  starsAllocatedForStage,
   toVietnamDatetimeLocal,
 } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
@@ -80,6 +82,14 @@ function MatchList({
   const showStageHeadings = stageGroups.length > 1;
   const allDateGroups = stageGroups.flatMap((sg) => sg.dateGroups);
 
+  const hasKnockoutStages = stageGroups.some(
+    ({ stage }) => starsAllocatedForStage(stage) > 0,
+  );
+  const { data: starAllotments } = api.vote.getStarAllotments.useQuery(
+    undefined,
+    { enabled: isSignedIn && hasKnockoutStages },
+  );
+
   if (allDateGroups.length === 0) {
     return (
       <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-12 text-center">
@@ -92,17 +102,57 @@ function MatchList({
     ? allDateGroups.find((g) => g.dateKey === modalDateKey)
     : null;
 
+  const singleStage = !showStageHeadings ? stageGroups[0] : undefined;
+  const showSingleStageBudget =
+    singleStage !== undefined &&
+    isSignedIn &&
+    starsAllocatedForStage(singleStage.stage) > 0 &&
+    singleStage.dateGroups.some((dg) => dg.matches.some((m) => m.votingOpen));
+  const singleStageAllotment = showSingleStageBudget
+    ? starAllotments?.find((a) => a.stage === singleStage!.stage)
+    : undefined;
+
   return (
     <>
+      {showSingleStageBudget && (
+        <div className="mb-2 flex items-center gap-1 text-xs text-amber-500 dark:text-amber-400">
+          <StarIcon filled={false} />
+          <span>
+            {!starAllotments
+              ? "…"
+              : `${singleStageAllotment?.remaining ?? 0} of ${singleStageAllotment?.allocated ?? 0} stars remaining this round`}
+          </span>
+        </div>
+      )}
       <div className={showStageHeadings ? "space-y-12" : "space-y-8"}>
-        {stageGroups.map(({ stage, dateGroups }) => (
+        {stageGroups.map(({ stage, dateGroups }) => {
+          const stageAllotment = starAllotments?.find((a) => a.stage === stage);
+          const hasVotableInStage = dateGroups.some((dg) =>
+            dg.matches.some((m) => m.votingOpen),
+          );
+          const showStarBudget =
+            isSignedIn &&
+            starsAllocatedForStage(stage) > 0 &&
+            hasVotableInStage;
+
+          return (
           <div key={stage ?? "__null__"}>
             {showStageHeadings && (
               <div className="mb-8 flex items-center gap-3">
                 <div className="h-px flex-1 bg-foreground/10" />
-                <span className="text-xs font-semibold uppercase tracking-widest text-foreground/40">
-                  {stage ?? "Other"}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-foreground/40">
+                    {stage ?? "Other"}
+                  </span>
+                  {showStarBudget && (
+                    <span className="flex items-center gap-1 text-xs text-amber-500 dark:text-amber-400">
+                      <StarIcon filled={false} />
+                      {starAllotments
+                        ? `${stageAllotment?.remaining ?? 0}/${stageAllotment?.allocated ?? 0}`
+                        : "…"}
+                    </span>
+                  )}
+                </div>
                 <div className="h-px flex-1 bg-foreground/10" />
               </div>
             )}
@@ -155,7 +205,8 @@ function MatchList({
               })}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {modalGroup && (
