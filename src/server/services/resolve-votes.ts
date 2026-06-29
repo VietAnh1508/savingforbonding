@@ -1,9 +1,9 @@
 import { type PrismaClient } from "../../../generated/prisma";
 import {
-  BEER_NO_BET,
   beerCostForVote,
   deriveResult,
   isVoteCorrect,
+  noBetPenaltyForStage,
 } from "~/lib/match";
 
 export async function resolveMatchVotes(
@@ -60,7 +60,7 @@ export async function resolveMatchVotes(
       match.homeRatio,
       match.awayRatio,
     );
-    const beers = beerCostForVote(isCorrect);
+    const beers = beerCostForVote(isCorrect, match.stage);
 
     await db.vote.update({
       where: { id: vote.id },
@@ -94,15 +94,17 @@ export async function resolveMatchVotes(
       select: { id: true },
     });
 
+    const noBetPenalty = noBetPenaltyForStage(match.stage);
+
     for (const user of nonVoters) {
       await db.user.update({
         where: { id: user.id },
         data: {
-          totalPoints: { increment: BEER_NO_BET },
-          weeklyPoints: { increment: BEER_NO_BET },
+          totalPoints: { increment: noBetPenalty },
+          weeklyPoints: { increment: noBetPenalty },
         },
       });
-      beersCharged += BEER_NO_BET;
+      beersCharged += noBetPenalty;
     }
 
     noBetPenalties = nonVoters.length;

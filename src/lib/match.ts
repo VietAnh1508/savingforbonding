@@ -16,8 +16,30 @@ export const BEER_WIN = BEER_PLATFORM_FEE;
 export const BEER_LOSE = BEER_PLATFORM_FEE + BEER_LOSE_PENALTY;
 export const BEER_NO_BET = 2;
 
-export function beerCostForVote(isCorrect: boolean): number {
-  return isCorrect ? BEER_WIN : BEER_LOSE;
+export const KNOCKOUT_STAGE_ORDER = [
+  "Round of 32",
+  "Round of 16",
+  "Quarter-final",
+  "Semi-final",
+  "Play-off for third place",
+  "Final",
+] as const;
+
+export function wrongPenaltyForStage(stage: string | null): number {
+  const index = KNOCKOUT_STAGE_ORDER.indexOf(
+    stage as (typeof KNOCKOUT_STAGE_ORDER)[number],
+  );
+  return index === -1 ? BEER_LOSE : BEER_LOSE + (index + 1) * 3;
+}
+
+export function noBetPenaltyForStage(stage: string | null): number {
+  const isKnockout =
+    KNOCKOUT_STAGE_ORDER.indexOf(stage as (typeof KNOCKOUT_STAGE_ORDER)[number]) !== -1;
+  return isKnockout ? wrongPenaltyForStage(stage) + 2 : BEER_NO_BET;
+}
+
+export function beerCostForVote(isCorrect: boolean, stage: string | null): number {
+  return isCorrect ? BEER_WIN : wrongPenaltyForStage(stage);
 }
 
 export function formatBeers(count: number): string {

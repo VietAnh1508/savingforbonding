@@ -6,7 +6,7 @@ import { MatchStatusBadge } from "~/app/_components/match-status-badge";
 import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
 import { RatioDisplay } from "~/app/_components/ratio-display";
 import { TeamFlag } from "~/app/_components/team-flag";
-import { formatBeers, formatKickoffTime } from "~/lib/match";
+import { formatBeers, formatKickoffTime, noBetPenaltyForStage } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listMatches"][number];
@@ -21,6 +21,7 @@ function MatchCardFooter({
   homeCountry,
   awayCountry,
   voteCounts,
+  stage,
 }: {
   isSignedIn: boolean;
   isCompleted: boolean;
@@ -29,6 +30,7 @@ function MatchCardFooter({
   homeCountry: string;
   awayCountry: string;
   voteCounts: Match["voteCounts"];
+  stage: string | null;
 }) {
   if (isSignedIn && isCompleted && voteResult) {
     if (voteResult.isCorrect === null) {
@@ -51,7 +53,7 @@ function MatchCardFooter({
   if (isSignedIn && isCompleted && !prediction) {
     return (
       <p className="text-center text-xs font-medium text-amber-600 dark:text-amber-400">
-        No pick — {formatBeers(2)}
+        No pick — {formatBeers(noBetPenaltyForStage(stage))}
       </p>
     );
   }
@@ -149,6 +151,7 @@ export function MatchCard({ match, isSignedIn = false }: { match: Match; isSigne
           homeCountry={match.homeCountry}
           awayCountry={match.awayCountry}
           voteCounts={match.voteCounts}
+          stage={match.stage}
         />
       </div>
     </Link>
