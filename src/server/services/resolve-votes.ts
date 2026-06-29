@@ -1,9 +1,10 @@
 import { type PrismaClient } from "../../../generated/prisma";
 import {
-  BEER_NO_BET,
+  beerCostForStarVote,
   beerCostForVote,
   deriveResult,
   isVoteCorrect,
+  noBetPenaltyForStage,
 } from "~/lib/match";
 
 export async function resolveMatchVotes(
@@ -60,20 +61,36 @@ export async function resolveMatchVotes(
       match.homeRatio,
       match.awayRatio,
     );
-    const beers = beerCostForVote(isCorrect);
+    const beers = vote.hasStar
+      ? beerCostForStarVote(isCorrect, match.stage)
+      : beerCostForVote(isCorrect, match.stage);
 
     await db.vote.update({
       where: { id: vote.id },
       data: { isCorrect, points: beers },
     });
 
-    await db.user.update({
-      where: { id: vote.userId },
-      data: {
-        totalPoints: { increment: beers },
-        weeklyPoints: { increment: beers },
-      },
-    });
+    if (beers >= 0) {
+      await db.user.update({
+        where: { id: vote.userId },
+        data: {
+          totalPoints: { increment: beers },
+          weeklyPoints: { increment: beers },
+        },
+      });
+    } else {
+      const user = await db.user.findUnique({
+        where: { id: vote.userId },
+        select: { totalPoints: true, weeklyPoints: true },
+      });
+      await db.user.update({
+        where: { id: vote.userId },
+        data: {
+          totalPoints: Math.max(0, (user?.totalPoints ?? 0) + beers),
+          weeklyPoints: Math.max(0, (user?.weeklyPoints ?? 0) + beers),
+        },
+      });
+    }
     beersCharged += beers;
   }
 
@@ -94,15 +111,17 @@ export async function resolveMatchVotes(
       select: { id: true },
     });
 
+    const noBetPenalty = noBetPenaltyForStage(match.stage);
+
     for (const user of nonVoters) {
       await db.user.update({
         where: { id: user.id },
         data: {
-          totalPoints: { increment: BEER_NO_BET },
-          weeklyPoints: { increment: BEER_NO_BET },
+          totalPoints: { increment: noBetPenalty },
+          weeklyPoints: { increment: noBetPenalty },
         },
       });
-      beersCharged += BEER_NO_BET;
+      beersCharged += noBetPenalty;
     }
 
     noBetPenalties = nonVoters.length;

@@ -53,6 +53,7 @@ model Vote {
     match     Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
     outcome   VoteOutcome
     isCorrect Boolean?
+    hasStar   Boolean     @default(false)
     points    Int         @default(0)
     createdAt DateTime    @default(now())
     updatedAt DateTime    @updatedAt

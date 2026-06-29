@@ -68,7 +68,7 @@ export const matchRouter = createTRPCRouter({
               userId: ctx.session.user.id,
               matchId: { in: matchIds },
             },
-            select: { matchId: true, outcome: true, isCorrect: true, points: true },
+            select: { matchId: true, outcome: true, isCorrect: true, points: true, hasStar: true },
           })
         : [];
 

@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { type PrismaClient } from "../../../../generated/prisma";
-import { isVotingOpen } from "~/lib/match";
+import { isVotingOpen, STARS_BY_STAGE, starsAllocatedForStage } from "~/lib/match";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 const voteOutcomeSchema = z.enum(["HOME_WIN", "DRAW", "AWAY_WIN"]);
@@ -330,6 +330,79 @@ export const voteRouter = createTRPCRouter({
         take: limit,
       });
     }),
+
+  toggleStar: protectedProcedure
+    .input(z.object({ matchId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      return ctx.db.$transaction(async (tx) => {
+        const [vote, match] = await Promise.all([
+          tx.vote.findUnique({
+            where: { userId_matchId: { userId, matchId: input.matchId } },
+          }),
+          tx.match.findUnique({
+            where: { id: input.matchId },
+            select: { stage: true, kickoffAt: true, status: true },
+          }),
+        ]);
+
+        if (!vote) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "You haven't voted on this match" });
+        }
+        if (!match) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Match not found" });
+        }
+        if (!isVotingOpen(match.kickoffAt, match.status)) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Voting is closed for this match" });
+        }
+
+        const allocated = starsAllocatedForStage(match.stage);
+        if (allocated === 0) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Stars are not available for this stage" });
+        }
+
+        if (!vote.hasStar) {
+          const usedStars = await tx.vote.count({
+            where: { userId, hasStar: true, match: { stage: match.stage } },
+          });
+          if (usedStars >= allocated) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `No stars remaining for this stage`,
+            });
+          }
+        }
+
+        return tx.vote.update({
+          where: { id: vote.id },
+          data: { hasStar: !vote.hasStar },
+        });
+      });
+    }),
+
+  getStarAllotments: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    const starredVotes = await ctx.db.vote.findMany({
+      where: { userId, hasStar: true },
+      select: { match: { select: { stage: true } } },
+    });
+
+    const usedByStage = new Map<string, number>();
+    for (const vote of starredVotes) {
+      const stage = vote.match.stage;
+      if (stage === null) continue;
+      usedByStage.set(stage, (usedByStage.get(stage) ?? 0) + 1);
+    }
+
+    return Object.entries(STARS_BY_STAGE).map(([stage, allocated]) => ({
+      stage,
+      allocated,
+      used: usedByStage.get(stage) ?? 0,
+      remaining: allocated - (usedByStage.get(stage) ?? 0),
+    }));
+  }),
 
   getMyStats: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;

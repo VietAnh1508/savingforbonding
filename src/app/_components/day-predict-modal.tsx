@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 
-import { RatioDisplay } from "~/app/_components/ratio-display";
+import { StarIcon } from "~/app/_components/icons/star-icon";
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
+import { RatioDisplay } from "~/app/_components/ratio-display";
 import { TeamFlag } from "~/app/_components/team-flag";
+import { Tooltip } from "~/app/_components/tooltip";
 import { useToast } from "~/app/_components/toast";
-import { formatKickoffTime } from "~/lib/match";
+import { useToggleStar } from "~/app/hooks/use-toggle-star";
+import { formatKickoffTime, starsAllocatedForStage } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { type VoteOutcome } from "../../../generated/prisma";
 
@@ -32,8 +35,34 @@ export function DayPredictModal({
   const [selections, setSelections] = useState<Selections>(() =>
     initSelections(matches),
   );
+  // Optimistic local star state: matchId → hasStar (overrides server data until invalidated)
+  const [starOverrides, setStarOverrides] = useState<Record<string, boolean>>({});
   const utils = api.useUtils();
   const toast = useToast();
+
+  const hasKnockoutMatches = matches.some((m) => starsAllocatedForStage(m.stage) > 0);
+  const { data: starAllotments } = api.vote.getStarAllotments.useQuery(undefined, {
+    enabled: hasKnockoutMatches,
+  });
+
+  const toggleStar = useToggleStar({
+    onMutate: ({ matchId }) => {
+      const current = matchId in starOverrides
+        ? starOverrides[matchId]
+        : (matches.find((m) => m.id === matchId)?.userVoteResult?.hasStar ?? false);
+      setStarOverrides((prev) => ({ ...prev, [matchId]: !current }));
+    },
+    onError: (_err, { matchId }) => {
+      setStarOverrides((prev) => {
+        const next = { ...prev };
+        delete next[matchId];
+        return next;
+      });
+    },
+    onSettled: () => {
+      void utils.match.listMatches.invalidate();
+    },
+  });
 
   // Close on Escape
   useEffect(() => {
@@ -136,6 +165,20 @@ export function DayPredictModal({
             const locked = !match.votingOpen;
             const selected = selections[match.id];
 
+            const starsAllocated = starsAllocatedForStage(match.stage);
+            const hasExistingVote = match.userVoteOutcome !== null;
+            const isStarred = match.id in starOverrides
+              ? (starOverrides[match.id] ?? false)
+              : (match.userVoteResult?.hasStar ?? false);
+            const stageAllotment = starAllotments?.find((a) => a.stage === match.stage);
+            // Adjust remaining count for optimistic toggles in this session
+            const optimisticUsed = Object.entries(starOverrides).filter(
+              ([mid, starred]) => starred && matches.find((m) => m.id === mid)?.stage === match.stage,
+            ).length;
+            const serverRemaining = stageAllotment?.remaining ?? starsAllocated;
+            const starsRemaining = Math.max(0, serverRemaining - optimisticUsed + (isStarred && match.id in starOverrides ? 1 : 0));
+            const canStar = starsAllocated > 0 && hasExistingVote && !locked && (isStarred || starsRemaining > 0);
+
             const options = [
                 { outcome: "HOME_WIN" as VoteOutcome, label: match.homeCountry, flag: match.homeCountry },
                 { outcome: "DRAW" as VoteOutcome, label: "Draw", flag: null },
@@ -148,7 +191,27 @@ export function DayPredictModal({
                   <span className={locked ? "font-medium text-red-500 dark:text-red-400" : "text-foreground/40"}>
                     {locked ? "🔒 Voting closed" : formatKickoffTime(match.kickoffAt)}
                   </span>
-                  <RatioDisplay homeRatio={match.homeRatio} awayRatio={match.awayRatio} />
+                  <div className="flex items-center gap-2">
+                    {starsAllocated > 0 && hasExistingVote && (
+                      <Tooltip label={isStarred ? "Remove star" : `Star this pick (${starsRemaining} remaining)`}>
+                        <button
+                          type="button"
+                          disabled={!canStar || toggleStar.isPending}
+                          onClick={() => toggleStar.mutate({ matchId: match.id })}
+                          className={`transition ${
+                            isStarred
+                              ? "text-amber-500 dark:text-amber-400"
+                              : canStar
+                                ? "text-foreground/30 hover:text-amber-400"
+                                : "cursor-not-allowed text-foreground/20"
+                          }`}
+                        >
+                          <StarIcon filled={isStarred} />
+                        </button>
+                      </Tooltip>
+                    )}
+                    <RatioDisplay homeRatio={match.homeRatio} awayRatio={match.awayRatio} />
+                  </div>
                 </div>
 
                 <div className={`grid grid-cols-3 gap-2 ${locked ? "opacity-40" : ""}`}>

@@ -1,5 +1,12 @@
-import { Nav } from "~/app/_components/nav";
 import { BeerStakes } from "~/app/_components/beer-stakes";
+import { StarIcon } from "~/app/_components/icons/star-icon";
+import { Nav } from "~/app/_components/nav";
+import {
+  KNOCKOUT_STAGE_ORDER,
+  STARS_BY_STAGE,
+  formatBeers,
+  wrongPenaltyForStage,
+} from "~/lib/match";
 
 export default function RulesPage() {
   return (
@@ -12,15 +19,102 @@ export default function RulesPage() {
         </p>
         <BeerStakes />
 
+        <div className="mt-8 rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 text-sm text-foreground/70">
+          <h3 className="mb-2 flex items-center gap-1.5 font-semibold text-violet-700 dark:text-violet-300">
+            <span className="text-amber-500 dark:text-amber-400">
+              <StarIcon filled />
+            </span>
+            Star of Hope
+          </h3>
+          <p className="mb-3">
+            In knockout rounds, you can place a{" "}
+            <strong className="text-foreground/90">Star of Hope</strong> on any
+            match you&apos;ve voted on — but stars are scarce and the stakes are
+            doubled:
+          </p>
+          <ul className="mb-3 list-inside list-disc space-y-1">
+            <li>
+              <span className="text-emerald-600 dark:text-emerald-300">
+                Correct + star
+              </span>{" "}
+              — clears beers equal to double the stage wrong penalty (floored at
+              0)
+            </li>
+            <li>
+              <span className="text-red-600 dark:text-red-300">
+                Wrong + star
+              </span>{" "}
+              — double the stage wrong penalty
+            </li>
+          </ul>
+          <p className="mb-2">
+            Stars can only be placed or removed before the voting window closes
+            (5 minutes before kickoff). Each stage has a fixed star budget:
+          </p>
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-foreground/10 text-left text-foreground/50">
+                <th className="pb-1 font-normal">Stage</th>
+                <th className="pb-1 font-normal text-amber-500 dark:text-amber-400">
+                  Stars
+                </th>
+                <th className="pb-1 font-normal text-emerald-600 dark:text-emerald-300">
+                  Right clears
+                </th>
+                <th className="pb-1 font-normal text-red-600 dark:text-red-400">
+                  Wrong costs
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {KNOCKOUT_STAGE_ORDER.map((stage) => (
+                <tr
+                  key={stage}
+                  className="border-b border-foreground/5 last:border-0"
+                >
+                  <td className="py-0.5">{stage}</td>
+                  <td className="py-0.5 text-amber-500 dark:text-amber-400">
+                    {STARS_BY_STAGE[stage]}
+                  </td>
+                  <td className="py-0.5 text-emerald-600 dark:text-emerald-300">
+                    {formatBeers(wrongPenaltyForStage(stage) * 2)}
+                  </td>
+                  <td className="py-0.5 text-red-600 dark:text-red-300">
+                    {formatBeers(wrongPenaltyForStage(stage) * 2)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
         <div className="mt-8 rounded-xl border border-foreground/10 bg-foreground/5 p-4 text-sm text-foreground/70">
-          <h3 className="mb-2 font-semibold text-foreground/90">Leaderboard Tiebreakers</h3>
+          <h3 className="mb-2 font-semibold text-foreground/90">
+            Leaderboard Tiebreakers
+          </h3>
           <p className="mb-3">
             Tied players share the same rank. If a further tiebreaker is needed:
           </p>
           <ol className="list-inside list-decimal space-y-1">
-            <li>Lower <span className="text-amber-600 dark:text-amber-400">accuracy</span> (correct ÷ voted) ranks lower</li>
-            <li>Most <span className="text-red-600 dark:text-red-300">wrong predictions</span> ranks lower</li>
-            <li>Most <span className="text-foreground/50">missed predictions</span> ranks lower</li>
+            <li>
+              Lower{" "}
+              <span className="text-amber-600 dark:text-amber-400">
+                accuracy
+              </span>{" "}
+              (correct ÷ voted) ranks lower
+            </li>
+            <li>
+              Most{" "}
+              <span className="text-red-600 dark:text-red-300">
+                wrong predictions
+              </span>{" "}
+              ranks lower
+            </li>
+            <li>
+              Most{" "}
+              <span className="text-foreground/50">missed predictions</span>{" "}
+              ranks lower
+            </li>
             <li>Players still tied share the same rank</li>
           </ol>
         </div>
@@ -28,3 +122,4 @@ export default function RulesPage() {
     </>
   );
 }
+
