@@ -1,14 +1,14 @@
 import { notFound } from "next/navigation";
 
-import { BeerStakes } from "~/app/_components/beer-stakes";
-import { BettingRatios } from "~/app/_components/betting-ratios";
-import { MatchStatusBadge } from "~/app/_components/match-status-badge";
-import { MatchVoteCounts } from "~/app/_components/match-vote-counts";
-import { VoterList } from "~/app/_components/voter-list";
-import { Nav } from "~/app/_components/nav";
-import { TeamFlag } from "~/app/_components/team-flag";
-import { VoteForm } from "~/app/_components/vote-form";
 import { BackLink } from "~/app/_components/back-link";
+import { BeerStakes } from "~/app/_components/beer-stakes";
+import { MatchStatusBadge } from "~/app/_components/match-status-badge";
+import { BettingRatios } from "~/app/_components/match/betting-ratios";
+import { MatchVoteCounts } from "~/app/_components/match/match-vote-counts";
+import { TeamFlag } from "~/app/_components/match/team-flag";
+import { VoteForm } from "~/app/_components/match/vote-form";
+import { VoterList } from "~/app/_components/match/voter-list";
+import { Nav } from "~/app/_components/nav";
 import { formatMatchDateTime } from "~/lib/match";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
@@ -76,7 +76,9 @@ export default async function MatchPage({
               awayCountry={match.awayCountry}
               voteCounts={match.voteCounts}
             />
-            {match.status === "COMPLETED" && <VoterList voters={match.voters} />}
+            {match.status === "COMPLETED" && (
+              <VoterList voters={match.voters} />
+            )}
           </div>
         </div>
 

@@ -10,8 +10,8 @@ import {
   wrongPenaltyForStage,
 } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
-import { type VoteOutcome } from "../../../generated/prisma";
-import { useToast } from "./toast";
+import { type VoteOutcome } from "../../../../generated/prisma";
+import { useToast } from "../toast";
 
 const OUTCOMES: VoteOutcome[] = ["HOME_WIN", "DRAW", "AWAY_WIN"];
 

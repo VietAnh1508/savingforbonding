@@ -2,16 +2,16 @@
 
 import { useEffect, useState } from "react";
 
-import { StarIcon } from "~/app/_components/icons/star-icon";
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
-import { RatioDisplay } from "~/app/_components/ratio-display";
-import { TeamFlag } from "~/app/_components/team-flag";
-import { Tooltip } from "~/app/_components/tooltip";
+import { StarIcon } from "~/app/_components/icons/star-icon";
+import { RatioDisplay } from "~/app/_components/match/ratio-display";
+import { TeamFlag } from "~/app/_components/match/team-flag";
 import { useToast } from "~/app/_components/toast";
+import { Tooltip } from "~/app/_components/tooltip";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
 import { formatKickoffTime, starsAllocatedForStage } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
-import { type VoteOutcome } from "../../../generated/prisma";
+import { type VoteOutcome } from "../../../../generated/prisma";
 
 type Match = RouterOutputs["match"]["listMatches"][number];
 
@@ -36,20 +36,29 @@ export function DayPredictModal({
     initSelections(matches),
   );
   // Optimistic local star state: matchId → hasStar (overrides server data until invalidated)
-  const [starOverrides, setStarOverrides] = useState<Record<string, boolean>>({});
+  const [starOverrides, setStarOverrides] = useState<Record<string, boolean>>(
+    {},
+  );
   const utils = api.useUtils();
   const toast = useToast();
 
-  const hasKnockoutMatches = matches.some((m) => starsAllocatedForStage(m.stage) > 0);
-  const { data: starAllotments } = api.vote.getStarAllotments.useQuery(undefined, {
-    enabled: hasKnockoutMatches,
-  });
+  const hasKnockoutMatches = matches.some(
+    (m) => starsAllocatedForStage(m.stage) > 0,
+  );
+  const { data: starAllotments } = api.vote.getStarAllotments.useQuery(
+    undefined,
+    {
+      enabled: hasKnockoutMatches,
+    },
+  );
 
   const toggleStar = useToggleStar({
     onMutate: ({ matchId }) => {
-      const current = matchId in starOverrides
-        ? starOverrides[matchId]
-        : (matches.find((m) => m.id === matchId)?.userVoteResult?.hasStar ?? false);
+      const current =
+        matchId in starOverrides
+          ? starOverrides[matchId]
+          : (matches.find((m) => m.id === matchId)?.userVoteResult?.hasStar ??
+            false);
       setStarOverrides((prev) => ({ ...prev, [matchId]: !current }));
     },
     onError: (_err, { matchId }) => {
@@ -167,37 +176,75 @@ export function DayPredictModal({
 
             const starsAllocated = starsAllocatedForStage(match.stage);
             const hasExistingVote = match.userVoteOutcome !== null;
-            const isStarred = match.id in starOverrides
-              ? (starOverrides[match.id] ?? false)
-              : (match.userVoteResult?.hasStar ?? false);
-            const stageAllotment = starAllotments?.find((a) => a.stage === match.stage);
+            const isStarred =
+              match.id in starOverrides
+                ? (starOverrides[match.id] ?? false)
+                : (match.userVoteResult?.hasStar ?? false);
+            const stageAllotment = starAllotments?.find(
+              (a) => a.stage === match.stage,
+            );
             // Adjust remaining count for optimistic toggles in this session
             const optimisticUsed = Object.entries(starOverrides).filter(
-              ([mid, starred]) => starred && matches.find((m) => m.id === mid)?.stage === match.stage,
+              ([mid, starred]) =>
+                starred &&
+                matches.find((m) => m.id === mid)?.stage === match.stage,
             ).length;
             const serverRemaining = stageAllotment?.remaining ?? starsAllocated;
-            const starsRemaining = Math.max(0, serverRemaining - optimisticUsed + (isStarred && match.id in starOverrides ? 1 : 0));
-            const canStar = starsAllocated > 0 && hasExistingVote && !locked && (isStarred || starsRemaining > 0);
+            const starsRemaining = Math.max(
+              0,
+              serverRemaining -
+                optimisticUsed +
+                (isStarred && match.id in starOverrides ? 1 : 0),
+            );
+            const canStar =
+              starsAllocated > 0 &&
+              hasExistingVote &&
+              !locked &&
+              (isStarred || starsRemaining > 0);
 
             const options = [
-                { outcome: "HOME_WIN" as VoteOutcome, label: match.homeCountry, flag: match.homeCountry },
-                { outcome: "DRAW" as VoteOutcome, label: "Draw", flag: null },
-                { outcome: "AWAY_WIN" as VoteOutcome, label: match.awayCountry, flag: match.awayCountry },
-              ] as const;
+              {
+                outcome: "HOME_WIN" as VoteOutcome,
+                label: match.homeCountry,
+                flag: match.homeCountry,
+              },
+              { outcome: "DRAW" as VoteOutcome, label: "Draw", flag: null },
+              {
+                outcome: "AWAY_WIN" as VoteOutcome,
+                label: match.awayCountry,
+                flag: match.awayCountry,
+              },
+            ] as const;
 
-              return (
+            return (
               <div key={match.id} className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className={locked ? "font-medium text-red-500 dark:text-red-400" : "text-foreground/40"}>
-                    {locked ? "🔒 Voting closed" : formatKickoffTime(match.kickoffAt)}
+                  <span
+                    className={
+                      locked
+                        ? "font-medium text-red-500 dark:text-red-400"
+                        : "text-foreground/40"
+                    }
+                  >
+                    {locked
+                      ? "🔒 Voting closed"
+                      : formatKickoffTime(match.kickoffAt)}
                   </span>
                   <div className="flex items-center gap-2">
                     {starsAllocated > 0 && hasExistingVote && (
-                      <Tooltip label={isStarred ? "Remove star" : `Star this pick (${starsRemaining} remaining)`}>
+                      <Tooltip
+                        label={
+                          isStarred
+                            ? "Remove star"
+                            : `Star this pick (${starsRemaining} remaining)`
+                        }
+                      >
                         <button
                           type="button"
                           disabled={!canStar || toggleStar.isPending}
-                          onClick={() => toggleStar.mutate({ matchId: match.id })}
+                          onClick={() =>
+                            toggleStar.mutate({ matchId: match.id })
+                          }
                           className={`transition ${
                             isStarred
                               ? "text-amber-500 dark:text-amber-400"
@@ -210,11 +257,16 @@ export function DayPredictModal({
                         </button>
                       </Tooltip>
                     )}
-                    <RatioDisplay homeRatio={match.homeRatio} awayRatio={match.awayRatio} />
+                    <RatioDisplay
+                      homeRatio={match.homeRatio}
+                      awayRatio={match.awayRatio}
+                    />
                   </div>
                 </div>
 
-                <div className={`grid grid-cols-3 gap-2 ${locked ? "opacity-40" : ""}`}>
+                <div
+                  className={`grid grid-cols-3 gap-2 ${locked ? "opacity-40" : ""}`}
+                >
                   {options.map(({ outcome, label, flag }) => (
                     <button
                       key={outcome}
@@ -233,9 +285,18 @@ export function DayPredictModal({
                   ))}
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center text-xs text-foreground/40">
-                  <span>{match.voteCounts.home} voter{match.voteCounts.home === 1 ? "" : "s"}</span>
-                  <span>{match.voteCounts.draw} voter{match.voteCounts.draw === 1 ? "" : "s"}</span>
-                  <span>{match.voteCounts.away} voter{match.voteCounts.away === 1 ? "" : "s"}</span>
+                  <span>
+                    {match.voteCounts.home} voter
+                    {match.voteCounts.home === 1 ? "" : "s"}
+                  </span>
+                  <span>
+                    {match.voteCounts.draw} voter
+                    {match.voteCounts.draw === 1 ? "" : "s"}
+                  </span>
+                  <span>
+                    {match.voteCounts.away} voter
+                    {match.voteCounts.away === 1 ? "" : "s"}
+                  </span>
                 </div>
               </div>
             );
@@ -270,3 +331,4 @@ export function DayPredictModal({
     </div>
   );
 }
+

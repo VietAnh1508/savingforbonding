@@ -1,4 +1,4 @@
-import { MatchTabs } from "~/app/_components/match-tabs";
+import { MatchTabs } from "~/app/_components/match/match-tabs";
 import { Nav } from "~/app/_components/nav";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
