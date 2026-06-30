@@ -18,7 +18,7 @@ type Match = RouterOutputs["match"]["listMatches"][number];
 
 type TabId = "upcoming" | "completed";
 
-function groupByDate(matches: Match[]) {
+function groupByDate(matches: Match[], descending = false) {
   const grouped = matches.reduce(
     (acc, match) => {
       const key = toVietnamDatetimeLocal(match.kickoffAt).slice(0, 10);
@@ -30,7 +30,7 @@ function groupByDate(matches: Match[]) {
   );
 
   return Object.keys(grouped)
-    .sort()
+    .sort(descending ? (a, b) => b.localeCompare(a) : undefined)
     .map((key) => ({ dateKey: key, matches: grouped[key]! }));
 }
 
@@ -39,14 +39,15 @@ type StageGroup = {
   dateGroups: ReturnType<typeof groupByDate>;
 };
 
-function groupByStageAndDate(matches: Match[]): StageGroup[] {
+function groupByStageAndDate(matches: Match[], descending = false): StageGroup[] {
   const seenStages: (string | null)[] = [];
   for (const m of matches) {
     if (!seenStages.includes(m.stage)) seenStages.push(m.stage);
   }
-  return seenStages.map((stage) => ({
+  const orderedStages = descending ? [...seenStages].reverse() : seenStages;
+  return orderedStages.map((stage) => ({
     stage,
-    dateGroups: groupByDate(matches.filter((m) => m.stage === stage)),
+    dateGroups: groupByDate(matches.filter((m) => m.stage === stage), descending),
   }));
 }
 
@@ -254,10 +255,11 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
   );
 
   const activeMatches = activeTab === "upcoming" ? upcoming : completed;
-  const groups = useMemo(() => groupByDate(activeMatches), [activeMatches]);
+  const descending = activeTab === "completed";
+  const groups = useMemo(() => groupByDate(activeMatches, descending), [activeMatches, descending]);
   const stageGroups = useMemo(
-    () => groupByStageAndDate(activeMatches),
-    [activeMatches],
+    () => groupByStageAndDate(activeMatches, descending),
+    [activeMatches, descending],
   );
 
   // Reset active date when the tab or groups change
