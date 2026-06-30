@@ -210,7 +210,7 @@ export function MatchCard({
           )}
         </div>
 
-        <div className="flex min-w-[6.5rem] flex-col items-center gap-1">
+        <div className={`flex min-w-[6.5rem] flex-col items-center gap-1 ${predictedTeamClass(predictsDraw)}`}>
           <span
             className={`text-xl font-bold ${
               scoreIsTbd ? "text-foreground/40" : ""
