@@ -1,27 +1,10 @@
 import { z } from "zod";
 
-import { MatchStatus } from "../../../../generated/prisma";
 import { isKnownCountry } from "~/lib/country-flag";
 import { isVotingOpen, type MatchVoter } from "~/lib/match";
+import { MatchStatus } from "../../../../generated/prisma";
 
-const STAGE_FLAGS: [string, string | undefined][] = [
-  ["First Stage", process.env.STAGE_FIRST_STAGE],
-  ["Round of 32", process.env.STAGE_ROUND_OF_32],
-  ["Round of 16", process.env.STAGE_ROUND_OF_16],
-  ["Quarter-final", process.env.STAGE_QUARTER_FINAL],
-  ["Semi-final", process.env.STAGE_SEMI_FINAL],
-  ["Play-off for third place", process.env.STAGE_THIRD_PLACE],
-  ["Final", process.env.STAGE_FINAL],
-];
-
-const ACTIVE_STAGES = STAGE_FLAGS
-  .filter(([, flag]) => flag === "true")
-  .map(([stage]) => stage);
-
-import {
-  createTRPCRouter,
-  publicProcedure,
-} from "~/server/api/trpc";
+import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
   emptyMatchVoteCounts,
   getVoteCountsByMatchId,
@@ -35,19 +18,17 @@ export const matchRouter = createTRPCRouter({
       if (input.filter === "completed") {
         statuses = [MatchStatus.COMPLETED];
       } else if (input.filter === "upcoming") {
-        statuses = [MatchStatus.SCHEDULED, MatchStatus.LIVE, MatchStatus.POSTPONED];
+        statuses = [
+          MatchStatus.SCHEDULED,
+          MatchStatus.LIVE,
+          MatchStatus.POSTPONED,
+        ];
       }
 
       const matches = (
         await ctx.db.match.findMany({
           where: {
             ...(statuses ? { status: { in: statuses } } : undefined),
-            OR: [
-              { stage: null },
-              ...(ACTIVE_STAGES.length > 0
-                ? [{ stage: { in: ACTIVE_STAGES } }]
-                : []),
-            ],
           },
           orderBy: { kickoffAt: "asc" },
         })
@@ -68,7 +49,13 @@ export const matchRouter = createTRPCRouter({
               userId: ctx.session.user.id,
               matchId: { in: matchIds },
             },
-            select: { matchId: true, outcome: true, isCorrect: true, points: true, hasStar: true },
+            select: {
+              matchId: true,
+              outcome: true,
+              isCorrect: true,
+              points: true,
+              hasStar: true,
+            },
           })
         : [];
 
@@ -80,8 +67,7 @@ export const matchRouter = createTRPCRouter({
         ...match,
         userVoteOutcome: userVoteByMatchId.get(match.id)?.outcome ?? null,
         userVoteResult: userVoteByMatchId.get(match.id) ?? null,
-        voteCounts:
-          voteCountsByMatchId.get(match.id) ?? emptyMatchVoteCounts(),
+        voteCounts: voteCountsByMatchId.get(match.id) ?? emptyMatchVoteCounts(),
         votingOpen: isVotingOpen(match.kickoffAt, match.status),
       }));
     }),
@@ -114,12 +100,23 @@ export const matchRouter = createTRPCRouter({
       if (!match) return null;
 
       const voteCounts = emptyMatchVoteCounts();
-      const voters: { home: MatchVoter[]; draw: MatchVoter[]; away: MatchVoter[] } = { home: [], draw: [], away: [] };
+      const voters: {
+        home: MatchVoter[];
+        draw: MatchVoter[];
+        away: MatchVoter[];
+      } = { home: [], draw: [], away: [] };
       for (const v of allVotes) {
         const entry = { ...v.user, hasStar: v.hasStar };
-        if (v.outcome === "HOME_WIN") { voteCounts.home++; voters.home.push(entry); }
-        else if (v.outcome === "DRAW") { voteCounts.draw++; voters.draw.push(entry); }
-        else if (v.outcome === "AWAY_WIN") { voteCounts.away++; voters.away.push(entry); }
+        if (v.outcome === "HOME_WIN") {
+          voteCounts.home++;
+          voters.home.push(entry);
+        } else if (v.outcome === "DRAW") {
+          voteCounts.draw++;
+          voters.draw.push(entry);
+        } else if (v.outcome === "AWAY_WIN") {
+          voteCounts.away++;
+          voters.away.push(entry);
+        }
       }
 
       return {
