@@ -22,12 +22,15 @@ export function NavMenu({ isLoggedIn, userName, userEmail }: NavClientProps) {
   const navItems = [
     { href: "/", label: "Matches" },
     { href: "/leaderboard", label: "Leaderboard" },
+    { href: "/rank-history", label: "Rank History" },
     { href: "/rules", label: "Rules" },
   ];
 
   const desktopLinkClass = (href: string) => {
     const isActive =
-      href === "/" ? pathname === "/" : pathname.startsWith(href);
+      href === "/" || href === "/leaderboard"
+        ? pathname === href
+        : pathname === href || pathname.startsWith(`${href}/`);
     return `text-sm font-medium transition-colors border-b-2 pb-0.5 ${
       isActive
         ? "text-foreground border-emerald-500"
@@ -37,7 +40,9 @@ export function NavMenu({ isLoggedIn, userName, userEmail }: NavClientProps) {
 
   const dropdownLinkClass = (href: string) => {
     const isActive =
-      href === "/" ? pathname === "/" : pathname.startsWith(href);
+      href === "/" || href === "/leaderboard"
+        ? pathname === href
+        : pathname === href || pathname.startsWith(`${href}/`);
     return `block px-4 py-2.5 text-sm transition-colors hover:bg-foreground/5 ${
       isActive ? "font-semibold text-foreground" : "text-foreground/70"
     }`;

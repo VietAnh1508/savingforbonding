@@ -1,12 +1,12 @@
-import { BEER_NO_BET } from "~/lib/match";
+import { BEER_NO_BET, toVNDate } from "~/lib/match";
+import {
+  assignRanks,
+  compareLeaderboardEntries,
+  computeRankHistory,
+} from "~/lib/rank-history";
 import { resolveUserJoiningDate } from "~/lib/user-joining-date";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { type PrismaClient } from "../../../../generated/prisma";
-
-const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
-function toVNDate(date: Date): string {
-  return new Date(date.getTime() + VN_OFFSET_MS).toISOString().slice(0, 10);
-}
 
 const leaderboardUserSelect = {
   id: true,
@@ -36,27 +36,35 @@ async function fetchLeaderboardUsers(db: PrismaClient) {
 
 export const leaderboardRouter = createTRPCRouter({
   global: publicProcedure.query(async ({ ctx }) => {
-    const [users, voteCounts, completedMatchCount, lastVoteUpdate, lastMatchUpdate] =
-      await Promise.all([
-        fetchLeaderboardUsers(ctx.db),
-        ctx.db.vote.groupBy({
-          by: ["userId", "isCorrect"],
-          where: { isCorrect: { not: null } },
-          _count: { _all: true },
-        }),
-        ctx.db.match.count({ where: { status: "COMPLETED" } }),
-        ctx.db.vote.findFirst({
-          where: { isCorrect: { not: null } },
-          orderBy: { updatedAt: "desc" },
-          select: { updatedAt: true },
-        }),
-        ctx.db.match.findFirst({
-          orderBy: { updatedAt: "desc" },
-          select: { updatedAt: true },
-        }),
-      ]);
+    const [
+      users,
+      voteCounts,
+      completedMatchCount,
+      lastVoteUpdate,
+      lastMatchUpdate,
+    ] = await Promise.all([
+      fetchLeaderboardUsers(ctx.db),
+      ctx.db.vote.groupBy({
+        by: ["userId", "isCorrect"],
+        where: { isCorrect: { not: null } },
+        _count: { _all: true },
+      }),
+      ctx.db.match.count({ where: { status: "COMPLETED" } }),
+      ctx.db.vote.findFirst({
+        where: { isCorrect: { not: null } },
+        orderBy: { updatedAt: "desc" },
+        select: { updatedAt: true },
+      }),
+      ctx.db.match.findFirst({
+        orderBy: { updatedAt: "desc" },
+        select: { updatedAt: true },
+      }),
+    ]);
 
-    const voteCountMap = new Map<string, { correct: number; incorrect: number }>();
+    const voteCountMap = new Map<
+      string,
+      { correct: number; incorrect: number }
+    >();
     for (const vc of voteCounts) {
       if (vc.isCorrect === null) continue;
       const entry = voteCountMap.get(vc.userId) ?? { correct: 0, incorrect: 0 };
@@ -80,7 +88,10 @@ export const leaderboardRouter = createTRPCRouter({
           ? user.createdAt
           : null;
 
-      const { correct, incorrect } = voteCountMap.get(user.id) ?? { correct: 0, incorrect: 0 };
+      const { correct, incorrect } = voteCountMap.get(user.id) ?? {
+        correct: 0,
+        incorrect: 0,
+      };
       const totalVotes = correct + incorrect;
       const accuracy = totalVotes > 0 ? correct / totalVotes : 0;
 
@@ -88,7 +99,10 @@ export const leaderboardRouter = createTRPCRouter({
         id: user.id,
         name: user.name,
         image: user.image,
-        joiningDate: resolveUserJoiningDate({ createdAt, earliestVoteAt: null }),
+        joiningDate: resolveUserJoiningDate({
+          createdAt,
+          earliestVoteAt: null,
+        }),
         beers: user.totalPoints,
         correctPredictions: correct,
         incorrectPredictions: incorrect,
@@ -97,35 +111,9 @@ export const leaderboardRouter = createTRPCRouter({
       };
     });
 
-    const sorted = unsortedEntries.sort((a, b) => {
-      if (b.beers !== a.beers) return b.beers - a.beers;
-      if (a.accuracy !== b.accuracy) return a.accuracy - b.accuracy;
-      if (b.incorrectPredictions !== a.incorrectPredictions)
-        return b.incorrectPredictions - a.incorrectPredictions;
-      if (b.missedPredictions !== a.missedPredictions)
-        return b.missedPredictions - a.missedPredictions;
-      return 0;
-    });
+    const sorted = unsortedEntries.sort(compareLeaderboardEntries);
 
-    const entries: Array<(typeof sorted)[number] & { rank: number }> = [];
-    for (let i = 0; i < sorted.length; i++) {
-      const entry = sorted[i]!;
-      const prev = entries[i - 1];
-      let rank: number;
-      if (!prev) {
-        rank = 1;
-      } else if (
-        prev.beers === entry.beers &&
-        prev.accuracy === entry.accuracy &&
-        prev.incorrectPredictions === entry.incorrectPredictions &&
-        prev.missedPredictions === entry.missedPredictions
-      ) {
-        rank = prev.rank;
-      } else {
-        rank = prev.rank + 1;
-      }
-      entries.push({ ...entry, rank });
-    }
+    const entries = assignRanks(sorted);
 
     return { entries, lastUpdated };
   }),
@@ -164,7 +152,10 @@ export const leaderboardRouter = createTRPCRouter({
       ctx.db.user.count(),
     ]);
 
-    const voteAggMap = new Map<string, { pointsSum: number; voteCount: number }>();
+    const voteAggMap = new Map<
+      string,
+      { pointsSum: number; voteCount: number }
+    >();
     for (const agg of voteAggs) {
       voteAggMap.set(agg.matchId, {
         pointsSum: agg._sum.points ?? 0,
@@ -175,7 +166,10 @@ export const leaderboardRouter = createTRPCRouter({
     const dayMap = new Map<string, number>();
     for (const match of completedMatches) {
       const date = toVNDate(match.kickoffAt);
-      const { pointsSum, voteCount } = voteAggMap.get(match.id) ?? { pointsSum: 0, voteCount: 0 };
+      const { pointsSum, voteCount } = voteAggMap.get(match.id) ?? {
+        pointsSum: 0,
+        voteCount: 0,
+      };
       const noBetBeers = (totalUsers - voteCount) * BEER_NO_BET;
       dayMap.set(date, (dayMap.get(date) ?? 0) + pointsSum + noBetBeers);
     }
@@ -187,5 +181,21 @@ export const leaderboardRouter = createTRPCRouter({
       return { date, daily, cumulative };
     });
   }),
-});
 
+  rankByDay: publicProcedure.query(async ({ ctx }) => {
+    const [completedMatches, resolvedVotes, allUsers] = await Promise.all([
+      ctx.db.match.findMany({
+        where: { status: "COMPLETED" },
+        select: { id: true, kickoffAt: true, stage: true },
+        orderBy: { kickoffAt: "asc" },
+      }),
+      ctx.db.vote.findMany({
+        where: { match: { status: "COMPLETED" } },
+        select: { userId: true, matchId: true, points: true, isCorrect: true },
+      }),
+      ctx.db.user.findMany({ select: { id: true, name: true, image: true } }),
+    ]);
+
+    return computeRankHistory(completedMatches, resolvedVotes, allUsers);
+  }),
+});

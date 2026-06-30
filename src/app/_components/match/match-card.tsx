@@ -13,6 +13,7 @@ import { useToggleStar } from "~/app/hooks/use-toggle-star";
 import {
   formatBeers,
   formatKickoffTime,
+  hasBettingHandicap,
   noBetPenaltyForStage,
   starsAllocatedForStage,
 } from "~/lib/match";
@@ -222,6 +223,11 @@ export function MatchCard({
             homeRatio={match.homeRatio}
             awayRatio={match.awayRatio}
           />
+          {!hasBettingHandicap(match.homeRatio, match.awayRatio) && (
+            <span className="text-[10px] text-amber-600 dark:text-amber-400">
+              No handicap set
+            </span>
+          )}
           {predictsDraw && (
             <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
               predict draw

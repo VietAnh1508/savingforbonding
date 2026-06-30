@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import {
   fromVietnamDatetimeLocal,
-  toVietnamDatetimeLocal,
+  toVNDate,
   validateBettingRatios,
 } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
@@ -35,7 +35,7 @@ export function MatchForm({ editingMatch, onSuccess, onCancel }: Props) {
     ? {
         homeCountry: editingMatch.homeCountry,
         awayCountry: editingMatch.awayCountry,
-        kickoffAt: toVietnamDatetimeLocal(new Date(editingMatch.kickoffAt)),
+        kickoffAt: toVNDate(new Date(editingMatch.kickoffAt), 16),
         tournament: editingMatch.tournament,
         homeRatio: String(editingMatch.homeRatio),
         awayRatio: String(editingMatch.awayRatio),
