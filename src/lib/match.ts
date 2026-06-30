@@ -214,9 +214,9 @@ export const MATCH_DISPLAY_TIMEZONE = "Asia/Ho_Chi_Minh";
 
 const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
 
-/** Format a UTC Date as a `datetime-local` input value in Vietnam time (UTC+7). */
-export function toVietnamDatetimeLocal(date: Date): string {
-  return new Date(date.getTime() + VN_OFFSET_MS).toISOString().slice(0, 16);
+/** Format a UTC Date as an ISO string in Vietnam time (UTC+7), sliced to `length` chars. */
+export function toVNDate(date: Date, length = 10): string {
+  return new Date(date.getTime() + VN_OFFSET_MS).toISOString().slice(0, length);
 }
 
 /** Parse a `datetime-local` input value entered as Vietnam time (UTC+7) into a UTC Date. */

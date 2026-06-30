@@ -1,0 +1,236 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  BEER_LOSE,
+  BEER_NO_BET,
+  BEER_WIN,
+  STAGE_ROUND_OF_16,
+  noBetPenaltyForStage,
+} from "~/lib/match";
+import { computeRankHistory } from "~/lib/rank-history";
+
+// Noon UTC on a given date = 7pm VN = same calendar day in VN
+const d = (dateStr: string) => new Date(`${dateStr}T12:00:00Z`);
+
+const alice = { id: "alice", name: "Alice", image: null };
+const bob = { id: "bob", name: "Bob", image: null };
+const carol = { id: "carol", name: "Carol", image: null };
+
+describe("computeRankHistory", () => {
+  it("returns empty days when there are no matches", () => {
+    const result = computeRankHistory([], [], [alice, bob]);
+    expect(result.days).toHaveLength(0);
+    expect(result.series).toHaveLength(2);
+  });
+
+  it("returns a day with empty ranks when there are no users", () => {
+    const match = { id: "m1", kickoffAt: d("2026-06-12"), stage: null };
+    const result = computeRankHistory([match], [], []);
+    expect(result.days).toHaveLength(1);
+    expect(result.days[0]!.ranks).toEqual({});
+    expect(result.days[0]!.beers).toEqual({});
+  });
+
+  it("assigns rank 1 to a single user who voted correctly", () => {
+    const match = { id: "m1", kickoffAt: d("2026-06-12"), stage: null };
+    const vote = { userId: "alice", matchId: "m1", points: BEER_WIN, isCorrect: true };
+
+    const result = computeRankHistory([match], [vote], [alice]);
+
+    expect(result.days).toHaveLength(1);
+    expect(result.days[0]!.ranks["alice"]).toBe(1);
+    expect(result.days[0]!.beers["alice"]).toBe(BEER_WIN);
+  });
+
+  it("charges BEER_NO_BET when a user did not vote on a group-stage match", () => {
+    const match = { id: "m1", kickoffAt: d("2026-06-12"), stage: null };
+    // alice did not vote
+
+    const result = computeRankHistory([match], [], [alice]);
+
+    expect(result.days[0]!.beers["alice"]).toBe(BEER_NO_BET);
+  });
+
+  it("charges a higher no-bet penalty for knockout-stage matches", () => {
+    const match = { id: "m1", kickoffAt: d("2026-06-12"), stage: STAGE_ROUND_OF_16 };
+
+    const result = computeRankHistory([match], [], [alice]);
+
+    const expected = noBetPenaltyForStage(STAGE_ROUND_OF_16);
+    expect(result.days[0]!.beers["alice"]).toBe(expected);
+    expect(expected).toBeGreaterThan(BEER_NO_BET);
+  });
+
+  it("ranks user with more beers first", () => {
+    const match = { id: "m1", kickoffAt: d("2026-06-12"), stage: null };
+    const votes = [
+      { userId: "alice", matchId: "m1", points: BEER_LOSE, isCorrect: false },
+      { userId: "bob",   matchId: "m1", points: BEER_WIN,  isCorrect: true  },
+    ];
+
+    const result = computeRankHistory([match], votes, [alice, bob]);
+
+    const day = result.days[0]!;
+    expect(day.ranks["alice"]).toBe(1); // 3 beers
+    expect(day.ranks["bob"]).toBe(2);   // 1 beer
+  });
+
+  it("assigns the same rank to users with identical stats (tie)", () => {
+    const match = { id: "m1", kickoffAt: d("2026-06-12"), stage: null };
+    const votes = [
+      { userId: "alice", matchId: "m1", points: BEER_LOSE, isCorrect: false },
+      { userId: "bob",   matchId: "m1", points: BEER_LOSE, isCorrect: false },
+    ];
+
+    const result = computeRankHistory([match], votes, [alice, bob]);
+
+    expect(result.days[0]!.ranks["alice"]).toBe(1);
+    expect(result.days[0]!.ranks["bob"]).toBe(1);
+  });
+
+  it("breaks a beer tie using accuracy ascending (lower accuracy = higher rank)", () => {
+    // Two matches. Alice voted on both — wrong once, right once (50% accuracy).
+    // Bob voted on both — wrong twice (0% accuracy).
+    // Same beers: alice 3+1=4, bob 3+3=6 — not equal, bad example.
+    //
+    // To get equal beers with different accuracy:
+    // alice: wrong m1 (3) + correct m2 (1) = 4 beers, 1/2 = 50% accuracy
+    // bob:   no-vote m1 (2) + no-vote m2 (2) = 4 beers, 0/0 = 0% accuracy (no votes)
+    // Same beers, different accuracy → accuracy tiebreaker fires.
+    // Lower accuracy (bob, 0%) should rank higher (#1) than alice (50%).
+    const m1 = { id: "m1", kickoffAt: d("2026-06-12"), stage: null };
+    const m2 = { id: "m2", kickoffAt: d("2026-06-12"), stage: null };
+    const votes = [
+      { userId: "alice", matchId: "m1", points: BEER_LOSE, isCorrect: false },
+      { userId: "alice", matchId: "m2", points: BEER_WIN,  isCorrect: true  },
+    ];
+
+    const result = computeRankHistory([m1, m2], votes, [alice, bob]);
+
+    const day = result.days[0]!;
+    // Both at 4 beers
+    expect(day.beers["alice"]).toBe(BEER_LOSE + BEER_WIN); // 4
+    expect(day.beers["bob"]).toBe(BEER_NO_BET + BEER_NO_BET); // 4
+    // bob has 0% accuracy (no votes at all); alice has 50% — lower accuracy ranks #1
+    expect(day.ranks["bob"]).toBe(1);
+    expect(day.ranks["alice"]).toBe(2);
+  });
+
+  it("breaks a beer+accuracy tie using incorrect predictions descending", () => {
+    // Two matches. Alice wrong on both (6 beers, 0% accuracy, 2 incorrect).
+    // Bob wrong on one, no-vote on one (3+2=5 beers) → not equal beers.
+    // Let's construct a true incorrect-count tie:
+    // m1, m2, m3: alice wrong m1 (3), correct m2 (1), no-vote m3 (2) → 6 beers, 1/2=50% acc, 1 incorrect
+    // carol wrong m1 (3), no-vote m2 (2), correct m3 (1) → 6 beers, 1/2=50% acc, 1 incorrect
+    // Same everything → same rank
+    const m1 = { id: "m1", kickoffAt: d("2026-06-12"), stage: null };
+    const m2 = { id: "m2", kickoffAt: d("2026-06-12"), stage: null };
+    const m3 = { id: "m3", kickoffAt: d("2026-06-12"), stage: null };
+    const votes = [
+      { userId: "alice", matchId: "m1", points: BEER_LOSE, isCorrect: false },
+      { userId: "alice", matchId: "m2", points: BEER_WIN,  isCorrect: true  },
+      { userId: "carol", matchId: "m1", points: BEER_LOSE, isCorrect: false },
+      { userId: "carol", matchId: "m3", points: BEER_WIN,  isCorrect: true  },
+    ];
+
+    const result = computeRankHistory([m1, m2, m3], votes, [alice, carol]);
+
+    const day = result.days[0]!;
+    expect(day.beers["alice"]).toBe(BEER_LOSE + BEER_WIN + BEER_NO_BET); // 6
+    expect(day.beers["carol"]).toBe(BEER_LOSE + BEER_NO_BET + BEER_WIN); // 6
+    expect(day.ranks["alice"]).toBe(day.ranks["carol"]); // full tie
+  });
+
+  it("accumulates beers correctly across multiple days", () => {
+    const m1 = { id: "m1", kickoffAt: d("2026-06-12"), stage: null };
+    const m2 = { id: "m2", kickoffAt: d("2026-06-13"), stage: null };
+    const votes = [
+      { userId: "alice", matchId: "m1", points: BEER_WIN,  isCorrect: true  },
+      { userId: "alice", matchId: "m2", points: BEER_LOSE, isCorrect: false },
+    ];
+
+    const result = computeRankHistory([m1, m2], votes, [alice]);
+
+    expect(result.days).toHaveLength(2);
+    expect(result.days[0]!.beers["alice"]).toBe(BEER_WIN);
+    expect(result.days[1]!.beers["alice"]).toBe(BEER_WIN + BEER_LOSE);
+  });
+
+  it("groups multiple matches on the same day into a single snapshot", () => {
+    const m1 = { id: "m1", kickoffAt: d("2026-06-12"), stage: null };
+    const m2 = { id: "m2", kickoffAt: d("2026-06-12"), stage: null };
+    const votes = [
+      { userId: "alice", matchId: "m1", points: BEER_WIN,  isCorrect: true  },
+      { userId: "alice", matchId: "m2", points: BEER_LOSE, isCorrect: false },
+    ];
+
+    const result = computeRankHistory([m1, m2], votes, [alice]);
+
+    expect(result.days).toHaveLength(1);
+    expect(result.days[0]!.date).toBe("2026-06-12");
+    expect(result.days[0]!.beers["alice"]).toBe(BEER_WIN + BEER_LOSE);
+  });
+
+  it("applies no-bet penalty only to users who did not vote on that match", () => {
+    const match = { id: "m1", kickoffAt: d("2026-06-12"), stage: null };
+    const votes = [
+      { userId: "alice", matchId: "m1", points: BEER_WIN, isCorrect: true },
+      // bob did not vote
+    ];
+
+    const result = computeRankHistory([match], votes, [alice, bob]);
+
+    const day = result.days[0]!;
+    expect(day.beers["alice"]).toBe(BEER_WIN);   // voted correctly
+    expect(day.beers["bob"]).toBe(BEER_NO_BET);  // no vote
+  });
+
+  it("includes all users in series regardless of whether they voted", () => {
+    const match = { id: "m1", kickoffAt: d("2026-06-12"), stage: null };
+
+    const result = computeRankHistory([match], [], [alice, bob, carol]);
+
+    expect(result.series).toHaveLength(3);
+    expect(result.series.map((s) => s.userId)).toEqual(
+      expect.arrayContaining(["alice", "bob", "carol"]),
+    );
+  });
+
+  it("does not charge a no-bet penalty to users who voted but whose vote is not yet resolved", () => {
+    const match = { id: "m1", kickoffAt: d("2026-06-12"), stage: null };
+    // alice voted (isCorrect: null = unresolved); bob did not vote
+    const votes = [
+      { userId: "alice", matchId: "m1", points: 0, isCorrect: null as boolean | null },
+    ];
+
+    const result = computeRankHistory([match], votes, [alice, bob]);
+
+    const day = result.days[0]!;
+    expect(day.beers["alice"]).toBe(0);         // voted, unresolved → no penalty, no points
+    expect(day.beers["bob"]).toBe(BEER_NO_BET); // did not vote → penalty
+  });
+
+  it("clamps beer total at 0 when a correct star vote produces negative points", () => {
+    const match = { id: "m1", kickoffAt: d("2026-06-12"), stage: null };
+    // A correct star bet on a group-stage match returns -BEER_NO_BET*2 = -4 points
+    const votes = [
+      { userId: "alice", matchId: "m1", points: -4, isCorrect: true },
+    ];
+
+    const result = computeRankHistory([match], votes, [alice]);
+
+    // Math.max(0, 0 + (-4)) = 0; should not go negative
+    expect(result.days[0]!.beers["alice"]).toBe(0);
+  });
+
+  it("assigns correct VN date for a match at 17:00 UTC (midnight VN = next VN day boundary)", () => {
+    // 17:00 UTC = 00:00 VN next day → matches at 17:30 UTC are already the next VN day
+    const m1 = { id: "m1", kickoffAt: new Date("2026-06-12T16:59:00Z"), stage: null }; // 23:59 VN → Jun 12
+    const m2 = { id: "m2", kickoffAt: new Date("2026-06-12T17:00:00Z"), stage: null }; // 00:00 VN → Jun 13
+
+    const result = computeRankHistory([m1, m2], [], [alice]);
+
+    expect(result.days[0]!.date).toBe("2026-06-12");
+    expect(result.days[1]!.date).toBe("2026-06-13");
+  });
+});

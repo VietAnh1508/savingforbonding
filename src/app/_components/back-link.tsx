@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-export function BackLink({ href }: { href?: string }) {
+export function BackLink({ href, label = "Back" }: { href?: string; label?: string }) {
   const router = useRouter();
 
   if (!href) {
@@ -13,7 +13,7 @@ export function BackLink({ href }: { href?: string }) {
         onClick={() => router.back()}
         className="text-sm text-foreground/50 transition hover:text-foreground/80"
       >
-        ← Back
+        ← {label}
       </button>
     );
   }
@@ -23,7 +23,7 @@ export function BackLink({ href }: { href?: string }) {
       href={href}
       className="text-sm text-foreground/50 transition hover:text-foreground/80"
     >
-      ← Back
+      ← {label}
     </Link>
   );
 }

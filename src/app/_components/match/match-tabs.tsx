@@ -10,7 +10,7 @@ import {
   formatMatchDate,
   MATCH_DISPLAY_TIMEZONE,
   starsAllocatedForStage,
-  toVietnamDatetimeLocal,
+  toVNDate,
 } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
@@ -21,7 +21,7 @@ type TabId = "upcoming" | "completed";
 function groupByDate(matches: Match[], descending = false) {
   const grouped = matches.reduce(
     (acc, match) => {
-      const key = toVietnamDatetimeLocal(match.kickoffAt).slice(0, 10);
+      const key = toVNDate(match.kickoffAt);
       acc[key] ??= [];
       acc[key].push(match);
       return acc;
