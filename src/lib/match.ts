@@ -18,13 +18,20 @@ export const BEER_WIN = BEER_PLATFORM_FEE;
 export const BEER_LOSE = BEER_PLATFORM_FEE + BEER_LOSE_PENALTY;
 export const BEER_NO_BET = 2;
 
+export const STAGE_ROUND_OF_32 = "Round of 32";
+export const STAGE_ROUND_OF_16 = "Round of 16";
+export const STAGE_QUARTER_FINAL = "Quarter-final";
+export const STAGE_SEMI_FINAL = "Semi-final";
+export const STAGE_THIRD_PLACE = "Play-off for third place";
+export const STAGE_FINAL = "Final";
+
 export const STARS_BY_STAGE: Record<string, number> = {
-  "Round of 32": 8,
-  "Round of 16": 4,
-  "Quarter-final": 2,
-  "Semi-final": 1,
-  "Play-off for third place": 1,
-  Final: 1,
+  [STAGE_ROUND_OF_32]: 8,
+  [STAGE_ROUND_OF_16]: 4,
+  [STAGE_QUARTER_FINAL]: 2,
+  [STAGE_SEMI_FINAL]: 1,
+  [STAGE_THIRD_PLACE]: 1,
+  [STAGE_FINAL]: 1,
 };
 
 export function starsAllocatedForStage(stage: string | null): number {
@@ -40,12 +47,12 @@ export function beerCostForStarVote(
 }
 
 export const KNOCKOUT_STAGE_ORDER = [
-  "Round of 32",
-  "Round of 16",
-  "Quarter-final",
-  "Semi-final",
-  "Play-off for third place",
-  "Final",
+  STAGE_ROUND_OF_32,
+  STAGE_ROUND_OF_16,
+  STAGE_QUARTER_FINAL,
+  STAGE_SEMI_FINAL,
+  STAGE_THIRD_PLACE,
+  STAGE_FINAL,
 ] as const;
 
 export function wrongPenaltyForStage(stage: string | null): number {
