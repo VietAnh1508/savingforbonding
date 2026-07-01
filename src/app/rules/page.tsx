@@ -1,14 +1,11 @@
 import { BeerStakes } from "~/app/_components/beer-stakes";
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { Nav } from "~/app/_components/nav";
-import {
-  KNOCKOUT_STAGE_ORDER,
-  STARS_BY_STAGE,
-  formatBeers,
-  wrongPenaltyForStage,
-} from "~/lib/match";
+import { STARS_BY_STAGE, formatBeers, wrongPenaltyForStage } from "~/lib/match";
+import { api } from "~/trpc/server";
 
-export default function RulesPage() {
+export default async function RulesPage() {
+  const knockoutStages = await api.stage.listKnockout();
   return (
     <>
       <Nav />
@@ -67,20 +64,20 @@ export default function RulesPage() {
               </tr>
             </thead>
             <tbody>
-              {KNOCKOUT_STAGE_ORDER.map((stage) => (
+              {knockoutStages.map((stage) => (
                 <tr
-                  key={stage}
+                  key={stage.name}
                   className="border-b border-foreground/5 last:border-0"
                 >
-                  <td className="py-0.5">{stage}</td>
+                  <td className="py-0.5">{stage.name}</td>
                   <td className="py-0.5 text-amber-500 dark:text-amber-400">
-                    {STARS_BY_STAGE[stage]}
+                    {STARS_BY_STAGE[stage.name]}
                   </td>
                   <td className="py-0.5 text-emerald-600 dark:text-emerald-300">
-                    {formatBeers(wrongPenaltyForStage(stage) * 2)}
+                    {formatBeers(wrongPenaltyForStage(stage.name) * 2)}
                   </td>
                   <td className="py-0.5 text-red-600 dark:text-red-300">
-                    {formatBeers(wrongPenaltyForStage(stage) * 2)}
+                    {formatBeers(wrongPenaltyForStage(stage.name) * 2)}
                   </td>
                 </tr>
               ))}

@@ -22,6 +22,20 @@ enum VoteOutcome {
     AWAY_WIN
 }
 
+model Stage {
+    id              String   @id
+    name            String
+    startDate       DateTime
+    endDate         DateTime
+    sequenceOrder   Int
+    seasonId        String
+    isKnockout      Boolean  @default(false)
+    matches         Match[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
 model Match {
     id          String       @id @default(cuid())
     externalId  String?      @unique
@@ -35,7 +49,8 @@ model Match {
     result      VoteOutcome?
     homeRatio   Float        @default(0)
     awayRatio   Float        @default(0)
-    stage       String?
+    stageId     String?
+    stage       Stage?       @relation(fields: [stageId], references: [id])
     votes       Vote[]
 
     createdAt DateTime @default(now())
@@ -43,6 +58,7 @@ model Match {
 
     @@index([kickoffAt])
     @@index([status])
+    @@index([stageId])
 }
 
 model Vote {

@@ -1,17 +1,19 @@
 import {
   BEER_WIN,
-  KNOCKOUT_STAGE_ORDER,
   formatBeers,
   noBetPenaltyForStage,
   wrongPenaltyForStage,
 } from "~/lib/match";
+import { api } from "~/trpc/server";
 
-const STAGE_ROWS: { label: string; stage: string | null }[] = [
-  { label: "Group Stage", stage: null },
-  ...KNOCKOUT_STAGE_ORDER.map((s) => ({ label: s, stage: s })),
-];
+export async function BeerStakes() {
+  const stages = await api.stage.list();
 
-export function BeerStakes() {
+  const stageRows = stages.map((s) => ({
+    label: s.name,
+    stage: s.isKnockout ? s.name : null,
+  }));
+
   return (
     <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-foreground/70">
       <h3 className="mb-2 font-semibold text-amber-700 dark:text-amber-300">🍺 Beer stakes</h3>
@@ -32,7 +34,7 @@ export function BeerStakes() {
           </tr>
         </thead>
         <tbody>
-          {STAGE_ROWS.map(({ label, stage }) => (
+          {stageRows.map(({ label, stage }) => (
             <tr key={label} className="border-b border-foreground/5 last:border-0">
               <td className="py-0.5">{label}</td>
               <td className="py-0.5 text-red-600 dark:text-red-300">{formatBeers(wrongPenaltyForStage(stage))}</td>

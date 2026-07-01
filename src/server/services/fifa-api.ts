@@ -1,9 +1,6 @@
 const FIFA_API_BASE = "https://api.fifa.com/api/v3";
 const FIFA_WORLD_CUP_SEASON_ID = "285023";
 
-/** Matches fifa.com with timezone preset to Vietnam (UTC+7). */
-export const FIFA_VIETNAM_UTC_OFFSET_HOURS = 7;
-
 /**
  * FIFA `Date` is ISO-8601 UTC (e.g. `2026-06-11T19:00:00Z` = 12/06 02:00 in Vietnam).
  */
@@ -30,6 +27,7 @@ type FifaTeam = {
 export type FifaMatch = {
   IdMatch: string;
   IdCompetition: string;
+  IdStage: string;
   MatchNumber: number | null;
   Date: string;
   LocalDate: string;
