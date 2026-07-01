@@ -13,10 +13,14 @@ export async function resolveMatchVotes(
   homeScore: number,
   awayScore: number,
 ) {
-  const match = await db.match.findUnique({ where: { id: matchId } });
+  const match = await db.match.findUnique({
+    where: { id: matchId },
+    include: { stage: true },
+  });
   if (!match) {
     throw new Error("Match not found");
   }
+  const stageName = match.stage?.name ?? null;
 
   const result = deriveResult(homeScore, awayScore);
   const alreadyResolved =
@@ -62,8 +66,8 @@ export async function resolveMatchVotes(
       match.awayRatio,
     );
     const beers = vote.hasStar
-      ? beerCostForStarVote(isCorrect, match.stage)
-      : beerCostForVote(isCorrect, match.stage);
+      ? beerCostForStarVote(isCorrect, stageName)
+      : beerCostForVote(isCorrect, stageName);
 
     await db.vote.update({
       where: { id: vote.id },
@@ -111,7 +115,7 @@ export async function resolveMatchVotes(
       select: { id: true },
     });
 
-    const noBetPenalty = noBetPenaltyForStage(match.stage);
+    const noBetPenalty = noBetPenaltyForStage(stageName);
 
     for (const user of nonVoters) {
       await db.user.update({

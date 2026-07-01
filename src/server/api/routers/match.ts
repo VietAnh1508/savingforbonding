@@ -31,6 +31,7 @@ export const matchRouter = createTRPCRouter({
             ...(statuses ? { status: { in: statuses } } : undefined),
           },
           orderBy: { kickoffAt: "asc" },
+          include: { stage: true },
         })
       ).filter(
         (m) => isKnownCountry(m.homeCountry) && isKnownCountry(m.awayCountry),
@@ -65,6 +66,7 @@ export const matchRouter = createTRPCRouter({
 
       return matches.map((match) => ({
         ...match,
+        stage: match.stage?.name ?? null,
         userVoteOutcome: userVoteByMatchId.get(match.id)?.outcome ?? null,
         userVoteResult: userVoteByMatchId.get(match.id) ?? null,
         voteCounts: voteCountsByMatchId.get(match.id) ?? emptyMatchVoteCounts(),
@@ -76,7 +78,10 @@ export const matchRouter = createTRPCRouter({
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const [match, allVotes, userVote] = await Promise.all([
-        ctx.db.match.findUnique({ where: { id: input.id } }),
+        ctx.db.match.findUnique({
+          where: { id: input.id },
+          include: { stage: true },
+        }),
         ctx.db.vote.findMany({
           where: { matchId: input.id },
           select: {
@@ -121,6 +126,7 @@ export const matchRouter = createTRPCRouter({
 
       return {
         ...match,
+        stage: match.stage?.name ?? null,
         votingOpen: isVotingOpen(match.kickoffAt, match.status),
         userVote,
         voteCounts,

@@ -186,7 +186,7 @@ export const leaderboardRouter = createTRPCRouter({
     const [completedMatches, resolvedVotes, allUsers] = await Promise.all([
       ctx.db.match.findMany({
         where: { status: "COMPLETED" },
-        select: { id: true, kickoffAt: true, stage: true },
+        select: { id: true, kickoffAt: true, stage: { select: { name: true } } },
         orderBy: { kickoffAt: "asc" },
       }),
       ctx.db.vote.findMany({
@@ -196,6 +196,12 @@ export const leaderboardRouter = createTRPCRouter({
       ctx.db.user.findMany({ select: { id: true, name: true, image: true } }),
     ]);
 
-    return computeRankHistory(completedMatches, resolvedVotes, allUsers);
+    const matchInputs = completedMatches.map((match) => ({
+      id: match.id,
+      kickoffAt: match.kickoffAt,
+      stage: match.stage?.name ?? null,
+    }));
+
+    return computeRankHistory(matchInputs, resolvedVotes, allUsers);
   }),
 });

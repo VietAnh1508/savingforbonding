@@ -343,7 +343,12 @@ export const voteRouter = createTRPCRouter({
           }),
           tx.match.findUnique({
             where: { id: input.matchId },
-            select: { stage: true, kickoffAt: true, status: true },
+            select: {
+              stageId: true,
+              stage: { select: { name: true } },
+              kickoffAt: true,
+              status: true,
+            },
           }),
         ]);
 
@@ -357,14 +362,14 @@ export const voteRouter = createTRPCRouter({
           throw new TRPCError({ code: "BAD_REQUEST", message: "Voting is closed for this match" });
         }
 
-        const allocated = starsAllocatedForStage(match.stage);
+        const allocated = starsAllocatedForStage(match.stage?.name ?? null);
         if (allocated === 0) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "Stars are not available for this stage" });
         }
 
         if (!vote.hasStar) {
           const usedStars = await tx.vote.count({
-            where: { userId, hasStar: true, match: { stage: match.stage } },
+            where: { userId, hasStar: true, match: { stageId: match.stageId } },
           });
           if (usedStars >= allocated) {
             throw new TRPCError({
@@ -386,12 +391,12 @@ export const voteRouter = createTRPCRouter({
 
     const starredVotes = await ctx.db.vote.findMany({
       where: { userId, hasStar: true },
-      select: { match: { select: { stage: true } } },
+      select: { match: { select: { stage: { select: { name: true } } } } },
     });
 
     const usedByStage = new Map<string, number>();
     for (const vote of starredVotes) {
-      const stage = vote.match.stage;
+      const stage = vote.match.stage?.name ?? null;
       if (stage === null) continue;
       usedByStage.set(stage, (usedByStage.get(stage) ?? 0) + 1);
     }

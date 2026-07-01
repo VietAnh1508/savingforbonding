@@ -27,6 +27,7 @@ type FifaTeam = {
 export type FifaMatch = {
   IdMatch: string;
   IdCompetition: string;
+  IdStage: string;
   MatchNumber: number | null;
   Date: string;
   LocalDate: string;
