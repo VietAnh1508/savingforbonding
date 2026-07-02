@@ -1,5 +1,7 @@
+import Link from "next/link";
+
 import { Nav } from "~/app/_components/nav";
-import { LeaderboardTabs } from "~/app/leaderboard/_components/leaderboard-tabs";
+import { LeaderboardTable } from "~/app/leaderboard/_components/leaderboard-table";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -24,9 +26,42 @@ export default async function LeaderboardPage() {
           Who owes the most beer? Higher is more generous.
         </p>
 
-        <LeaderboardTabs
-          global={global}
-          beerPool={beerPool}
+        <div className="mb-6 rounded-xl border border-foreground/10 bg-foreground/5 p-10 text-center">
+          <p className="text-sm font-medium uppercase tracking-wide text-foreground/50">
+            Community Beer Pool
+          </p>
+          <p className="mt-4 text-6xl font-bold text-amber-600 dark:text-amber-400">
+            🍺 {beerPool.totalBeers}
+          </p>
+          <p className="mt-3 text-lg text-foreground/80">
+            beers pledged across {beerPool.userCount} players
+          </p>
+        </div>
+
+        <div className="mb-3 flex items-center justify-between text-xs">
+          <Link
+            href="/rules"
+            className="font-medium text-emerald-600 hover:underline dark:text-emerald-400"
+          >
+            Tie-breaker rules →
+          </Link>
+          {global.lastUpdated && (
+            <span className="text-foreground/40">
+              Last updated:{" "}
+              {global.lastUpdated.toLocaleString("en-AU", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          )}
+        </div>
+
+        <LeaderboardTable
+          entries={global.entries}
+          beersLabel="Total Beers"
           currentUserId={session?.user?.id}
         />
       </main>

@@ -22,7 +22,7 @@ export function NavMenu({ isLoggedIn, userName, userEmail }: NavClientProps) {
   const navItems = [
     { href: "/", label: "Matches" },
     { href: "/leaderboard", label: "Leaderboard" },
-    { href: "/rank-history", label: "Rank History" },
+    { href: "/insight", label: "Insight" },
     { href: "/rules", label: "Rules" },
   ];
 
