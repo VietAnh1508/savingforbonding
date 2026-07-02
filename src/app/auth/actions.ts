@@ -92,6 +92,10 @@ export async function signUp(formData: FormData) {
   const completedMatchCount = await db.match.count({
     where: { status: "COMPLETED" },
   });
+  // TODO: flat-rate debt, unlike the stage-aware noBetPenaltyForStage used
+  // everywhere else (resolveMatchVotes, computeRankHistory). Fine while
+  // signups only happen during the flat-rate group stage, but a signup
+  // during/after knockout rounds would be under-charged for prior matches.
   const noBetDebt = completedMatchCount * BEER_NO_BET;
 
   await db.user.create({
