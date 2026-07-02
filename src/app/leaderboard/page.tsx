@@ -4,9 +4,10 @@ import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
 export default async function LeaderboardPage() {
-  const [global, beerPool, session] = await Promise.all([
+  const [global, beerPool, , session] = await Promise.all([
     api.leaderboard.global(),
     api.leaderboard.totalBeerPool(),
+    api.leaderboard.rankByDay.prefetch(),
     auth(),
   ]);
 

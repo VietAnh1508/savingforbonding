@@ -10,7 +10,6 @@ export const env = createEnv({
     DATABASE_URL: z.string(),
     TURSO_DATABASE_URL: z.string().optional(),
     TURSO_API_KEY: z.string().optional(),
-    FOOTBALL_DATA_API_KEY: z.string().optional(),
     ADMIN_PASSWORD: z.string().optional(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
@@ -24,7 +23,6 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL,
     TURSO_API_KEY: process.env.TURSO_API_KEY,
-    FOOTBALL_DATA_API_KEY: process.env.FOOTBALL_DATA_API_KEY,
     ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
     NODE_ENV: process.env.NODE_ENV,
   },

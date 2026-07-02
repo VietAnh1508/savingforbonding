@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 
+import { RankGapBadge } from "~/app/leaderboard/_components/rank-gap-badge";
 import { formatJoiningDate } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
@@ -26,10 +27,12 @@ export function LeaderboardTable({
   entries,
   beersLabel = "Beers",
   currentUserId,
+  rankGaps,
 }: {
   entries: Entry[];
   beersLabel?: string;
   currentUserId?: string;
+  rankGaps?: Record<string, number>;
 }) {
   if (entries.length === 0) {
     return (
@@ -76,7 +79,10 @@ export function LeaderboardTable({
                 }`}
               >
                 <td className="px-1 py-3 sm:px-2">
-                  <div className="flex justify-center">
+                  <div className="flex items-center justify-center">
+                    <span className="flex w-7 shrink-0 justify-end pr-1">
+                      <RankGapBadge gap={rankGaps?.[entry.id]} />
+                    </span>
                     <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-sm font-bold text-foreground/60">
                       {entry.rank}
                     </span>

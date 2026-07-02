@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { AccuracyTable } from "~/app/leaderboard/_components/accuracy-table";
 import { BeerAccumulationChart } from "~/app/leaderboard/_components/beer-accumulation-chart";
 import { LeaderboardTable } from "~/app/leaderboard/_components/leaderboard-table";
-import { type RouterOutputs } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react";
 
 type TabId = "allTime" | "accuracy" | "beerPool";
 
@@ -26,6 +26,20 @@ export function LeaderboardTabs({
   currentUserId?: string;
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("allTime");
+
+  const { data: rankHistory } = api.leaderboard.rankByDay.useQuery();
+  const rankGaps = useMemo(() => {
+    const days = rankHistory?.days ?? [];
+    if (days.length < 2) return {};
+    const current = days[days.length - 1]!.ranks;
+    const previous = days[days.length - 2]!.ranks;
+    const gaps: Record<string, number> = {};
+    for (const [userId, rank] of Object.entries(current)) {
+      const prevRank = previous[userId];
+      if (prevRank !== undefined) gaps[userId] = prevRank - rank;
+    }
+    return gaps;
+  }, [rankHistory]);
 
   return (
     <div>
@@ -72,6 +86,7 @@ export function LeaderboardTabs({
             entries={global.entries}
             beersLabel="Total Beers"
             currentUserId={currentUserId}
+            rankGaps={rankGaps}
           />
         </>
       )}

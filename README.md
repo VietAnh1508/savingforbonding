@@ -1,11 +1,11 @@
 # SavingForBonding
 
-A T3 Stack app for tracking savings and bonding activities.
+A FIFA World Cup football prediction game for a small group of friends. Users predict match outcomes and accrue beer "debts" for wrong picks, tracked on a leaderboard. See `CLAUDE.md` for the full architecture and engineering notes.
 
 ## Stack
 
 - **Next.js 15** (App Router, Turbo mode)
-- **Prisma + SQLite** locally (or Turso for a remote libSQL DB)
+- **Prisma + Turso** (libSQL) — both dev and production connect to a remote Turso database; there's no local SQLite workflow
 - **tRPC** for the API layer
 - **NextAuth v5** for authentication
 - **Tailwind CSS v4**
@@ -24,15 +24,14 @@ npm install
 cp .env.example .env
 ```
 
-The defaults work for local dev — SQLite is used by default, no Turso setup needed.
+Fill in `TURSO_DATABASE_URL` and `TURSO_API_KEY` for the dev database (ask a teammate for these, or mint your own token — see "Turso CLI" below).
 
-**3. Set up the database**
+**3. Push the schema and seed data**
 
 ```bash
-npm run db:setup
+npm run db:push:turso
+npm run db:seed
 ```
-
-This runs `prisma db push` (creates the SQLite file) then seeds it with initial data.
 
 **4. Start the dev server**
 
@@ -48,16 +47,27 @@ The app runs at `http://localhost:3000`.
 |---|---|
 | `npm run db:studio` | Open Prisma Studio (visual DB browser) |
 | `npm run db:seed` | Re-seed the database |
+| `npm run db:push:turso` | Push schema changes to the Turso DB (dev by default; see `CLAUDE.md` for pushing to prod) |
 | `npm run typecheck` | TypeScript type check |
+| `npm run sync:fifa` | Manually pull latest FIFA fixture data |
+
+## Turso CLI
+
+```bash
+turso auth login                          # one-time login (required before other commands)
+turso db shell savingforbonding           # direct SQL access — dev DB
+turso db shell savingforbonding-prod      # direct SQL access — production DB
+turso db tokens create savingforbonding   # mint a new database auth token
+```
 
 ## Environment variables
 
-See `.env.example` for all available variables. Key ones:
+See `.env.example` for all available variables, and `CLAUDE.md` for the full dev/prod breakdown. Key ones:
 
 | Variable | Required | Description |
 |---|---|---|
-| `DATABASE_URL` | Yes | SQLite path, default `file:./db.sqlite` |
+| `TURSO_DATABASE_URL` / `TURSO_API_KEY` | Yes | Turso libSQL connection — dev and prod are separate databases |
 | `AUTH_SECRET` | Production only | NextAuth secret |
 | `ADMIN_PASSWORD` | No | Admin page password, default `admin123` |
-| `FOOTBALL_DATA_API_KEY` | No | For live match data |
-| `TURSO_DATABASE_URL` / `TURSO_API_KEY` | No | Use Turso instead of local SQLite |
+| `CRON_SECRET` | Production | Auth for the Vercel cron that syncs FIFA fixtures daily |
+| `DATABASE_URL` | Yes | Legacy SQLite placeholder kept for schema validation; unused once Turso vars are set |
