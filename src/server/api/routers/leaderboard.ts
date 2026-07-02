@@ -1,4 +1,4 @@
-import { BEER_NO_BET, toVNDate } from "~/lib/match";
+import { noBetPenaltyForStage, toVNDate } from "~/lib/match";
 import {
   assignRanks,
   compareLeaderboardEntries,
@@ -140,7 +140,7 @@ export const leaderboardRouter = createTRPCRouter({
     const [completedMatches, voteAggs, totalUsers] = await Promise.all([
       ctx.db.match.findMany({
         where: { status: "COMPLETED" },
-        select: { id: true, kickoffAt: true },
+        select: { id: true, kickoffAt: true, stage: { select: { name: true } } },
         orderBy: { kickoffAt: "asc" },
       }),
       ctx.db.vote.groupBy({
@@ -170,7 +170,8 @@ export const leaderboardRouter = createTRPCRouter({
         pointsSum: 0,
         voteCount: 0,
       };
-      const noBetBeers = (totalUsers - voteCount) * BEER_NO_BET;
+      const noBetBeers =
+        (totalUsers - voteCount) * noBetPenaltyForStage(match.stage?.name ?? null);
       dayMap.set(date, (dayMap.get(date) ?? 0) + pointsSum + noBetBeers);
     }
 
