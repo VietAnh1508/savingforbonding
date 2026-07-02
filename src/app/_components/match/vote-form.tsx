@@ -4,8 +4,8 @@ import { StarIcon } from "~/app/_components/icons/star-icon";
 import { OutcomePicker } from "~/app/_components/match/outcome-picker";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
 import {
-  BEER_NO_BET,
   formatBeers,
+  noBetPenaltyForStage,
   outcomeLabel,
   starsAllocatedForStage,
   wrongPenaltyForStage,
@@ -140,7 +140,8 @@ export function VoteForm({
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-center text-amber-700 dark:text-amber-300">
           <p className="font-medium">Voting is locked</p>
           <p className="mt-1 text-sm">
-            You didn't make a prediction — that's {formatBeers(BEER_NO_BET)}
+            You didn't make a prediction — that's{" "}
+            {formatBeers(noBetPenaltyForStage(matchStage))}
           </p>
         </div>
       );
@@ -220,7 +221,7 @@ export function VoteForm({
       </h3>
       <p className="text-sm text-foreground/50">
         Required for every match — skip it and you owe{" "}
-        {formatBeers(BEER_NO_BET)} anyway.
+        {formatBeers(noBetPenaltyForStage(matchStage))} anyway.
       </p>
       <OutcomePicker
         homeCountry={homeCountry}
