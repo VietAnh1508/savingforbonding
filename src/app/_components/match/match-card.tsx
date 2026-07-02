@@ -8,11 +8,13 @@ import { MatchStatusBadge } from "~/app/_components/match-status-badge";
 import { MatchVoteCounts } from "~/app/_components/match/match-vote-counts";
 import { RatioDisplay } from "~/app/_components/match/ratio-display";
 import { TeamFlag } from "~/app/_components/match/team-flag";
+import type { TabId } from "~/app/_components/match/match-tabs";
 import { Tooltip } from "~/app/_components/tooltip";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
 import {
   formatBeers,
   formatKickoffTime,
+  formatMatchScore,
   hasBettingHandicap,
   noBetPenaltyForStage,
   starsAllocatedForStage,
@@ -100,30 +102,21 @@ function predictedTeamClass(isPredicted: boolean) {
     : "px-3 py-2";
 }
 
-function formatMatchScore(match: Match): string {
-  if (
-    match.homeScore !== null &&
-    match.awayScore !== null &&
-    (match.status === "LIVE" || match.status === "COMPLETED")
-  ) {
-    return `${match.homeScore} - ${match.awayScore}`;
-  }
-
-  return "vs";
-}
-
 export function MatchCard({
   match,
   isSignedIn = false,
+  activeTab = "upcoming",
 }: {
   match: Match;
   isSignedIn?: boolean;
+  activeTab?: TabId;
 }) {
   const prediction = match.userVoteOutcome;
   const predictsHomeWin = prediction === "HOME_WIN";
   const predictsAwayWin = prediction === "AWAY_WIN";
   const predictsDraw = prediction === "DRAW";
-  const scoreIsTbd = formatMatchScore(match) === "vs";
+  const scoreIsTbd =
+    formatMatchScore(match.homeScore, match.awayScore, match.status) === "vs";
   const isCompleted = match.status === "COMPLETED";
   const voteResult = match.userVoteResult;
 
@@ -157,7 +150,11 @@ export function MatchCard({
 
   return (
     <Link
-      href={`/matches/${match.id}`}
+      href={
+        activeTab === "completed"
+          ? `/matches/${match.id}?tab=completed`
+          : `/matches/${match.id}`
+      }
       className="block rounded-xl border border-foreground/10 bg-foreground/5 p-4 transition hover:border-emerald-500/30 hover:bg-foreground/10"
     >
       <div className="mb-3 flex items-center justify-between">
@@ -217,7 +214,7 @@ export function MatchCard({
               scoreIsTbd ? "text-foreground/40" : ""
             }`}
           >
-            {formatMatchScore(match)}
+            {formatMatchScore(match.homeScore, match.awayScore, match.status)}
           </span>
           <RatioDisplay
             homeRatio={match.homeRatio}

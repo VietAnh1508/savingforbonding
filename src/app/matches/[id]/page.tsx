@@ -15,21 +15,26 @@ import { api, HydrateClient } from "~/trpc/server";
 
 export default async function MatchPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { id } = await params;
+  const { tab } = await searchParams;
   const session = await auth();
   const match = await api.match.getById({ id });
 
   if (!match) notFound();
+
+  const backHref = tab === "completed" ? "/?tab=completed" : "/";
 
   return (
     <HydrateClient>
       <Nav />
       <main className="container mx-auto max-w-2xl px-4 py-8">
         <div className="mb-6">
-          <BackLink href="/" label="Matches" />
+          <BackLink href={backHref} label="Matches" />
         </div>
         <div className="mb-2 text-sm text-foreground/50">
           {match.tournament}

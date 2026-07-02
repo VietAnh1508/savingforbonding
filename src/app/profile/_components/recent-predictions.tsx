@@ -2,6 +2,7 @@ import { StarIcon } from "~/app/_components/icons/star-icon";
 import {
   deriveEffectiveResult,
   deriveResult,
+  formatMatchScore,
   formatRatioValue,
   hasBettingHandicap,
   outcomeLabel,
@@ -42,10 +43,7 @@ type MissedItem = {
 type LedgerItem = VoteItem | MissedItem;
 
 function MatchLabel({ item }: { item: LedgerItem }) {
-  const score =
-    item.homeScore !== null && item.awayScore !== null
-      ? `${item.homeScore}–${item.awayScore}`
-      : "vs";
+  const score = formatMatchScore(item.homeScore, item.awayScore);
   return (
     <>
       <span>
@@ -87,6 +85,26 @@ function effectiveResultLabel(item: LedgerItem): string | null {
   );
 }
 
+function ResultCell({ item }: { item: LedgerItem }) {
+  const raw = rawResultLabel(item);
+  const effective = effectiveResultLabel(item);
+  if (raw === null || effective === null) return "—";
+  if (raw === effective) return raw;
+  return (
+    <>
+      <span>
+        {raw} <span className="text-foreground/40">(raw)</span>
+      </span>
+      <span className="block text-xs text-foreground/50">
+        Handicap-adjusted:{" "}
+        <strong className="font-semibold text-foreground/80">
+          {effective}
+        </strong>
+      </span>
+    </>
+  );
+}
+
 export function RecentPredictions({ items }: { items: LedgerItem[] }) {
   return (
     <section className="flex min-h-0 flex-1 flex-col">
@@ -112,7 +130,7 @@ export function RecentPredictions({ items }: { items: LedgerItem[] }) {
                 <th className="px-3 py-2 text-left font-medium">Result</th>
                 <th className="px-3 py-2 text-center font-medium">Star</th>
                 <th className="px-3 py-2 text-left font-medium">Outcome</th>
-                <th className="px-3 py-2 text-right font-medium">Beer Δ</th>
+                <th className="px-3 py-2 text-right font-medium">Beer</th>
                 <th className="px-3 py-2 text-right font-medium">Total</th>
               </tr>
             </thead>
@@ -139,32 +157,11 @@ export function RecentPredictions({ items }: { items: LedgerItem[] }) {
                         item.awayCountry,
                       )
                     ) : (
-                      <span className="text-foreground/40 italic">
-                        No vote
-                      </span>
+                      <span className="text-foreground/40 italic">No vote</span>
                     )}
                   </td>
                   <td className="px-3 py-2 text-foreground/70">
-                    {(() => {
-                      const raw = rawResultLabel(item);
-                      const effective = effectiveResultLabel(item);
-                      if (raw === null || effective === null) return "—";
-                      if (raw === effective) return raw;
-                      return (
-                        <>
-                          <span>
-                            {raw}{" "}
-                            <span className="text-foreground/40">(raw)</span>
-                          </span>
-                          <span className="block text-xs text-foreground/50">
-                            Handicap-adjusted:{" "}
-                            <strong className="font-semibold text-foreground/80">
-                              {effective}
-                            </strong>
-                          </span>
-                        </>
-                      );
-                    })()}
+                    <ResultCell item={item} />
                   </td>
                   <td className="px-3 py-2 text-center">
                     {item.kind === "vote" && item.hasStar ? (
@@ -223,3 +220,4 @@ export function RecentPredictions({ items }: { items: LedgerItem[] }) {
     </section>
   );
 }
+

@@ -28,6 +28,8 @@ npm run db:studio       # Open Prisma Studio
 npm run sync:fifa    # Manually pull latest FIFA fixture data
 ```
 
+The dev server's default port is 3000. Before starting a new one to test UI changes, check whether it's already running there (e.g. `lsof -i :3000`) and reuse it — only run `npm run dev` if port 3000 is free.
+
 ### Database setup
 
 **Both local dev and production use Turso** (there is no local SQLite workflow). Dev and prod are separate Turso databases under the `givemeakiss` org: `savingforbonding` (dev) and `savingforbonding-prod` (production). The only difference between pushing to dev vs. prod is which credentials are loaded:
