@@ -16,7 +16,7 @@ import { api, type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listMatches"][number];
 
-type TabId = "upcoming" | "completed";
+export type TabId = "upcoming" | "completed";
 
 function groupByDate(matches: Match[], descending = false) {
   const grouped = matches.reduce(
@@ -39,7 +39,10 @@ type StageGroup = {
   dateGroups: ReturnType<typeof groupByDate>;
 };
 
-function groupByStageAndDate(matches: Match[], descending = false): StageGroup[] {
+function groupByStageAndDate(
+  matches: Match[],
+  descending = false,
+): StageGroup[] {
   const seenStages: (string | null)[] = [];
   for (const m of matches) {
     if (!seenStages.includes(m.stage)) seenStages.push(m.stage);
@@ -47,7 +50,10 @@ function groupByStageAndDate(matches: Match[], descending = false): StageGroup[]
   const orderedStages = descending ? [...seenStages].reverse() : seenStages;
   return orderedStages.map((stage) => ({
     stage,
-    dateGroups: groupByDate(matches.filter((m) => m.stage === stage), descending),
+    dateGroups: groupByDate(
+      matches.filter((m) => m.stage === stage),
+      descending,
+    ),
   }));
 }
 
@@ -74,10 +80,12 @@ function MatchList({
   stageGroups,
   isSignedIn,
   emptyMessage,
+  activeTab,
 }: {
   stageGroups: StageGroup[];
   isSignedIn: boolean;
   emptyMessage: string;
+  activeTab: TabId;
 }) {
   const [modalDateKey, setModalDateKey] = useState<string | null>(null);
   const showStageHeadings = stageGroups.length > 1;
@@ -137,75 +145,76 @@ function MatchList({
             hasVotableInStage;
 
           return (
-          <div key={stage ?? "__null__"}>
-            {showStageHeadings && (
-              <div className="mb-8 flex items-center gap-3">
-                <div className="h-px flex-1 bg-foreground/10" />
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-widest text-foreground/40">
-                    {stage ?? "Other"}
-                  </span>
-                  {showStarBudget && (
-                    <span className="flex items-center gap-1 text-xs text-amber-500 dark:text-amber-400">
-                      <StarIcon filled={false} />
-                      {starAllotments
-                        ? `${stageAllotment?.remaining ?? 0}/${stageAllotment?.allocated ?? 0}`
-                        : "…"}
+            <div key={stage ?? "__null__"}>
+              {showStageHeadings && (
+                <div className="mb-8 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-foreground/10" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-widest text-foreground/40">
+                      {stage ?? "Other"}
                     </span>
-                  )}
+                    {showStarBudget && (
+                      <span className="flex items-center gap-1 text-xs text-amber-500 dark:text-amber-400">
+                        <StarIcon filled={false} />
+                        {starAllotments
+                          ? `${stageAllotment?.remaining ?? 0}/${stageAllotment?.allocated ?? 0}`
+                          : "…"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="h-px flex-1 bg-foreground/10" />
                 </div>
-                <div className="h-px flex-1 bg-foreground/10" />
-              </div>
-            )}
-            <div className="space-y-8">
-              {dateGroups.map(({ dateKey, matches: dayMatches }) => {
-                const hasVotable = dayMatches.some((m) => m.votingOpen);
-                const hasAnyVote = dayMatches.some(
-                  (m) => m.votingOpen && m.userVoteOutcome != null,
-                );
-                const isVotingClosed =
-                  !hasVotable &&
-                  dayMatches.some((m) => m.status !== MatchStatus.COMPLETED);
+              )}
+              <div className="space-y-8">
+                {dateGroups.map(({ dateKey, matches: dayMatches }) => {
+                  const hasVotable = dayMatches.some((m) => m.votingOpen);
+                  const hasAnyVote = dayMatches.some(
+                    (m) => m.votingOpen && m.userVoteOutcome != null,
+                  );
+                  const isVotingClosed =
+                    !hasVotable &&
+                    dayMatches.some((m) => m.status !== MatchStatus.COMPLETED);
 
-                return (
-                  <section key={dateKey} id={`date-section-${dateKey}`}>
-                    <div className="mb-4 flex items-center justify-between">
-                      <h2 className="text-xl font-semibold text-emerald-400">
-                        {formatMatchDate(dayMatches[0]!.kickoffAt)}
-                      </h2>
-                      {isSignedIn && hasVotable && (
-                        <button
-                          type="button"
-                          onClick={() => setModalDateKey(dateKey)}
-                          className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
-                            hasAnyVote
-                              ? "border border-emerald-500/50 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
-                              : "bg-emerald-600 text-white hover:bg-emerald-500"
-                          }`}
-                        >
-                          {hasAnyVote ? "Edit predictions" : "Predict all"}
-                        </button>
-                      )}
-                      {isSignedIn && isVotingClosed && (
-                        <span className="text-sm text-foreground/30">
-                          Voting closed
-                        </span>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      {dayMatches.map((match) => (
-                        <MatchCard
-                          key={match.id}
-                          match={match}
-                          isSignedIn={isSignedIn}
-                        />
-                      ))}
-                    </div>
-                  </section>
-                );
-              })}
+                  return (
+                    <section key={dateKey} id={`date-section-${dateKey}`}>
+                      <div className="mb-4 flex items-center justify-between">
+                        <h2 className="text-xl font-semibold text-emerald-400">
+                          {formatMatchDate(dayMatches[0]!.kickoffAt)}
+                        </h2>
+                        {isSignedIn && hasVotable && (
+                          <button
+                            type="button"
+                            onClick={() => setModalDateKey(dateKey)}
+                            className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
+                              hasAnyVote
+                                ? "border border-emerald-500/50 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
+                                : "bg-emerald-600 text-white hover:bg-emerald-500"
+                            }`}
+                          >
+                            {hasAnyVote ? "Edit predictions" : "Predict all"}
+                          </button>
+                        )}
+                        {isSignedIn && isVotingClosed && (
+                          <span className="text-sm text-foreground/30">
+                            Voting closed
+                          </span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {dayMatches.map((match) => (
+                          <MatchCard
+                            key={match.id}
+                            match={match}
+                            isSignedIn={isSignedIn}
+                            activeTab={activeTab}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })}
+              </div>
             </div>
-          </div>
           );
         })}
       </div>
@@ -256,7 +265,10 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
 
   const activeMatches = activeTab === "upcoming" ? upcoming : completed;
   const descending = activeTab === "completed";
-  const groups = useMemo(() => groupByDate(activeMatches, descending), [activeMatches, descending]);
+  const groups = useMemo(
+    () => groupByDate(activeMatches, descending),
+    [activeMatches, descending],
+  );
   const stageGroups = useMemo(
     () => groupByStageAndDate(activeMatches, descending),
     [activeMatches, descending],
@@ -450,9 +462,9 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
               : "No completed matches yet."
           }
           isSignedIn={isSignedIn}
+          activeTab={activeTab}
         />
       </div>
     </div>
   );
 }
-

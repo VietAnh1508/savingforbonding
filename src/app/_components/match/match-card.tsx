@@ -8,6 +8,7 @@ import { MatchStatusBadge } from "~/app/_components/match-status-badge";
 import { MatchVoteCounts } from "~/app/_components/match/match-vote-counts";
 import { RatioDisplay } from "~/app/_components/match/ratio-display";
 import { TeamFlag } from "~/app/_components/match/team-flag";
+import type { TabId } from "~/app/_components/match/match-tabs";
 import { Tooltip } from "~/app/_components/tooltip";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
 import {
@@ -104,9 +105,11 @@ function predictedTeamClass(isPredicted: boolean) {
 export function MatchCard({
   match,
   isSignedIn = false,
+  activeTab = "upcoming",
 }: {
   match: Match;
   isSignedIn?: boolean;
+  activeTab?: TabId;
 }) {
   const prediction = match.userVoteOutcome;
   const predictsHomeWin = prediction === "HOME_WIN";
@@ -147,7 +150,11 @@ export function MatchCard({
 
   return (
     <Link
-      href={`/matches/${match.id}`}
+      href={
+        activeTab === "completed"
+          ? `/matches/${match.id}?tab=completed`
+          : `/matches/${match.id}`
+      }
       className="block rounded-xl border border-foreground/10 bg-foreground/5 p-4 transition hover:border-emerald-500/30 hover:bg-foreground/10"
     >
       <div className="mb-3 flex items-center justify-between">
