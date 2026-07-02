@@ -30,29 +30,38 @@ npm run sync:fifa    # Manually pull latest FIFA fixture data
 
 ### Database setup
 
-**Both local dev and production use Turso** (there is no local SQLite workflow). The only difference is which credentials are loaded:
+**Both local dev and production use Turso** (there is no local SQLite workflow). Dev and prod are separate Turso databases under the `givemeakiss` org: `savingforbonding` (dev) and `savingforbonding-prod` (production). The only difference between pushing to dev vs. prod is which credentials are loaded:
 
-| Environment | Credentials file | Command |
-|-------------|-----------------|---------|
-| Dev         | `.env`          | `npm run db:push:turso` |
-| Production  | `.env.prod`     | `TURSO_DATABASE_URL="..." TURSO_API_KEY="<db-token>" npm run db:push:turso` |
+| Environment | Credentials file  | Command |
+|-------------|--------------------|---------|
+| Dev         | `.env`             | `npm run db:push:turso` |
+| Production  | `.env.production`  | `TURSO_DATABASE_URL="..." TURSO_API_KEY="<db-token>" npm run db:push:turso` |
 
-`db:push:turso` loads `.env` automatically via `--env-file=.env`. For production, pass the `.env.prod` values explicitly as shown above.
+`db:push:turso` loads `.env` automatically via `--env-file=.env`. For production, pass the `.env.production` values explicitly as shown above — inline env vars take priority over `--env-file` (Node doesn't overwrite already-set vars), so this correctly targets the prod DB instead. `db:push:turso` also runs `scripts/backfill-user-joining-dates.mjs` afterward (idempotent, safe to ignore).
 
-The `TURSO_API_KEY` must be a **database auth token** (not a platform API token) — run `npm run turso:db-token` to mint one if needed.
+The `TURSO_API_KEY` must be a **database auth token** (not a platform API token) — run `npm run turso:db-token` to mint one from a `TURSO_PLATFORM_TOKEN`, or use the Turso CLI directly (see below).
 
 **Always push the schema before deploying code** that depends on new tables or columns.
 
 There are no tests. `npm run typecheck` is the only automated check.
 
+### Turso CLI
+
+```bash
+turso auth login                          # one-time login (required before other commands)
+turso db shell savingforbonding           # direct SQL access — dev DB
+turso db shell savingforbonding-prod      # direct SQL access — production DB
+turso db tokens create savingforbonding   # mint a new database auth token
+```
+
 ## Environment Variables
 
-Required in `.env` (dev) and `.env.prod` (production):
+Required in `.env` (dev) and `.env.production` (production, used only for local scripts targeting the prod DB — the deployed app's env vars live in the Vercel dashboard, not this file):
 - `TURSO_DATABASE_URL` — Turso `libsql://` URL
 - `TURSO_API_KEY` — Turso database auth token (not a platform API token)
 - `AUTH_SECRET` — NextAuth secret (required in production)
 - `ADMIN_PASSWORD` — Admin panel password (defaults to `admin123`)
-- `CRON_SECRET` — Secret for Vercel cron job auth (generate with `openssl rand -hex 32`)
+- `CRON_SECRET` — Secret for Vercel cron job auth (generate with `openssl rand -hex 32`); set in the Vercel dashboard for the deployed app
 
 Note: `DATABASE_URL` in `.env` is a legacy field kept for schema validation; the app always connects via `TURSO_DATABASE_URL`.
 
