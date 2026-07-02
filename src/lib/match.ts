@@ -263,6 +263,19 @@ export function formatKickoffTime(date: Date): string {
   return matchTimeFormatter.format(date);
 }
 
+/** Score display for a match, or "vs" if not yet underway/finished. */
+export function formatMatchScore(
+  homeScore: number | null,
+  awayScore: number | null,
+  status?: MatchStatus,
+): string {
+  if (homeScore === null || awayScore === null) return "vs";
+  if (status !== undefined && status !== "LIVE" && status !== "COMPLETED") {
+    return "vs";
+  }
+  return `${homeScore} - ${awayScore}`;
+}
+
 export function formatMatchDateTime(date: Date): string {
   return matchDateTimeFormatter.format(date);
 }

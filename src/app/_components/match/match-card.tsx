@@ -13,6 +13,7 @@ import { useToggleStar } from "~/app/hooks/use-toggle-star";
 import {
   formatBeers,
   formatKickoffTime,
+  formatMatchScore,
   hasBettingHandicap,
   noBetPenaltyForStage,
   starsAllocatedForStage,
@@ -100,18 +101,6 @@ function predictedTeamClass(isPredicted: boolean) {
     : "px-3 py-2";
 }
 
-function formatMatchScore(match: Match): string {
-  if (
-    match.homeScore !== null &&
-    match.awayScore !== null &&
-    (match.status === "LIVE" || match.status === "COMPLETED")
-  ) {
-    return `${match.homeScore} - ${match.awayScore}`;
-  }
-
-  return "vs";
-}
-
 export function MatchCard({
   match,
   isSignedIn = false,
@@ -123,7 +112,8 @@ export function MatchCard({
   const predictsHomeWin = prediction === "HOME_WIN";
   const predictsAwayWin = prediction === "AWAY_WIN";
   const predictsDraw = prediction === "DRAW";
-  const scoreIsTbd = formatMatchScore(match) === "vs";
+  const scoreIsTbd =
+    formatMatchScore(match.homeScore, match.awayScore, match.status) === "vs";
   const isCompleted = match.status === "COMPLETED";
   const voteResult = match.userVoteResult;
 
@@ -217,7 +207,7 @@ export function MatchCard({
               scoreIsTbd ? "text-foreground/40" : ""
             }`}
           >
-            {formatMatchScore(match)}
+            {formatMatchScore(match.homeScore, match.awayScore, match.status)}
           </span>
           <RatioDisplay
             homeRatio={match.homeRatio}
