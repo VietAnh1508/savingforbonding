@@ -290,46 +290,25 @@ export const voteRouter = createTRPCRouter({
       return { count: votes.length };
     }),
 
-  getMyVotes: protectedProcedure
-    .input(
-      z
-        .object({
-          limit: z.number().min(1).max(100).default(50),
-        })
-        .optional(),
-    )
-    .query(async ({ ctx, input }) => {
-      const limit = input?.limit ?? 50;
+  getMyVotes: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.db.vote.findMany({
+      where: { userId: ctx.session.user.id },
+      include: { match: true },
+      orderBy: { createdAt: "desc" },
+    });
+  }),
 
-      return ctx.db.vote.findMany({
-        where: { userId: ctx.session.user.id },
-        include: { match: true },
-        orderBy: { createdAt: "desc" },
-        take: limit,
-      });
-    }),
+  getMyMissedMatches: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
 
-  getMyMissedMatches: protectedProcedure
-    .input(
-      z
-        .object({
-          limit: z.number().min(1).max(100).default(20),
-        })
-        .optional(),
-    )
-    .query(async ({ ctx, input }) => {
-      const limit = input?.limit ?? 20;
-      const userId = ctx.session.user.id;
-
-      return ctx.db.match.findMany({
-        where: {
-          status: "COMPLETED",
-          votes: { none: { userId } },
-        },
-        orderBy: { kickoffAt: "desc" },
-        take: limit,
-      });
-    }),
+    return ctx.db.match.findMany({
+      where: {
+        status: "COMPLETED",
+        votes: { none: { userId } },
+      },
+      orderBy: { kickoffAt: "desc" },
+    });
+  }),
 
   toggleStar: protectedProcedure
     .input(z.object({ matchId: z.string() }))

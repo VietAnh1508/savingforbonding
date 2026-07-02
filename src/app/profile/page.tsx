@@ -13,8 +13,8 @@ export default async function ProfilePage() {
 
   const [stats, votes, missedMatches, followers] = await Promise.all([
     api.vote.getMyStats(),
-    api.vote.getMyVotes({ limit: 20 }),
-    api.vote.getMyMissedMatches({ limit: 20 }),
+    api.vote.getMyVotes(),
+    api.vote.getMyMissedMatches(),
     api.vote.getMyFollowers(),
   ]);
 
