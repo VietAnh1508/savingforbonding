@@ -1,8 +1,9 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { BEER_NO_BET, isMatchEditable, validateBettingRatios } from "~/lib/match";
+import { isMatchEditable, validateBettingRatios } from "~/lib/match";
 import { hashPassword } from "~/lib/password";
+import { computeRankHistory } from "~/lib/rank-history";
 import { adminProcedure, createTRPCRouter } from "~/server/api/trpc";
 import { resolveMatchVotes } from "~/server/services/resolve-votes";
 import { syncFifaFixtures } from "~/server/services/sync-fifa-fixtures";
@@ -65,26 +66,36 @@ export const adminRouter = createTRPCRouter({
   }),
 
   repairBeerTotals: adminProcedure.mutation(async ({ ctx }) => {
-    const [completedMatchCount, users] = await Promise.all([
-      ctx.db.match.count({ where: { status: "COMPLETED" } }),
+    const [completedMatches, resolvedVotes, users] = await Promise.all([
+      ctx.db.match.findMany({
+        where: { status: "COMPLETED" },
+        select: { id: true, kickoffAt: true, stage: { select: { name: true } } },
+        orderBy: { kickoffAt: "asc" },
+      }),
+      ctx.db.vote.findMany({
+        where: { match: { status: "COMPLETED" } },
+        select: { userId: true, matchId: true, points: true, isCorrect: true },
+      }),
       ctx.db.user.findMany({
-        select: {
-          id: true,
-          totalPoints: true,
-          votes: {
-            where: { isCorrect: { not: null } },
-            select: { points: true },
-          },
-        },
+        select: { id: true, name: true, image: true, totalPoints: true },
       }),
     ]);
+
+    const matchInputs = completedMatches.map((match) => ({
+      id: match.id,
+      kickoffAt: match.kickoffAt,
+      stage: match.stage?.name ?? null,
+    }));
+
+    // Reuses the same stage-aware no-bet penalty logic as the rank history
+    // chart, so a repair can never diverge from what the chart/badges show.
+    const { days } = computeRankHistory(matchInputs, resolvedVotes, users);
+    const finalBeers = days[days.length - 1]?.beers ?? {};
 
     let usersUpdated = 0;
 
     for (const user of users) {
-      const votePointsSum = user.votes.reduce((sum, v) => sum + v.points, 0);
-      const missedCount = completedMatchCount - user.votes.length;
-      const newTotalPoints = votePointsSum + missedCount * BEER_NO_BET;
+      const newTotalPoints = finalBeers[user.id] ?? 0;
 
       if (newTotalPoints !== user.totalPoints) {
         await ctx.db.user.update({
@@ -95,7 +106,7 @@ export const adminRouter = createTRPCRouter({
       }
     }
 
-    return { usersUpdated, completedMatchCount };
+    return { usersUpdated, completedMatchCount: completedMatches.length };
   }),
 
   listAll: adminProcedure.query(async ({ ctx }) => {
