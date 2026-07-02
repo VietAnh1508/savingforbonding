@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { Nav } from "~/app/_components/nav";
 import { EditProfileName } from "~/app/profile/_components/edit-profile-name";
+import { noBetPenaltyForStage } from "~/lib/match";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 import { RecentPredictions } from "./_components/recent-predictions";
@@ -24,6 +25,10 @@ export default async function ProfilePage() {
     kickoffAt: v.match.kickoffAt,
     homeCountry: v.match.homeCountry,
     awayCountry: v.match.awayCountry,
+    homeScore: v.match.homeScore,
+    awayScore: v.match.awayScore,
+    homeRatio: v.match.homeRatio,
+    awayRatio: v.match.awayRatio,
     outcome: v.outcome,
     isCorrect: v.isCorrect,
     points: v.points,
@@ -36,17 +41,37 @@ export default async function ProfilePage() {
     kickoffAt: m.kickoffAt,
     homeCountry: m.homeCountry,
     awayCountry: m.awayCountry,
+    homeScore: m.homeScore,
+    awayScore: m.awayScore,
+    homeRatio: m.homeRatio,
+    awayRatio: m.awayRatio,
+    stage: m.stage?.name ?? null,
   }));
 
-  const allItems = [...voteItems, ...missedItems].sort(
-    (a, b) => b.kickoffAt.getTime() - a.kickoffAt.getTime(),
+  // Chronological (oldest first) so the running beer total below reads like a
+  // ledger — each row's total is the balance right after that match settled.
+  const chronological = [...voteItems, ...missedItems].sort(
+    (a, b) => a.kickoffAt.getTime() - b.kickoffAt.getTime(),
   );
+
+  let runningTotal = 0;
+  const allItems = chronological.map((item) => {
+    if (item.kind === "missed") {
+      const penalty = noBetPenaltyForStage(item.stage);
+      runningTotal += penalty;
+      return { ...item, points: penalty, runningTotal };
+    }
+    if (item.isCorrect !== null) {
+      runningTotal = Math.max(0, runningTotal + item.points);
+    }
+    return { ...item, runningTotal };
+  });
 
   return (
     <HydrateClient>
       <div className="flex h-screen flex-col">
         <Nav />
-        <main className="container mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col px-4 py-8">
+        <main className="container mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 py-8">
           <div className="mb-6 flex items-center gap-3 sm:mb-8 sm:gap-4">
             {session.user.image ? (
               <Image
@@ -98,7 +123,7 @@ export default async function ProfilePage() {
           </div>
 
           <div className="mb-8">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-foreground/50">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-foreground/50">
               Followers
             </h2>
             {followers.length === 0 ? (

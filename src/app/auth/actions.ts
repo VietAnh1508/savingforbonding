@@ -3,7 +3,7 @@
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 
-import { BEER_NO_BET } from "~/lib/match";
+import { noBetPenaltyForStage } from "~/lib/match";
 import { hashPassword } from "~/lib/password";
 import { auth, signIn } from "~/server/auth";
 import { db } from "~/server/db";
@@ -89,14 +89,14 @@ export async function signUp(formData: FormData) {
 
   const passwordHash = await hashPassword(password);
 
-  const completedMatchCount = await db.match.count({
+  const completedMatches = await db.match.findMany({
     where: { status: "COMPLETED" },
+    include: { stage: true },
   });
-  // TODO: flat-rate debt, unlike the stage-aware noBetPenaltyForStage used
-  // everywhere else (resolveMatchVotes, computeRankHistory). Fine while
-  // signups only happen during the flat-rate group stage, but a signup
-  // during/after knockout rounds would be under-charged for prior matches.
-  const noBetDebt = completedMatchCount * BEER_NO_BET;
+  const noBetDebt = completedMatches.reduce(
+    (sum, match) => sum + noBetPenaltyForStage(match.stage?.name ?? null),
+    0,
+  );
 
   await db.user.create({
     data: {
