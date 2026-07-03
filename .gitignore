@@ -49,3 +49,5 @@ yarn-error.log*
 
 # local scratch / planning files
 /tmp/
+
+.playwright-mcp
