@@ -1,3 +1,4 @@
+import { BEER_LOSE, BEER_NO_VOTE } from "../src/lib/match";
 import { createPrismaClient } from "../src/server/create-prisma-client";
 import stagesData from "../stages.json";
 
@@ -26,7 +27,20 @@ async function main() {
         isKnockout: stage.Type === 0,
       },
     });
-    console.log(`Upserted stage: ${name} (knockout: ${stage.Type === 0})`);
+
+    const isKnockout = stage.Type === 0;
+    const wrongPenalty = isKnockout
+      ? BEER_LOSE + (stage.SequenceOrder - 1) * 3
+      : BEER_LOSE;
+    const noVotePenalty = isKnockout ? wrongPenalty + 2 : BEER_NO_VOTE;
+
+    await db.stagePenalty.upsert({
+      where: { stageId: stage.IdStage },
+      update: {}, // never clobber an admin's edited values on re-seed
+      create: { stageId: stage.IdStage, wrongPenalty, noVotePenalty },
+    });
+
+    console.log(`Upserted stage: ${name} (knockout: ${isKnockout})`);
   }
   console.log(`Done — ${stagesData.Results.length} stages processed.`);
 }

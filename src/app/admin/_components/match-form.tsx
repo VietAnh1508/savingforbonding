@@ -5,7 +5,7 @@ import { useState } from "react";
 import {
   fromVietnamDatetimeLocal,
   toVNDate,
-  validateBettingRatios,
+  validateVotingRatios,
 } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
@@ -75,7 +75,7 @@ export function MatchForm({ editingMatch, onSuccess, onCancel }: Props) {
       return;
     }
 
-    const ratioError = validateBettingRatios(homeRatio, awayRatio);
+    const ratioError = validateVotingRatios(homeRatio, awayRatio);
     if (ratioError) {
       setFormError(ratioError);
       return;

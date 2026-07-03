@@ -141,7 +141,7 @@ export async function syncFifaFixtures(
 
     // When transitioning to COMPLETED, omit status/scores/result here —
     // resolveMatchVotes writes those fields itself, and must see the match
-    // as not-yet-resolved so it applies the BEER_NO_BET penalty to non-voters.
+    // as not-yet-resolved so it applies the BEER_NO_VOTE penalty to non-voters.
     await db.match.update({
       where: { externalId },
       data: {

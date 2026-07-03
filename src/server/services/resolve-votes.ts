@@ -4,7 +4,7 @@ import {
   beerCostForVote,
   deriveResult,
   isVoteCorrect,
-  noBetPenaltyForStage,
+  noVotePenaltyForStage,
 } from "~/lib/match";
 
 export async function resolveMatchVotes(
@@ -15,12 +15,12 @@ export async function resolveMatchVotes(
 ) {
   const match = await db.match.findUnique({
     where: { id: matchId },
-    include: { stage: true },
+    include: { stage: { include: { penalty: true } } },
   });
   if (!match) {
     throw new Error("Match not found");
   }
-  const stageName = match.stage?.name ?? null;
+  const stagePenalty = match.stage?.penalty;
 
   const result = deriveResult(homeScore, awayScore);
   const alreadyResolved =
@@ -35,7 +35,7 @@ export async function resolveMatchVotes(
       return {
         result: match.result!,
         beersCharged: 0,
-        noBetPenalties: 0,
+        noVotePenalties: 0,
         alreadyResolved: true,
       };
     }
@@ -66,8 +66,8 @@ export async function resolveMatchVotes(
       match.awayRatio,
     );
     const beers = vote.hasStar
-      ? beerCostForStarVote(isCorrect, stageName)
-      : beerCostForVote(isCorrect, stageName);
+      ? beerCostForStarVote(isCorrect, stagePenalty)
+      : beerCostForVote(isCorrect, stagePenalty);
 
     await db.vote.update({
       where: { id: vote.id },
@@ -98,7 +98,7 @@ export async function resolveMatchVotes(
     beersCharged += beers;
   }
 
-  let noBetPenalties = 0;
+  let noVotePenalties = 0;
 
   if (!alreadyResolved) {
     const votedUserIds = new Set(
@@ -115,21 +115,21 @@ export async function resolveMatchVotes(
       select: { id: true },
     });
 
-    const noBetPenalty = noBetPenaltyForStage(stageName);
+    const noVotePenalty = noVotePenaltyForStage(stagePenalty);
 
     for (const user of nonVoters) {
       await db.user.update({
         where: { id: user.id },
         data: {
-          totalPoints: { increment: noBetPenalty },
-          weeklyPoints: { increment: noBetPenalty },
+          totalPoints: { increment: noVotePenalty },
+          weeklyPoints: { increment: noVotePenalty },
         },
       });
-      beersCharged += noBetPenalty;
+      beersCharged += noVotePenalty;
     }
 
-    noBetPenalties = nonVoters.length;
+    noVotePenalties = nonVoters.length;
   }
 
-  return { result, beersCharged, noBetPenalties, alreadyResolved: false };
+  return { result, beersCharged, noVotePenalties, alreadyResolved: false };
 }

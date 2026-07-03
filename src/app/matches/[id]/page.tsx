@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { BackLink } from "~/app/_components/back-link";
 import { BeerStakes } from "~/app/_components/beer-stakes";
 import { MatchStatusBadge } from "~/app/_components/match-status-badge";
-import { BettingRatios } from "~/app/_components/match/betting-ratios";
+import { VotingRatios } from "~/app/_components/match/voting-ratios";
 import { MatchVoteCounts } from "~/app/_components/match/match-vote-counts";
 import { TeamFlag } from "~/app/_components/match/team-flag";
 import { VoteForm } from "~/app/_components/match/vote-form";
@@ -109,7 +109,7 @@ export default async function MatchPage({
             </div>
           )}
 
-          <BettingRatios
+          <VotingRatios
             homeCountry={match.homeCountry}
             awayCountry={match.awayCountry}
             homeRatio={match.homeRatio}

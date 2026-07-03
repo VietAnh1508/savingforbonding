@@ -306,7 +306,7 @@ export const voteRouter = createTRPCRouter({
         status: "COMPLETED",
         votes: { none: { userId } },
       },
-      include: { stage: { select: { name: true } } },
+      include: { stage: { include: { penalty: true } } },
       orderBy: { kickoffAt: "desc" },
     });
   }),
