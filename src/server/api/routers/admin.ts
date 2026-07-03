@@ -242,10 +242,17 @@ export const adminRouter = createTRPCRouter({
     }),
 
   listStagePenalties: adminProcedure.query(async ({ ctx }) => {
-    return ctx.db.stage.findMany({
-      include: { penalty: true },
+    const stages = await ctx.db.stage.findMany({
+      include: {
+        penalty: true,
+        _count: { select: { matches: { where: { status: "COMPLETED" } } } },
+      },
       orderBy: { sequenceOrder: "asc" },
     });
+    return stages.map(({ _count, ...stage }) => ({
+      ...stage,
+      hasCompletedMatch: _count.matches > 0,
+    }));
   }),
 
   updateStagePenalty: adminProcedure
@@ -269,6 +276,19 @@ export const adminRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { stageId, wrongPenalty, noVotePenalty } = input;
+
+      const completedMatch = await ctx.db.match.findFirst({
+        where: { stageId, status: "COMPLETED" },
+        select: { id: true },
+      });
+      if (completedMatch) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Cannot edit penalties for a stage that already has completed matches",
+        });
+      }
+
       return ctx.db.stagePenalty.upsert({
         where: { stageId },
         update: { wrongPenalty, noVotePenalty },

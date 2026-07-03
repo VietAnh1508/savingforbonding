@@ -2,8 +2,14 @@
 
 import { useState } from "react";
 
+import { SubmitButton } from "~/app/_components/submit-button";
 import { useToast } from "~/app/_components/toast";
-import { BEER_LOSE, BEER_NO_VOTE, BEER_WIN, validateStagePenalty } from "~/lib/match";
+import {
+  BEER_WIN,
+  noVotePenaltyForStage,
+  validateStagePenalty,
+  wrongPenaltyForStage,
+} from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Stage = RouterOutputs["admin"]["listStagePenalties"][number];
@@ -13,10 +19,10 @@ function StageRow({ stage }: { stage: Stage }) {
   const toast = useToast();
 
   const [wrongPenalty, setWrongPenalty] = useState(
-    String(stage.penalty?.wrongPenalty ?? BEER_LOSE),
+    String(wrongPenaltyForStage(stage.penalty)),
   );
   const [noVotePenalty, setNoVotePenalty] = useState(
-    String(stage.penalty?.noVotePenalty ?? BEER_NO_VOTE),
+    String(noVotePenaltyForStage(stage.penalty)),
   );
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -28,7 +34,7 @@ function StageRow({ stage }: { stage: Stage }) {
     },
   });
 
-  function handleSave() {
+  async function handleSave() {
     const wrong = parseInt(wrongPenalty, 10);
     const noVote = parseInt(noVotePenalty, 10);
 
@@ -44,15 +50,20 @@ function StageRow({ stage }: { stage: Stage }) {
     }
 
     setFormError(null);
-    updatePenalty.mutate({
-      stageId: stage.id,
-      wrongPenalty: wrong,
-      noVotePenalty: noVote,
-    });
+    try {
+      await updatePenalty.mutateAsync({
+        stageId: stage.id,
+        wrongPenalty: wrong,
+        noVotePenalty: noVote,
+      });
+    } catch {
+      // surfaced via updatePenalty.error below
+    }
   }
 
+  const locked = stage.hasCompletedMatch;
   const inputClass =
-    "w-20 rounded-lg border border-foreground/10 bg-foreground/10 px-2 py-1 text-sm";
+    "w-20 rounded-lg border border-foreground/10 bg-foreground/10 px-2 py-1 text-sm disabled:opacity-50";
 
   return (
     <tr className="border-b border-foreground/5 last:border-0">
@@ -71,6 +82,7 @@ function StageRow({ stage }: { stage: Stage }) {
           step="1"
           value={wrongPenalty}
           onChange={(e) => setWrongPenalty(e.target.value)}
+          disabled={locked}
           className={inputClass}
         />
       </td>
@@ -81,22 +93,24 @@ function StageRow({ stage }: { stage: Stage }) {
           step="1"
           value={noVotePenalty}
           onChange={(e) => setNoVotePenalty(e.target.value)}
+          disabled={locked}
           className={inputClass}
         />
       </td>
       <td className="py-2">
-        <button
-          type="button"
-          disabled={updatePenalty.isPending}
-          onClick={handleSave}
-          className="rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-black transition hover:bg-emerald-400 disabled:opacity-50"
-        >
-          Save
-        </button>
-        {(formError ?? updatePenalty.error) && (
-          <p className="mt-1 text-xs text-red-400">
-            {formError ?? updatePenalty.error?.message}
+        {locked ? (
+          <p className="text-xs text-foreground/40">
+            Locked — stage has completed matches
           </p>
+        ) : (
+          <form action={handleSave} className="w-20">
+            <SubmitButton size="sm">Save</SubmitButton>
+            {(formError ?? updatePenalty.error) && (
+              <p className="mt-1 text-xs text-red-400">
+                {formError ?? updatePenalty.error?.message}
+              </p>
+            )}
+          </form>
         )}
       </td>
     </tr>

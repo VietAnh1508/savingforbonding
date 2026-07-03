@@ -1,4 +1,4 @@
-import { BEER_LOSE, BEER_NO_VOTE } from "~/lib/match";
+import { noVotePenaltyForStage, wrongPenaltyForStage } from "~/lib/match";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 export const stageRouter = createTRPCRouter({
@@ -15,8 +15,8 @@ export const stageRouter = createTRPCRouter({
     });
     return stages.map((stage) => ({
       ...stage,
-      wrongPenalty: stage.penalty?.wrongPenalty ?? BEER_LOSE,
-      noVotePenalty: stage.penalty?.noVotePenalty ?? BEER_NO_VOTE,
+      wrongPenalty: wrongPenaltyForStage(stage.penalty),
+      noVotePenalty: noVotePenaltyForStage(stage.penalty),
     }));
   }),
 
@@ -33,8 +33,8 @@ export const stageRouter = createTRPCRouter({
     });
     return stages.map((stage) => ({
       ...stage,
-      wrongPenalty: stage.penalty?.wrongPenalty ?? BEER_LOSE,
-      noVotePenalty: stage.penalty?.noVotePenalty ?? BEER_NO_VOTE,
+      wrongPenalty: wrongPenaltyForStage(stage.penalty),
+      noVotePenalty: noVotePenaltyForStage(stage.penalty),
     }));
   }),
 });

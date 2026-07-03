@@ -2,9 +2,9 @@ import { z } from "zod";
 
 import { isKnownCountry } from "~/lib/country-flag";
 import {
-  BEER_LOSE,
-  BEER_NO_VOTE,
   isVotingOpen,
+  noVotePenaltyForStage,
+  wrongPenaltyForStage,
   type MatchVoter,
 } from "~/lib/match";
 import { MatchStatus } from "../../../../generated/prisma";
@@ -72,8 +72,8 @@ export const matchRouter = createTRPCRouter({
       return matches.map((match) => ({
         ...match,
         stage: match.stage?.name ?? null,
-        stageWrongPenalty: match.stage?.penalty?.wrongPenalty ?? BEER_LOSE,
-        stageNoVotePenalty: match.stage?.penalty?.noVotePenalty ?? BEER_NO_VOTE,
+        stageWrongPenalty: wrongPenaltyForStage(match.stage?.penalty),
+        stageNoVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
         userVoteOutcome: userVoteByMatchId.get(match.id)?.outcome ?? null,
         userVoteResult: userVoteByMatchId.get(match.id) ?? null,
         voteCounts: voteCountsByMatchId.get(match.id) ?? emptyMatchVoteCounts(),
@@ -134,8 +134,8 @@ export const matchRouter = createTRPCRouter({
       return {
         ...match,
         stage: match.stage?.name ?? null,
-        stageWrongPenalty: match.stage?.penalty?.wrongPenalty ?? BEER_LOSE,
-        stageNoVotePenalty: match.stage?.penalty?.noVotePenalty ?? BEER_NO_VOTE,
+        stageWrongPenalty: wrongPenaltyForStage(match.stage?.penalty),
+        stageNoVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
         votingOpen: isVotingOpen(match.kickoffAt, match.status),
         userVote,
         voteCounts,
