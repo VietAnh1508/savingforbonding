@@ -95,7 +95,8 @@ export function BeerAccumulationChart() {
                         🍺 {item.cumulative} total
                       </p>
                       <p className="text-foreground/50">
-                        +{item.daily} this day
+                        {item.daily > 0 ? "+" : ""}
+                        {item.daily} this day
                       </p>
                     </div>
                   );

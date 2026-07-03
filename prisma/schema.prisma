@@ -1,144 +1,120 @@
 generator client {
-    provider = "prisma-client-js"
-    output   = "../generated/prisma"
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
-    provider = "sqlite"
-    url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 enum MatchStatus {
-    SCHEDULED
-    LIVE
-    COMPLETED
-    POSTPONED
-    CANCELLED
+  SCHEDULED
+  LIVE
+  COMPLETED
+  POSTPONED
+  CANCELLED
 }
 
 enum VoteOutcome {
-    HOME_WIN
-    DRAW
-    AWAY_WIN
+  HOME_WIN
+  DRAW
+  AWAY_WIN
 }
 
 model Stage {
-    id              String   @id
-    name            String
-    startDate       DateTime
-    endDate         DateTime
-    sequenceOrder   Int
-    seasonId        String
-    isKnockout      Boolean  @default(false)
-    matches         Match[]
+  id             String        @id
+  name           String
+  startDate      DateTime
+  endDate        DateTime
+  sequenceOrder  Int
+  seasonId       String
+  isKnockout     Boolean       @default(false)
+  starsAllocated Int           @default(0)
+  matches        Match[]
+  penalty        StagePenalty?
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StagePenalty {
+  id            String @id @default(cuid())
+  stageId       String @unique
+  stage         Stage  @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  wrongPenalty  Int
+  noVotePenalty Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Match {
-    id          String       @id @default(cuid())
-    externalId  String?      @unique
-    tournament  String       @default("FIFA World Cup")
-    homeCountry String
-    awayCountry String
-    kickoffAt   DateTime
-    status      MatchStatus  @default(SCHEDULED)
-    homeScore   Int?
-    awayScore   Int?
-    result      VoteOutcome?
-    homeRatio   Float        @default(0)
-    awayRatio   Float        @default(0)
-    stageId     String?
-    stage       Stage?       @relation(fields: [stageId], references: [id])
-    votes       Vote[]
+  id          String       @id @default(cuid())
+  externalId  String?      @unique
+  tournament  String       @default("FIFA World Cup")
+  homeCountry String
+  awayCountry String
+  kickoffAt   DateTime
+  status      MatchStatus  @default(SCHEDULED)
+  homeScore   Int?
+  awayScore   Int?
+  result      VoteOutcome?
+  homeRatio   Float        @default(0)
+  awayRatio   Float        @default(0)
+  stageId     String?
+  stage       Stage?       @relation(fields: [stageId], references: [id])
+  votes       Vote[]
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    @@index([kickoffAt])
-    @@index([status])
-    @@index([stageId])
+  @@index([kickoffAt])
+  @@index([status])
+  @@index([stageId])
 }
 
 model Vote {
-    id        String      @id @default(cuid())
-    userId    String
-    matchId   String
-    user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-    match     Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
-    outcome   VoteOutcome
-    isCorrect Boolean?
-    hasStar   Boolean     @default(false)
-    points    Int         @default(0)
-    createdAt DateTime    @default(now())
-    updatedAt DateTime    @updatedAt
+  id        String      @id @default(cuid())
+  userId    String
+  matchId   String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match     Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  outcome   VoteOutcome
+  isCorrect Boolean?
+  hasStar   Boolean     @default(false)
+  points    Int         @default(0)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
-    @@unique([userId, matchId])
-    @@index([matchId])
-    @@index([userId])
-}
-
-model Account {
-    id                       String  @id @default(cuid())
-    userId                   String
-    type                     String
-    provider                 String
-    providerAccountId        String
-    refresh_token            String?
-    access_token             String?
-    expires_at               Int?
-    token_type               String?
-    scope                    String?
-    id_token                 String?
-    session_state            String?
-    user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    refresh_token_expires_in Int?
-
-    @@unique([provider, providerAccountId])
-}
-
-model Session {
-    id           String   @id @default(cuid())
-    sessionToken String   @unique
-    userId       String
-    expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, matchId])
+  @@index([matchId])
+  @@index([userId])
 }
 
 model User {
-    id            String    @id @default(cuid())
-    name          String?
-    email         String    @unique
-    passwordHash  String?
-    emailVerified DateTime?
-    image         String?
-    totalPoints        Int       @default(0)
-    weeklyPoints       Int       @default(0)
-    mustChangePassword Boolean   @default(false)
-    createdAt          DateTime  @default(now())
-    accounts      Account[]
-    sessions      Session[]
-    votes         Vote[]
-    following     UserFollow[] @relation("FollowerFollows")
-    followers     UserFollow[] @relation("FollowingFollows")
+  id                 String       @id @default(cuid())
+  name               String?
+  email              String       @unique
+  passwordHash       String?
+  emailVerified      DateTime?
+  image              String?
+  totalPoints        Int          @default(0)
+  weeklyPoints       Int          @default(0)
+  mustChangePassword Boolean      @default(false)
+  createdAt          DateTime     @default(now())
+  votes              Vote[]
+  following          UserFollow[] @relation("FollowerFollows")
+  followers          UserFollow[] @relation("FollowingFollows")
 }
 
 model UserFollow {
-    id          String   @id @default(cuid())
-    followerId  String
-    followingId String
-    follower    User     @relation("FollowerFollows", fields: [followerId], references: [id], onDelete: Cascade)
-    following   User     @relation("FollowingFollows", fields: [followingId], references: [id], onDelete: Cascade)
-    createdAt   DateTime @default(now())
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  follower    User     @relation("FollowerFollows", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("FollowingFollows", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
 
-    @@unique([followerId, followingId])
-}
-
-model VerificationToken {
-    identifier String
-    token      String   @unique
-    expires    DateTime
-
-    @@unique([identifier, token])
+  @@unique([followerId, followingId])
 }

@@ -3,13 +3,7 @@
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { OutcomePicker } from "~/app/_components/match/outcome-picker";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
-import {
-  formatBeers,
-  noBetPenaltyForStage,
-  outcomeLabel,
-  starsAllocatedForStage,
-  wrongPenaltyForStage,
-} from "~/lib/match";
+import { BEER_LOSE, BEER_NO_VOTE, formatBeers, outcomeLabel } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { useToast } from "../toast";
 
@@ -38,7 +32,7 @@ export function VoteForm({
   const votingOpen = match?.votingOpen ?? false;
   const matchStage = match?.stage ?? null;
   const hasStarOnThisVote = match?.userVote?.hasStar ?? false;
-  const starsAllocated = starsAllocatedForStage(matchStage);
+  const starsAllocated = match?.stageStarsAllocated ?? 0;
 
   const { data: starAllotments } = api.vote.getStarAllotments.useQuery(
     undefined,
@@ -141,7 +135,7 @@ export function VoteForm({
           <p className="font-medium">Voting is locked</p>
           <p className="mt-1 text-sm">
             You didn't make a prediction — that's{" "}
-            {formatBeers(noBetPenaltyForStage(matchStage))}
+            {formatBeers(match?.stageNoVotePenalty ?? BEER_NO_VOTE)}
           </p>
         </div>
       );
@@ -221,7 +215,7 @@ export function VoteForm({
       </h3>
       <p className="text-sm text-foreground/50">
         Required for every match — skip it and you owe{" "}
-        {formatBeers(noBetPenaltyForStage(matchStage))} anyway.
+        {formatBeers(match?.stageNoVotePenalty ?? BEER_NO_VOTE)} anyway.
       </p>
       <OutcomePicker
         homeCountry={homeCountry}
@@ -250,7 +244,7 @@ export function VoteForm({
               <p className="mt-0.5 text-xs text-foreground/50">
                 {hasStarOnThisVote
                   ? "Double risk, double reward"
-                  : `Right: clear ${formatBeers(wrongPenaltyForStage(matchStage) * 2)}. Wrong: double penalty`}
+                  : `Right: clear ${formatBeers((match?.stageWrongPenalty ?? BEER_LOSE) * 2)}. Wrong: double penalty`}
               </p>
             </div>
             <div className="flex shrink-0 flex-col items-center gap-1">

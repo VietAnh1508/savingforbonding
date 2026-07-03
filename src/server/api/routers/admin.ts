@@ -1,7 +1,13 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { isMatchEditable, validateBettingRatios } from "~/lib/match";
+import {
+  isMatchEditable,
+  noVotePenaltyForStage,
+  validateVotingRatios,
+  validateStagePenalty,
+  validateStageStars,
+} from "~/lib/match";
 import { hashPassword } from "~/lib/password";
 import { computeRankHistory } from "~/lib/rank-history";
 import { adminProcedure, createTRPCRouter } from "~/server/api/trpc";
@@ -26,7 +32,7 @@ const matchInputSchema = z
     status: matchStatusSchema.default("SCHEDULED"),
   })
   .superRefine((data, ctx) => {
-    const error = validateBettingRatios(data.homeRatio, data.awayRatio);
+    const error = validateVotingRatios(data.homeRatio, data.awayRatio);
     if (error) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -49,7 +55,7 @@ const matchUpdateSchema = z
   })
   .superRefine((data, ctx) => {
     if (data.homeRatio !== undefined && data.awayRatio !== undefined) {
-      const error = validateBettingRatios(data.homeRatio, data.awayRatio);
+      const error = validateVotingRatios(data.homeRatio, data.awayRatio);
       if (error) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -69,7 +75,11 @@ export const adminRouter = createTRPCRouter({
     const [completedMatches, resolvedVotes, users] = await Promise.all([
       ctx.db.match.findMany({
         where: { status: "COMPLETED" },
-        select: { id: true, kickoffAt: true, stage: { select: { name: true } } },
+        select: {
+          id: true,
+          kickoffAt: true,
+          stage: { select: { penalty: true } },
+        },
         orderBy: { kickoffAt: "asc" },
       }),
       ctx.db.vote.findMany({
@@ -84,10 +94,10 @@ export const adminRouter = createTRPCRouter({
     const matchInputs = completedMatches.map((match) => ({
       id: match.id,
       kickoffAt: match.kickoffAt,
-      stage: match.stage?.name ?? null,
+      noVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
     }));
 
-    // Reuses the same stage-aware no-bet penalty logic as the rank history
+    // Reuses the same stage-aware no-vote penalty logic as the rank history
     // chart, so a repair can never diverge from what the chart/badges show.
     const { days } = computeRankHistory(matchInputs, resolvedVotes, users);
     const finalBeers = days[days.length - 1]?.beers ?? {};
@@ -154,7 +164,7 @@ export const adminRouter = createTRPCRouter({
 
       const homeRatio = data.homeRatio ?? match.homeRatio;
       const awayRatio = data.awayRatio ?? match.awayRatio;
-      const ratioError = validateBettingRatios(homeRatio, awayRatio);
+      const ratioError = validateVotingRatios(homeRatio, awayRatio);
       if (ratioError) {
         throw new TRPCError({ code: "BAD_REQUEST", message: ratioError });
       }
@@ -230,5 +240,96 @@ export const adminRouter = createTRPCRouter({
 
       await ctx.db.match.delete({ where: { id: input.id } });
       return { success: true };
+    }),
+
+  listStagePenalties: adminProcedure.query(async ({ ctx }) => {
+    const stages = await ctx.db.stage.findMany({
+      include: {
+        penalty: true,
+        _count: { select: { matches: { where: { status: "COMPLETED" } } } },
+      },
+      orderBy: { sequenceOrder: "asc" },
+    });
+    return stages.map(({ _count, ...stage }) => ({
+      ...stage,
+      hasCompletedMatch: _count.matches > 0,
+    }));
+  }),
+
+  updateStagePenalty: adminProcedure
+    .input(
+      z
+        .object({
+          stageId: z.string(),
+          wrongPenalty: z.number().int().min(0),
+          noVotePenalty: z.number().int().min(0),
+        })
+        .superRefine((data, ctx) => {
+          const error = validateStagePenalty(data.wrongPenalty, data.noVotePenalty);
+          if (error) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: error,
+              path: ["wrongPenalty"],
+            });
+          }
+        }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { stageId, wrongPenalty, noVotePenalty } = input;
+
+      const completedMatch = await ctx.db.match.findFirst({
+        where: { stageId, status: "COMPLETED" },
+        select: { id: true },
+      });
+      if (completedMatch) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Cannot edit penalties for a stage that already has completed matches",
+        });
+      }
+
+      return ctx.db.stagePenalty.upsert({
+        where: { stageId },
+        update: { wrongPenalty, noVotePenalty },
+        create: { stageId, wrongPenalty, noVotePenalty },
+      });
+    }),
+
+  updateStageStars: adminProcedure
+    .input(
+      z
+        .object({ stageId: z.string(), starsAllocated: z.number().int().min(0) })
+        .superRefine((data, ctx) => {
+          const error = validateStageStars(data.starsAllocated);
+          if (error) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: error,
+              path: ["starsAllocated"],
+            });
+          }
+        }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { stageId, starsAllocated } = input;
+
+      const completedMatch = await ctx.db.match.findFirst({
+        where: { stageId, status: "COMPLETED" },
+        select: { id: true },
+      });
+      if (completedMatch) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Cannot edit stars for a stage that already has completed matches",
+        });
+      }
+
+      return ctx.db.stage.update({
+        where: { id: stageId },
+        data: { starsAllocated },
+      });
     }),
 });

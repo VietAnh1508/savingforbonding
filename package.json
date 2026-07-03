@@ -12,6 +12,7 @@
     "turso:db-token": "node --env-file=.env scripts/mint-turso-db-token.mjs",
     "db:seed": "node --env-file=.env --import tsx prisma/seed.ts",
     "db:seed-stages": "node --env-file=.env --import tsx prisma/seed-stage.ts",
+    "db:backfill-stage-stars": "node --env-file=.env scripts/backfill-stage-stars.mjs",
     "db:setup": "prisma db push && npm run db:seed",
     "sync:fifa": "node --env-file=.env --import tsx prisma/seed.ts",
     "db:studio": "prisma studio",

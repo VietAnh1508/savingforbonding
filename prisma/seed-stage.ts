@@ -1,7 +1,18 @@
+import { BEER_LOSE, BEER_NO_VOTE } from "../src/lib/match";
 import { createPrismaClient } from "../src/server/create-prisma-client";
 import stagesData from "../stages.json";
 
 const db = createPrismaClient();
+
+/** Default star allocations for new stages — after initial seeding, values live in `Stage.starsAllocated` and are admin-editable. */
+const STARS_BY_STAGE: Record<string, number> = {
+  "Round of 32": 8,
+  "Round of 16": 4,
+  "Quarter-final": 2,
+  "Semi-final": 1,
+  "Play-off for third place": 1,
+  Final: 1,
+};
 
 async function main() {
   for (const stage of stagesData.Results) {
@@ -24,9 +35,23 @@ async function main() {
         sequenceOrder: stage.SequenceOrder,
         seasonId: stage.IdSeason,
         isKnockout: stage.Type === 0,
+        starsAllocated: STARS_BY_STAGE[name] ?? 0,
       },
     });
-    console.log(`Upserted stage: ${name} (knockout: ${stage.Type === 0})`);
+
+    const isKnockout = stage.Type === 0;
+    const wrongPenalty = isKnockout
+      ? BEER_LOSE + (stage.SequenceOrder - 1) * 3
+      : BEER_LOSE;
+    const noVotePenalty = isKnockout ? wrongPenalty + 2 : BEER_NO_VOTE;
+
+    await db.stagePenalty.upsert({
+      where: { stageId: stage.IdStage },
+      update: {}, // never clobber an admin's edited values on re-seed
+      create: { stageId: stage.IdStage, wrongPenalty, noVotePenalty },
+    });
+
+    console.log(`Upserted stage: ${name} (knockout: ${isKnockout})`);
   }
   console.log(`Done — ${stagesData.Results.length} stages processed.`);
 }

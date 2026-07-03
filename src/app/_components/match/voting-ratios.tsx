@@ -1,7 +1,7 @@
 import { RatioDisplay } from "~/app/_components/match/ratio-display";
-import { describeHandicapRule, hasBettingHandicap } from "~/lib/match";
+import { describeHandicapRule, hasVotingHandicap } from "~/lib/match";
 
-export function BettingRatios({
+export function VotingRatios({
   homeCountry,
   awayCountry,
   homeRatio,
@@ -36,7 +36,7 @@ export function BettingRatios({
           No handicap set — result uses the raw scoreline.
         </p>
       )}
-      {hasBettingHandicap(homeRatio, awayRatio) && (
+      {hasVotingHandicap(homeRatio, awayRatio) && (
         <p className="mt-2 text-xs text-foreground/30">
           Decimal lines (e.g. 1.5, 2.25) are applied to adjusted scores.
         </p>

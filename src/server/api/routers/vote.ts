@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { type PrismaClient } from "../../../../generated/prisma";
-import { isVotingOpen, STARS_BY_STAGE, starsAllocatedForStage } from "~/lib/match";
+import { isVotingOpen } from "~/lib/match";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 const voteOutcomeSchema = z.enum(["HOME_WIN", "DRAW", "AWAY_WIN"]);
@@ -306,7 +306,7 @@ export const voteRouter = createTRPCRouter({
         status: "COMPLETED",
         votes: { none: { userId } },
       },
-      include: { stage: { select: { name: true } } },
+      include: { stage: { include: { penalty: true } } },
       orderBy: { kickoffAt: "desc" },
     });
   }),
@@ -325,7 +325,7 @@ export const voteRouter = createTRPCRouter({
             where: { id: input.matchId },
             select: {
               stageId: true,
-              stage: { select: { name: true } },
+              stage: { select: { starsAllocated: true } },
               kickoffAt: true,
               status: true,
             },
@@ -342,7 +342,7 @@ export const voteRouter = createTRPCRouter({
           throw new TRPCError({ code: "BAD_REQUEST", message: "Voting is closed for this match" });
         }
 
-        const allocated = starsAllocatedForStage(match.stage?.name ?? null);
+        const allocated = match.stage?.starsAllocated ?? 0;
         if (allocated === 0) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "Stars are not available for this stage" });
         }
@@ -369,10 +369,16 @@ export const voteRouter = createTRPCRouter({
   getStarAllotments: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
-    const starredVotes = await ctx.db.vote.findMany({
-      where: { userId, hasStar: true },
-      select: { match: { select: { stage: { select: { name: true } } } } },
-    });
+    const [stages, starredVotes] = await Promise.all([
+      ctx.db.stage.findMany({
+        where: { starsAllocated: { gt: 0 } },
+        select: { name: true, starsAllocated: true },
+      }),
+      ctx.db.vote.findMany({
+        where: { userId, hasStar: true },
+        select: { match: { select: { stage: { select: { name: true } } } } },
+      }),
+    ]);
 
     const usedByStage = new Map<string, number>();
     for (const vote of starredVotes) {
@@ -381,11 +387,11 @@ export const voteRouter = createTRPCRouter({
       usedByStage.set(stage, (usedByStage.get(stage) ?? 0) + 1);
     }
 
-    return Object.entries(STARS_BY_STAGE).map(([stage, allocated]) => ({
-      stage,
-      allocated,
-      used: usedByStage.get(stage) ?? 0,
-      remaining: allocated - (usedByStage.get(stage) ?? 0),
+    return stages.map(({ name, starsAllocated }) => ({
+      stage: name,
+      allocated: starsAllocated,
+      used: usedByStage.get(name) ?? 0,
+      remaining: starsAllocated - (usedByStage.get(name) ?? 0),
     }));
   }),
 

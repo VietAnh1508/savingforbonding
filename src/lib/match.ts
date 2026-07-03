@@ -16,72 +16,63 @@ export const BEER_PLATFORM_FEE = 1;
 export const BEER_LOSE_PENALTY = 2;
 export const BEER_WIN = BEER_PLATFORM_FEE;
 export const BEER_LOSE = BEER_PLATFORM_FEE + BEER_LOSE_PENALTY;
-export const BEER_NO_BET = 2;
-
-export const STAGE_ROUND_OF_32 = "Round of 32";
-export const STAGE_ROUND_OF_16 = "Round of 16";
-export const STAGE_QUARTER_FINAL = "Quarter-final";
-export const STAGE_SEMI_FINAL = "Semi-final";
-export const STAGE_THIRD_PLACE = "Play-off for third place";
-export const STAGE_FINAL = "Final";
-
-export const STARS_BY_STAGE: Record<string, number> = {
-  [STAGE_ROUND_OF_32]: 8,
-  [STAGE_ROUND_OF_16]: 4,
-  [STAGE_QUARTER_FINAL]: 2,
-  [STAGE_SEMI_FINAL]: 1,
-  [STAGE_THIRD_PLACE]: 1,
-  [STAGE_FINAL]: 1,
-};
-
-export function starsAllocatedForStage(stage: string | null): number {
-  return stage !== null ? (STARS_BY_STAGE[stage] ?? 0) : 0;
-}
+export const BEER_NO_VOTE = 2;
 
 export function beerCostForStarVote(
   isCorrect: boolean,
-  stage: string | null,
+  penalty: StagePenaltyValues,
 ): number {
-  const doubled = wrongPenaltyForStage(stage) * 2;
+  const doubled = wrongPenaltyForStage(penalty) * 2;
   return isCorrect ? -doubled : doubled;
 }
 
-export const KNOCKOUT_STAGE_ORDER = [
-  STAGE_ROUND_OF_32,
-  STAGE_ROUND_OF_16,
-  STAGE_QUARTER_FINAL,
-  STAGE_SEMI_FINAL,
-  STAGE_THIRD_PLACE,
-  STAGE_FINAL,
-] as const;
+export type StagePenaltyValues =
+  | { wrongPenalty: number; noVotePenalty: number }
+  | null
+  | undefined;
 
-export function wrongPenaltyForStage(stage: string | null): number {
-  const index = KNOCKOUT_STAGE_ORDER.indexOf(
-    stage as (typeof KNOCKOUT_STAGE_ORDER)[number],
-  );
-  return index === -1 ? BEER_LOSE : BEER_LOSE + (index + 1) * 3;
+export function wrongPenaltyForStage(penalty: StagePenaltyValues): number {
+  return penalty?.wrongPenalty ?? BEER_LOSE;
 }
 
-export function noBetPenaltyForStage(stage: string | null): number {
-  const isKnockout =
-    KNOCKOUT_STAGE_ORDER.indexOf(
-      stage as (typeof KNOCKOUT_STAGE_ORDER)[number],
-    ) !== -1;
-  return isKnockout ? wrongPenaltyForStage(stage) + 2 : BEER_NO_BET;
+export function noVotePenaltyForStage(penalty: StagePenaltyValues): number {
+  return penalty?.noVotePenalty ?? BEER_NO_VOTE;
 }
 
 export function beerCostForVote(
   isCorrect: boolean,
-  stage: string | null,
+  penalty: StagePenaltyValues,
 ): number {
-  return isCorrect ? BEER_WIN : wrongPenaltyForStage(stage);
+  return isCorrect ? BEER_WIN : wrongPenaltyForStage(penalty);
+}
+
+export function validateStagePenalty(
+  wrongPenalty: number,
+  noVotePenalty: number,
+): string | null {
+  if (
+    !Number.isInteger(wrongPenalty) ||
+    !Number.isInteger(noVotePenalty) ||
+    wrongPenalty < 0 ||
+    noVotePenalty < 0
+  ) {
+    return "Penalties must be non-negative whole numbers";
+  }
+  return null;
+}
+
+export function validateStageStars(starsAllocated: number): string | null {
+  if (!Number.isInteger(starsAllocated) || starsAllocated < 0) {
+    return "Stars must be a non-negative whole number";
+  }
+  return null;
 }
 
 export function formatBeers(count: number): string {
   return `${count} beer${count === 1 ? "" : "s"}`;
 }
 
-export function validateBettingRatios(
+export function validateVotingRatios(
   homeRatio: number,
   awayRatio: number,
 ): string | null {
@@ -114,7 +105,7 @@ export function deriveResult(
   return "DRAW";
 }
 
-export function hasBettingHandicap(
+export function hasVotingHandicap(
   homeRatio: number,
   awayRatio: number,
 ): boolean {
@@ -140,7 +131,7 @@ export function deriveEffectiveResult(
   homeRatio: number,
   awayRatio: number,
 ): VoteOutcome {
-  if (!hasBettingHandicap(homeRatio, awayRatio)) {
+  if (!hasVotingHandicap(homeRatio, awayRatio)) {
     return deriveResult(homeScore, awayScore);
   }
 
@@ -179,7 +170,7 @@ export function describeHandicapRule(
   homeRatio: number,
   awayRatio: number,
 ): string | null {
-  if (!hasBettingHandicap(homeRatio, awayRatio)) {
+  if (!hasVotingHandicap(homeRatio, awayRatio)) {
     return null;
   }
 

@@ -1,7 +1,12 @@
 import { z } from "zod";
 
 import { isKnownCountry } from "~/lib/country-flag";
-import { isVotingOpen, type MatchVoter } from "~/lib/match";
+import {
+  isVotingOpen,
+  noVotePenaltyForStage,
+  wrongPenaltyForStage,
+  type MatchVoter,
+} from "~/lib/match";
 import { MatchStatus } from "../../../../generated/prisma";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
@@ -31,7 +36,7 @@ export const matchRouter = createTRPCRouter({
             ...(statuses ? { status: { in: statuses } } : undefined),
           },
           orderBy: { kickoffAt: "asc" },
-          include: { stage: true },
+          include: { stage: { include: { penalty: true } } },
         })
       ).filter(
         (m) => isKnownCountry(m.homeCountry) && isKnownCountry(m.awayCountry),
@@ -67,6 +72,9 @@ export const matchRouter = createTRPCRouter({
       return matches.map((match) => ({
         ...match,
         stage: match.stage?.name ?? null,
+        stageWrongPenalty: wrongPenaltyForStage(match.stage?.penalty),
+        stageNoVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
+        stageStarsAllocated: match.stage?.starsAllocated ?? 0,
         userVoteOutcome: userVoteByMatchId.get(match.id)?.outcome ?? null,
         userVoteResult: userVoteByMatchId.get(match.id) ?? null,
         voteCounts: voteCountsByMatchId.get(match.id) ?? emptyMatchVoteCounts(),
@@ -80,7 +88,7 @@ export const matchRouter = createTRPCRouter({
       const [match, allVotes, userVote] = await Promise.all([
         ctx.db.match.findUnique({
           where: { id: input.id },
-          include: { stage: true },
+          include: { stage: { include: { penalty: true } } },
         }),
         ctx.db.vote.findMany({
           where: { matchId: input.id },
@@ -127,6 +135,9 @@ export const matchRouter = createTRPCRouter({
       return {
         ...match,
         stage: match.stage?.name ?? null,
+        stageWrongPenalty: wrongPenaltyForStage(match.stage?.penalty),
+        stageNoVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
+        stageStarsAllocated: match.stage?.starsAllocated ?? 0,
         votingOpen: isVotingOpen(match.kickoffAt, match.status),
         userVote,
         voteCounts,
