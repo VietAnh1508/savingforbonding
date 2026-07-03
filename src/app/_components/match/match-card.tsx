@@ -1,14 +1,11 @@
 "use client";
 
-import Link from "next/link";
-
 import { useState } from "react";
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { MatchStatusBadge } from "~/app/_components/match-status-badge";
 import { MatchVoteCounts } from "~/app/_components/match/match-vote-counts";
 import { RatioDisplay } from "~/app/_components/match/ratio-display";
 import { TeamFlag } from "~/app/_components/match/team-flag";
-import type { TabId } from "~/app/_components/match/match-tabs";
 import { Tooltip } from "~/app/_components/tooltip";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
 import {
@@ -103,11 +100,11 @@ function predictedTeamClass(isPredicted: boolean) {
 export function MatchCard({
   match,
   isSignedIn = false,
-  activeTab = "upcoming",
+  onOpen,
 }: {
   match: Match;
   isSignedIn?: boolean;
-  activeTab?: TabId;
+  onOpen: (matchId: string) => void;
 }) {
   const prediction = match.userVoteOutcome;
   const predictsHomeWin = prediction === "HOME_WIN";
@@ -147,13 +144,17 @@ export function MatchCard({
   });
 
   return (
-    <Link
-      href={
-        activeTab === "completed"
-          ? `/matches/${match.id}?tab=completed`
-          : `/matches/${match.id}`
-      }
-      className="block rounded-xl border border-foreground/10 bg-foreground/5 p-4 transition hover:border-emerald-500/30 hover:bg-foreground/10"
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(match.id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen(match.id);
+        }
+      }}
+      className="block cursor-pointer rounded-xl border border-foreground/10 bg-foreground/5 p-4 transition hover:border-emerald-500/30 hover:bg-foreground/10"
     >
       <div className="mb-3 flex items-center justify-between">
         <MatchStatusBadge status={match.status} />
@@ -255,7 +256,7 @@ export function MatchCard({
           stageNoVotePenalty={match.stageNoVotePenalty}
         />
       </div>
-    </Link>
+    </div>
   );
 }
 

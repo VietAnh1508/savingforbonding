@@ -6,6 +6,7 @@ import { MatchStatus } from "../../../../generated/prisma";
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { DayPredictModal } from "~/app/_components/match/day-predict-modal";
 import { MatchCard } from "~/app/_components/match/match-card";
+import { MatchDetailModal } from "~/app/_components/match/match-detail-modal";
 import { formatMatchDate, MATCH_DISPLAY_TIMEZONE, toVNDate } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
@@ -77,12 +78,12 @@ function MatchList({
   stageGroups,
   isSignedIn,
   emptyMessage,
-  activeTab,
+  onOpenMatch,
 }: {
   stageGroups: StageGroup[];
   isSignedIn: boolean;
   emptyMessage: string;
-  activeTab: TabId;
+  onOpenMatch: (matchId: string) => void;
 }) {
   const [modalDateKey, setModalDateKey] = useState<string | null>(null);
   const showStageHeadings = stageGroups.length > 1;
@@ -201,7 +202,7 @@ function MatchList({
                             key={match.id}
                             match={match}
                             isSignedIn={isSignedIn}
-                            activeTab={activeTab}
+                            onOpen={onOpenMatch}
                           />
                         ))}
                       </div>
@@ -225,13 +226,10 @@ function MatchList({
   );
 }
 
-function syncUrl(tab: TabId) {
-  history.replaceState(null, "", tab !== "upcoming" ? `/?tab=${tab}` : "/");
-}
-
 export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
   const [activeTab, setActiveTab] = useState<TabId>("upcoming");
   const [activeDateKey, setActiveDateKey] = useState<string>("");
+  const [openMatchId, setOpenMatchId] = useState<string | null>(null);
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const isProgrammaticScrollRef = useRef(false);
   const userClickedDateRef = useRef(false);
@@ -241,6 +239,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
     right: false,
   });
 
+  const utils = api.useUtils();
   const { data: allMatches = [] } = api.match.listMatches.useQuery({});
 
   const upcoming = useMemo(
@@ -349,11 +348,49 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
     setActiveDateKey(dateKey);
   };
 
-  // Read tab from URL client-side after hydration to avoid SSR mismatch
+  // Read open match from URL client-side after hydration to avoid SSR mismatch
   useEffect(() => {
-    const tab = new URLSearchParams(window.location.search).get("tab");
-    if (tab === "completed") setActiveTab("completed");
+    const match = new URLSearchParams(window.location.search).get("match");
+    if (match) setOpenMatchId(match);
   }, []);
+
+  // Deep-linking into a match (or reopening after a tab switch) should land on
+  // whichever tab that match actually belongs to, so closing it doesn't make
+  // the match look like it vanished.
+  useEffect(() => {
+    if (!openMatchId || allMatches.length === 0) return;
+    const match = allMatches.find((m) => m.id === openMatchId);
+    if (!match) return;
+    setActiveTab(match.status === MatchStatus.COMPLETED ? "completed" : "upcoming");
+  }, [openMatchId, allMatches]);
+
+  // Keep the modal in sync with browser back/forward navigation
+  const pushedMatchRef = useRef(false);
+  useEffect(() => {
+    const onPopState = () => {
+      pushedMatchRef.current = false;
+      setOpenMatchId(new URLSearchParams(window.location.search).get("match"));
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const openMatch = (matchId: string) => {
+    void utils.match.getById.prefetch({ id: matchId });
+    history.pushState(null, "", `/?match=${matchId}`);
+    pushedMatchRef.current = true;
+    setOpenMatchId(matchId);
+  };
+
+  const closeMatch = () => {
+    if (pushedMatchRef.current) {
+      pushedMatchRef.current = false;
+      history.back();
+    } else {
+      history.replaceState(null, "", "/");
+    }
+    setOpenMatchId(null);
+  };
 
   if (upcoming.length === 0) {
     return (
@@ -378,10 +415,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
         <h1 className="mb-2 flex items-baseline gap-3 text-2xl font-bold">
           <button
             type="button"
-            onClick={() => {
-              syncUrl("upcoming");
-              setActiveTab("upcoming");
-            }}
+            onClick={() => setActiveTab("upcoming")}
             className={`transition ${activeTab === "upcoming" ? "" : "text-foreground/30 hover:text-foreground/50"}`}
           >
             Upcoming
@@ -389,10 +423,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
           <span className="text-foreground/20">|</span>
           <button
             type="button"
-            onClick={() => {
-              syncUrl("completed");
-              setActiveTab("completed");
-            }}
+            onClick={() => setActiveTab("completed")}
             className={`transition ${activeTab === "completed" ? "" : "text-foreground/30 hover:text-foreground/50"}`}
           >
             Completed
@@ -457,9 +488,18 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
               : "No completed matches yet."
           }
           isSignedIn={isSignedIn}
-          activeTab={activeTab}
+          onOpenMatch={openMatch}
         />
       </div>
+
+      {openMatchId && (
+        <MatchDetailModal
+          matchId={openMatchId}
+          isSignedIn={isSignedIn}
+          onClose={closeMatch}
+        />
+      )}
     </div>
   );
 }
+

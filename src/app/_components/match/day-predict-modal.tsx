@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
+import { CloseIcon } from "~/app/_components/icons/close-icon";
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { OutcomePicker } from "~/app/_components/match/outcome-picker";
 import { RatioDisplay } from "~/app/_components/match/ratio-display";
 import { useToast } from "~/app/_components/toast";
 import { Tooltip } from "~/app/_components/tooltip";
+import { useModalDismiss } from "~/app/hooks/use-modal-dismiss";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
 import { formatKickoffTime, voterLabel } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
@@ -71,22 +73,7 @@ export function DayPredictModal({
     },
   });
 
-  // Close on Escape
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  // Prevent body scroll while open
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, []);
+  useModalDismiss(onClose);
 
   const castBatch = api.vote.castBatch.useMutation({
     onSuccess: ({ saved }) => {
@@ -149,20 +136,7 @@ export function DayPredictModal({
             onClick={onClose}
             className="rounded-lg p-1.5 text-foreground/50 transition hover:bg-foreground/10 hover:text-foreground"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <CloseIcon />
           </button>
         </div>
 
