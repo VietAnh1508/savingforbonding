@@ -1,4 +1,4 @@
-import { noBetPenaltyForStage, toVNDate } from "~/lib/match";
+import { noVotePenaltyForStage, toVNDate } from "~/lib/match";
 import {
   assignRanks,
   compareLeaderboardEntries,
@@ -140,7 +140,11 @@ export const leaderboardRouter = createTRPCRouter({
     const [completedMatches, voteAggs, totalUsers] = await Promise.all([
       ctx.db.match.findMany({
         where: { status: "COMPLETED" },
-        select: { id: true, kickoffAt: true, stage: { select: { name: true } } },
+        select: {
+          id: true,
+          kickoffAt: true,
+          stage: { select: { penalty: true } },
+        },
         orderBy: { kickoffAt: "asc" },
       }),
       ctx.db.vote.groupBy({
@@ -170,9 +174,9 @@ export const leaderboardRouter = createTRPCRouter({
         pointsSum: 0,
         voteCount: 0,
       };
-      const noBetBeers =
-        (totalUsers - voteCount) * noBetPenaltyForStage(match.stage?.name ?? null);
-      dayMap.set(date, (dayMap.get(date) ?? 0) + pointsSum + noBetBeers);
+      const noVoteBeers =
+        (totalUsers - voteCount) * noVotePenaltyForStage(match.stage?.penalty);
+      dayMap.set(date, (dayMap.get(date) ?? 0) + pointsSum + noVoteBeers);
     }
 
     const days = [...dayMap.entries()].sort(([a], [b]) => a.localeCompare(b));
@@ -187,7 +191,7 @@ export const leaderboardRouter = createTRPCRouter({
     const [completedMatches, resolvedVotes, allUsers] = await Promise.all([
       ctx.db.match.findMany({
         where: { status: "COMPLETED" },
-        select: { id: true, kickoffAt: true, stage: { select: { name: true } } },
+        select: { id: true, kickoffAt: true, stage: { select: { penalty: true } } },
         orderBy: { kickoffAt: "asc" },
       }),
       ctx.db.vote.findMany({
@@ -200,7 +204,7 @@ export const leaderboardRouter = createTRPCRouter({
     const matchInputs = completedMatches.map((match) => ({
       id: match.id,
       kickoffAt: match.kickoffAt,
-      stage: match.stage?.name ?? null,
+      noVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
     }));
 
     return computeRankHistory(matchInputs, resolvedVotes, allUsers);

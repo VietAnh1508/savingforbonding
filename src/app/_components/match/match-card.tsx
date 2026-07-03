@@ -15,8 +15,7 @@ import {
   formatBeers,
   formatKickoffTime,
   formatMatchScore,
-  hasBettingHandicap,
-  noBetPenaltyForStage,
+  hasVotingHandicap,
   starsAllocatedForStage,
 } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
@@ -33,7 +32,7 @@ function MatchCardFooter({
   homeCountry,
   awayCountry,
   voteCounts,
-  stage,
+  stageNoVotePenalty,
 }: {
   isSignedIn: boolean;
   isCompleted: boolean;
@@ -42,7 +41,7 @@ function MatchCardFooter({
   homeCountry: string;
   awayCountry: string;
   voteCounts: Match["voteCounts"];
-  stage: string | null;
+  stageNoVotePenalty: number;
 }) {
   if (isSignedIn && isCompleted && voteResult) {
     const starIcon = voteResult.hasStar ? (
@@ -82,7 +81,7 @@ function MatchCardFooter({
   if (isSignedIn && isCompleted && !prediction) {
     return (
       <p className="text-center text-xs font-medium text-amber-600 dark:text-amber-400">
-        No pick — {formatBeers(noBetPenaltyForStage(stage))}
+        No pick — {formatBeers(stageNoVotePenalty)}
       </p>
     );
   }
@@ -220,7 +219,7 @@ export function MatchCard({
             homeRatio={match.homeRatio}
             awayRatio={match.awayRatio}
           />
-          {!hasBettingHandicap(match.homeRatio, match.awayRatio) && (
+          {!hasVotingHandicap(match.homeRatio, match.awayRatio) && (
             <span className="text-[10px] text-amber-600 dark:text-amber-400">
               No handicap set
             </span>
@@ -254,7 +253,7 @@ export function MatchCard({
           homeCountry={match.homeCountry}
           awayCountry={match.awayCountry}
           voteCounts={match.voteCounts}
-          stage={match.stage}
+          stageNoVotePenalty={match.stageNoVotePenalty}
         />
       </div>
     </Link>

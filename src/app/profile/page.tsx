@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { Nav } from "~/app/_components/nav";
 import { EditProfileName } from "~/app/profile/_components/edit-profile-name";
-import { noBetPenaltyForStage } from "~/lib/match";
+import { noVotePenaltyForStage } from "~/lib/match";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 import { RecentPredictions } from "./_components/recent-predictions";
@@ -45,7 +45,7 @@ export default async function ProfilePage() {
     awayScore: m.awayScore,
     homeRatio: m.homeRatio,
     awayRatio: m.awayRatio,
-    stage: m.stage?.name ?? null,
+    noVotePenalty: noVotePenaltyForStage(m.stage?.penalty),
   }));
 
   // Chronological (oldest first) so the running beer total below reads like a
@@ -57,9 +57,8 @@ export default async function ProfilePage() {
   let runningTotal = 0;
   const allItems = chronological.map((item) => {
     if (item.kind === "missed") {
-      const penalty = noBetPenaltyForStage(item.stage);
-      runningTotal += penalty;
-      return { ...item, points: penalty, runningTotal };
+      runningTotal += item.noVotePenalty;
+      return { ...item, points: item.noVotePenalty, runningTotal };
     }
     if (item.isCorrect !== null) {
       runningTotal = Math.max(0, runningTotal + item.points);

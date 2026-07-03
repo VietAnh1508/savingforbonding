@@ -4,7 +4,7 @@ import {
   deriveResult,
   formatMatchScore,
   formatRatioValue,
-  hasBettingHandicap,
+  hasVotingHandicap,
   outcomeLabel,
 } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
@@ -49,7 +49,7 @@ function MatchLabel({ item }: { item: LedgerItem }) {
       <span>
         {item.homeCountry} {score} {item.awayCountry}
       </span>
-      {hasBettingHandicap(item.homeRatio, item.awayRatio) && (
+      {hasVotingHandicap(item.homeRatio, item.awayRatio) && (
         <span className="block text-xs font-normal text-foreground/50">
           Handicap:{" "}
           <strong className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">

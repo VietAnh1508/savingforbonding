@@ -1,4 +1,4 @@
-import { noBetPenaltyForStage, toVNDate } from "~/lib/match";
+import { toVNDate } from "~/lib/match";
 
 type RankableEntry = {
   beers: number;
@@ -48,7 +48,7 @@ export function assignRanks<T extends RankableEntry>(
 export type MatchInput = {
   id: string;
   kickoffAt: Date;
-  stage: string | null;
+  noVotePenalty: number;
 };
 
 export type VoteInput = {
@@ -127,10 +127,10 @@ export function computeRankHistory(
             if (vote.isCorrect) a.correct++;
             else a.incorrect++;
           }
-          // Unresolved vote (isCorrect === null): user voted, so no no-bet penalty,
+          // Unresolved vote (isCorrect === null): user voted, so no no-vote penalty,
           // but points are not yet settled — contribute nothing until resolution.
         } else {
-          a.beers += noBetPenaltyForStage(match.stage);
+          a.beers += match.noVotePenalty;
         }
       }
     }

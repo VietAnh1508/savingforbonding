@@ -3,7 +3,7 @@
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 
-import { noBetPenaltyForStage } from "~/lib/match";
+import { noVotePenaltyForStage } from "~/lib/match";
 import { hashPassword } from "~/lib/password";
 import { auth, signIn } from "~/server/auth";
 import { db } from "~/server/db";
@@ -91,10 +91,10 @@ export async function signUp(formData: FormData) {
 
   const completedMatches = await db.match.findMany({
     where: { status: "COMPLETED" },
-    include: { stage: true },
+    include: { stage: { include: { penalty: true } } },
   });
-  const noBetDebt = completedMatches.reduce(
-    (sum, match) => sum + noBetPenaltyForStage(match.stage?.name ?? null),
+  const noVoteDebt = completedMatches.reduce(
+    (sum, match) => sum + noVotePenaltyForStage(match.stage?.penalty),
     0,
   );
 
@@ -104,8 +104,8 @@ export async function signUp(formData: FormData) {
       passwordHash,
       name: typeof name === "string" && name.trim() ? name.trim() : null,
       createdAt: new Date(),
-      totalPoints: noBetDebt,
-      weeklyPoints: noBetDebt,
+      totalPoints: noVoteDebt,
+      weeklyPoints: noVoteDebt,
     },
   });
 
