@@ -114,6 +114,10 @@ Pages are async server components that call `api.*.prefetch()` to populate the R
 
 `~/*` maps to `./src/*` (configured in `tsconfig.json`).
 
+## GitHub Remote
+
+This repo (`origin`, `VietAnh1508/savingforbonding`) is a fork of an upstream repo (`upstream`, `feiyang7641-png/savingforbonding`). All development — pushing branches, opening/managing PRs, issues, etc. — is scoped to `origin` only. Never push to, open PRs against, or otherwise modify `upstream`. When using `gh`, always target `origin` (e.g. `gh pr create` defaults to the fork's default branch, not upstream — double-check `--repo` / base branch if ever in doubt).
+
 ## Key Files
 
 - `src/server/api/trpc.ts` — tRPC context, procedure factories, middleware
