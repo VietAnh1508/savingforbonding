@@ -8,6 +8,7 @@ import {
   BEER_WIN,
   noVotePenaltyForStage,
   validateStagePenalty,
+  validateStageStars,
   wrongPenaltyForStage,
 } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
@@ -19,31 +20,30 @@ function StageRow({ stage }: { stage: Stage }) {
   const toast = useToast();
 
   const [wrongPenalty, setWrongPenalty] = useState(
-    String(wrongPenaltyForStage(stage.penalty)),
+    wrongPenaltyForStage(stage.penalty),
   );
   const [noVotePenalty, setNoVotePenalty] = useState(
-    String(noVotePenaltyForStage(stage.penalty)),
+    noVotePenaltyForStage(stage.penalty),
   );
+  const [starsAllocated, setStarsAllocated] = useState(stage.starsAllocated);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const updatePenalty = api.admin.updateStagePenalty.useMutation({
-    onSuccess: async () => {
-      await utils.admin.listStagePenalties.invalidate();
-      setFormError(null);
-      toast.success(`${stage.name} penalties saved`);
-    },
-  });
+  const updatePenalty = api.admin.updateStagePenalty.useMutation();
+  const updateStars = api.admin.updateStageStars.useMutation();
 
   async function handleSave() {
-    const wrong = parseInt(wrongPenalty, 10);
-    const noVote = parseInt(noVotePenalty, 10);
-
-    if (Number.isNaN(wrong) || Number.isNaN(noVote)) {
-      setFormError("Penalties must be valid numbers");
+    if (
+      Number.isNaN(wrongPenalty) ||
+      Number.isNaN(noVotePenalty) ||
+      Number.isNaN(starsAllocated)
+    ) {
+      setFormError("Values must be valid numbers");
       return;
     }
 
-    const error = validateStagePenalty(wrong, noVote);
+    const penaltyError = validateStagePenalty(wrongPenalty, noVotePenalty);
+    const starsError = validateStageStars(starsAllocated);
+    const error = penaltyError ?? starsError;
     if (error) {
       setFormError(error);
       return;
@@ -51,13 +51,21 @@ function StageRow({ stage }: { stage: Stage }) {
 
     setFormError(null);
     try {
-      await updatePenalty.mutateAsync({
-        stageId: stage.id,
-        wrongPenalty: wrong,
-        noVotePenalty: noVote,
-      });
+      await Promise.all([
+        updatePenalty.mutateAsync({
+          stageId: stage.id,
+          wrongPenalty,
+          noVotePenalty,
+        }),
+        updateStars.mutateAsync({
+          stageId: stage.id,
+          starsAllocated,
+        }),
+      ]);
+      await utils.admin.listStagePenalties.invalidate();
+      toast.success(`${stage.name} settings saved`);
     } catch {
-      // surfaced via updatePenalty.error below
+      // surfaced via updatePenalty.error/updateStars.error below
     }
   }
 
@@ -80,8 +88,8 @@ function StageRow({ stage }: { stage: Stage }) {
           type="number"
           min="0"
           step="1"
-          value={wrongPenalty}
-          onChange={(e) => setWrongPenalty(e.target.value)}
+          value={Number.isNaN(wrongPenalty) ? "" : wrongPenalty}
+          onChange={(e) => setWrongPenalty(e.target.valueAsNumber)}
           disabled={locked}
           className={inputClass}
         />
@@ -91,8 +99,19 @@ function StageRow({ stage }: { stage: Stage }) {
           type="number"
           min="0"
           step="1"
-          value={noVotePenalty}
-          onChange={(e) => setNoVotePenalty(e.target.value)}
+          value={Number.isNaN(noVotePenalty) ? "" : noVotePenalty}
+          onChange={(e) => setNoVotePenalty(e.target.valueAsNumber)}
+          disabled={locked}
+          className={inputClass}
+        />
+      </td>
+      <td className="py-2 pr-4">
+        <input
+          type="number"
+          min="0"
+          step="1"
+          value={Number.isNaN(starsAllocated) ? "" : starsAllocated}
+          onChange={(e) => setStarsAllocated(e.target.valueAsNumber)}
           disabled={locked}
           className={inputClass}
         />
@@ -105,9 +124,11 @@ function StageRow({ stage }: { stage: Stage }) {
         ) : (
           <form action={handleSave} className="w-20">
             <SubmitButton size="sm">Save</SubmitButton>
-            {(formError ?? updatePenalty.error) && (
+            {(formError ?? updatePenalty.error ?? updateStars.error) && (
               <p className="mt-1 text-xs text-red-400">
-                {formError ?? updatePenalty.error?.message}
+                {formError ??
+                  updatePenalty.error?.message ??
+                  updateStars.error?.message}
               </p>
             )}
           </form>
@@ -129,8 +150,9 @@ export function StagePenaltiesPanel() {
       <div>
         <h2 className="text-lg font-semibold">Stage Penalties</h2>
         <p className="mt-1 text-sm text-foreground/60">
-          Wrong-prediction and no-pick beer penalties, per stage. Correct
-          predictions always cost {BEER_WIN} beer, unaffected by this table.
+          Wrong-prediction and no-pick beer penalties, and the Star of Hope
+          budget, per stage. Correct predictions always cost {BEER_WIN} beer,
+          unaffected by this table.
         </p>
       </div>
 
@@ -143,6 +165,7 @@ export function StagePenaltiesPanel() {
               <th className="pb-2 pr-4 font-normal">Stage</th>
               <th className="pb-2 pr-4 font-normal">Wrong</th>
               <th className="pb-2 pr-4 font-normal">No pick</th>
+              <th className="pb-2 pr-4 font-normal">Stars</th>
               <th className="pb-2 font-normal"></th>
             </tr>
           </thead>

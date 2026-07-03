@@ -23,15 +23,16 @@ enum VoteOutcome {
 }
 
 model Stage {
-  id            String        @id
-  name          String
-  startDate     DateTime
-  endDate       DateTime
-  sequenceOrder Int
-  seasonId      String
-  isKnockout    Boolean       @default(false)
-  matches       Match[]
-  penalty       StagePenalty?
+  id             String        @id
+  name           String
+  startDate      DateTime
+  endDate        DateTime
+  sequenceOrder  Int
+  seasonId       String
+  isKnockout     Boolean       @default(false)
+  starsAllocated Int           @default(0)
+  matches        Match[]
+  penalty        StagePenalty?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

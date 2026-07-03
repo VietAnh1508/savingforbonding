@@ -18,26 +18,6 @@ export const BEER_WIN = BEER_PLATFORM_FEE;
 export const BEER_LOSE = BEER_PLATFORM_FEE + BEER_LOSE_PENALTY;
 export const BEER_NO_VOTE = 2;
 
-export const STAGE_ROUND_OF_32 = "Round of 32";
-export const STAGE_ROUND_OF_16 = "Round of 16";
-export const STAGE_QUARTER_FINAL = "Quarter-final";
-export const STAGE_SEMI_FINAL = "Semi-final";
-export const STAGE_THIRD_PLACE = "Play-off for third place";
-export const STAGE_FINAL = "Final";
-
-export const STARS_BY_STAGE: Record<string, number> = {
-  [STAGE_ROUND_OF_32]: 8,
-  [STAGE_ROUND_OF_16]: 4,
-  [STAGE_QUARTER_FINAL]: 2,
-  [STAGE_SEMI_FINAL]: 1,
-  [STAGE_THIRD_PLACE]: 1,
-  [STAGE_FINAL]: 1,
-};
-
-export function starsAllocatedForStage(stage: string | null): number {
-  return stage !== null ? (STARS_BY_STAGE[stage] ?? 0) : 0;
-}
-
 export function beerCostForStarVote(
   isCorrect: boolean,
   penalty: StagePenaltyValues,
@@ -77,6 +57,13 @@ export function validateStagePenalty(
     noVotePenalty < 0
   ) {
     return "Penalties must be non-negative whole numbers";
+  }
+  return null;
+}
+
+export function validateStageStars(starsAllocated: number): string | null {
+  if (!Number.isInteger(starsAllocated) || starsAllocated < 0) {
+    return "Stars must be a non-negative whole number";
   }
   return null;
 }

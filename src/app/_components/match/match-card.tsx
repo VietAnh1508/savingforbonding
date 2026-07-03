@@ -16,7 +16,6 @@ import {
   formatKickoffTime,
   formatMatchScore,
   hasVotingHandicap,
-  starsAllocatedForStage,
 } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
@@ -126,7 +125,7 @@ export function MatchCard({
     isSignedIn &&
     match.votingOpen &&
     !!prediction &&
-    starsAllocatedForStage(match.stage) > 0;
+    match.stageStarsAllocated > 0;
   const { data: starAllotments } = api.vote.getStarAllotments.useQuery(
     undefined,
     {

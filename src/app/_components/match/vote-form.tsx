@@ -3,13 +3,7 @@
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { OutcomePicker } from "~/app/_components/match/outcome-picker";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
-import {
-  BEER_LOSE,
-  BEER_NO_VOTE,
-  formatBeers,
-  outcomeLabel,
-  starsAllocatedForStage,
-} from "~/lib/match";
+import { BEER_LOSE, BEER_NO_VOTE, formatBeers, outcomeLabel } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { useToast } from "../toast";
 
@@ -38,7 +32,7 @@ export function VoteForm({
   const votingOpen = match?.votingOpen ?? false;
   const matchStage = match?.stage ?? null;
   const hasStarOnThisVote = match?.userVote?.hasStar ?? false;
-  const starsAllocated = starsAllocatedForStage(matchStage);
+  const starsAllocated = match?.stageStarsAllocated ?? 0;
 
   const { data: starAllotments } = api.vote.getStarAllotments.useQuery(
     undefined,

@@ -6,6 +6,7 @@ import {
   noVotePenaltyForStage,
   validateVotingRatios,
   validateStagePenalty,
+  validateStageStars,
 } from "~/lib/match";
 import { hashPassword } from "~/lib/password";
 import { computeRankHistory } from "~/lib/rank-history";
@@ -293,6 +294,42 @@ export const adminRouter = createTRPCRouter({
         where: { stageId },
         update: { wrongPenalty, noVotePenalty },
         create: { stageId, wrongPenalty, noVotePenalty },
+      });
+    }),
+
+  updateStageStars: adminProcedure
+    .input(
+      z
+        .object({ stageId: z.string(), starsAllocated: z.number().int().min(0) })
+        .superRefine((data, ctx) => {
+          const error = validateStageStars(data.starsAllocated);
+          if (error) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: error,
+              path: ["starsAllocated"],
+            });
+          }
+        }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { stageId, starsAllocated } = input;
+
+      const completedMatch = await ctx.db.match.findFirst({
+        where: { stageId, status: "COMPLETED" },
+        select: { id: true },
+      });
+      if (completedMatch) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Cannot edit stars for a stage that already has completed matches",
+        });
+      }
+
+      return ctx.db.stage.update({
+        where: { id: stageId },
+        data: { starsAllocated },
       });
     }),
 });

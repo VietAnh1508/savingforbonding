@@ -1,7 +1,7 @@
 import { BeerStakes } from "~/app/_components/beer-stakes";
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { Nav } from "~/app/_components/nav";
-import { STARS_BY_STAGE, formatBeers } from "~/lib/match";
+import { formatBeers } from "~/lib/match";
 import { api } from "~/trpc/server";
 
 export default async function RulesPage() {
@@ -71,7 +71,7 @@ export default async function RulesPage() {
                 >
                   <td className="py-0.5">{stage.name}</td>
                   <td className="py-0.5 text-amber-500 dark:text-amber-400">
-                    {STARS_BY_STAGE[stage.name]}
+                    {stage.starsAllocated}
                   </td>
                   <td className="py-0.5 text-emerald-600 dark:text-emerald-300">
                     {formatBeers(stage.wrongPenalty * 2)}

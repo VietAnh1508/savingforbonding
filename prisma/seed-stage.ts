@@ -4,6 +4,16 @@ import stagesData from "../stages.json";
 
 const db = createPrismaClient();
 
+/** Default star allocations for new stages — after initial seeding, values live in `Stage.starsAllocated` and are admin-editable. */
+const STARS_BY_STAGE: Record<string, number> = {
+  "Round of 32": 8,
+  "Round of 16": 4,
+  "Quarter-final": 2,
+  "Semi-final": 1,
+  "Play-off for third place": 1,
+  Final: 1,
+};
+
 async function main() {
   for (const stage of stagesData.Results) {
     const name = stage.Name.find((n) => n.Locale === "en-GB")?.Description ?? stage.Name[0]!.Description;
@@ -25,6 +35,7 @@ async function main() {
         sequenceOrder: stage.SequenceOrder,
         seasonId: stage.IdSeason,
         isKnockout: stage.Type === 0,
+        starsAllocated: STARS_BY_STAGE[name] ?? 0,
       },
     });
 

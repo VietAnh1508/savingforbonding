@@ -9,7 +9,7 @@ import { RatioDisplay } from "~/app/_components/match/ratio-display";
 import { useToast } from "~/app/_components/toast";
 import { Tooltip } from "~/app/_components/tooltip";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
-import { formatKickoffTime, starsAllocatedForStage, voterLabel } from "~/lib/match";
+import { formatKickoffTime, voterLabel } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { type VoteOutcome } from "../../../../generated/prisma";
 
@@ -42,13 +42,11 @@ export function DayPredictModal({
   const utils = api.useUtils();
   const toast = useToast();
 
-  const hasKnockoutMatches = matches.some(
-    (m) => starsAllocatedForStage(m.stage) > 0,
-  );
+  const hasStageStarBudget = matches.some((m) => m.stageStarsAllocated > 0);
   const { data: starAllotments } = api.vote.getStarAllotments.useQuery(
     undefined,
     {
-      enabled: hasKnockoutMatches,
+      enabled: hasStageStarBudget,
     },
   );
 
@@ -174,7 +172,7 @@ export function DayPredictModal({
             const locked = !match.votingOpen;
             const selected = selections[match.id];
 
-            const starsAllocated = starsAllocatedForStage(match.stage);
+            const starsAllocated = match.stageStarsAllocated;
             const hasExistingVote = match.userVoteOutcome !== null;
             const isStarred =
               match.id in starOverrides

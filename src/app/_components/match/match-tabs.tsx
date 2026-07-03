@@ -6,12 +6,7 @@ import { MatchStatus } from "../../../../generated/prisma";
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { DayPredictModal } from "~/app/_components/match/day-predict-modal";
 import { MatchCard } from "~/app/_components/match/match-card";
-import {
-  formatMatchDate,
-  MATCH_DISPLAY_TIMEZONE,
-  starsAllocatedForStage,
-  toVNDate,
-} from "~/lib/match";
+import { formatMatchDate, MATCH_DISPLAY_TIMEZONE, toVNDate } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listMatches"][number];
@@ -36,6 +31,7 @@ function groupByDate(matches: Match[], descending = false) {
 
 type StageGroup = {
   stage: string | null;
+  starsAllocated: number;
   dateGroups: ReturnType<typeof groupByDate>;
 };
 
@@ -48,13 +44,14 @@ function groupByStageAndDate(
     if (!seenStages.includes(m.stage)) seenStages.push(m.stage);
   }
   const orderedStages = descending ? [...seenStages].reverse() : seenStages;
-  return orderedStages.map((stage) => ({
-    stage,
-    dateGroups: groupByDate(
-      matches.filter((m) => m.stage === stage),
-      descending,
-    ),
-  }));
+  return orderedStages.map((stage) => {
+    const stageMatches = matches.filter((m) => m.stage === stage);
+    return {
+      stage,
+      starsAllocated: stageMatches[0]?.stageStarsAllocated ?? 0,
+      dateGroups: groupByDate(stageMatches, descending),
+    };
+  });
 }
 
 function formatTabDate(dateKey: string): { weekday: string; date: string } {
@@ -91,12 +88,12 @@ function MatchList({
   const showStageHeadings = stageGroups.length > 1;
   const allDateGroups = stageGroups.flatMap((sg) => sg.dateGroups);
 
-  const hasKnockoutStages = stageGroups.some(
-    ({ stage }) => starsAllocatedForStage(stage) > 0,
+  const hasStageStarBudget = stageGroups.some(
+    ({ starsAllocated }) => starsAllocated > 0,
   );
   const { data: starAllotments } = api.vote.getStarAllotments.useQuery(
     undefined,
-    { enabled: isSignedIn && hasKnockoutStages },
+    { enabled: isSignedIn && hasStageStarBudget },
   );
 
   if (allDateGroups.length === 0) {
@@ -115,7 +112,7 @@ function MatchList({
   const showSingleStageBudget =
     singleStage !== undefined &&
     isSignedIn &&
-    starsAllocatedForStage(singleStage.stage) > 0 &&
+    singleStage.starsAllocated > 0 &&
     singleStage.dateGroups.some((dg) => dg.matches.some((m) => m.votingOpen));
   const singleStageAllotment = showSingleStageBudget
     ? starAllotments?.find((a) => a.stage === singleStage!.stage)
@@ -134,15 +131,13 @@ function MatchList({
         </div>
       )}
       <div className={showStageHeadings ? "space-y-12" : "space-y-8"}>
-        {stageGroups.map(({ stage, dateGroups }) => {
+        {stageGroups.map(({ stage, starsAllocated, dateGroups }) => {
           const stageAllotment = starAllotments?.find((a) => a.stage === stage);
           const hasVotableInStage = dateGroups.some((dg) =>
             dg.matches.some((m) => m.votingOpen),
           );
           const showStarBudget =
-            isSignedIn &&
-            starsAllocatedForStage(stage) > 0 &&
-            hasVotableInStage;
+            isSignedIn && starsAllocated > 0 && hasVotableInStage;
 
           return (
             <div key={stage ?? "__null__"}>

@@ -10,6 +10,7 @@ export const stageRouter = createTRPCRouter({
         name: true,
         sequenceOrder: true,
         isKnockout: true,
+        starsAllocated: true,
         penalty: { select: { wrongPenalty: true, noVotePenalty: true } },
       },
     });
@@ -28,6 +29,7 @@ export const stageRouter = createTRPCRouter({
         id: true,
         name: true,
         sequenceOrder: true,
+        starsAllocated: true,
         penalty: { select: { wrongPenalty: true, noVotePenalty: true } },
       },
     });
