@@ -1,9 +1,4 @@
 import { buildFifaMatchPatch } from "~/lib/fifa-sync";
-import {
-  buildKqbdKickoffLookup,
-  fetchKqbdWorldCupSchedule,
-  lookupKqbdKickoff,
-} from "~/lib/kqbd-schedule";
 import { deriveResult } from "~/lib/match";
 import {
   fetchWorldCupFixtures,
@@ -26,20 +21,8 @@ export type SyncFifaFixturesResult = {
 
 export async function syncFifaFixtures(
   db: PrismaClient,
-  seasonYear = 2026,
 ): Promise<SyncFifaFixturesResult> {
-  const [fixtures, kqbdFixtures] = await Promise.all([
-    fetchWorldCupFixtures(),
-    fetchKqbdWorldCupSchedule(seasonYear).catch((error: unknown) => {
-      console.warn(
-        "KQBD schedule fetch failed; using FIFA kickoff times only.",
-        error,
-      );
-      return [];
-    }),
-  ]);
-
-  const kqbdKickoffLookup = buildKqbdKickoffLookup(kqbdFixtures);
+  const fixtures = await fetchWorldCupFixtures();
 
   let created = 0;
   let updated = 0;
@@ -52,14 +35,14 @@ export async function syncFifaFixtures(
     const fifaStatus = mapFifaMatchStatus(fixture);
     const fifaHome = fifaTeamName(fixture.Home, fixture.PlaceHolderA);
     const fifaAway = fifaTeamName(fixture.Away, fixture.PlaceHolderB);
-    const fifaKickoff =
-      lookupKqbdKickoff(fifaHome, fifaAway, kqbdKickoffLookup) ??
-      parseFifaKickoffToUtc(fixture.Date);
+    const fifaKickoff = parseFifaKickoffToUtc(fixture.Date);
     const tournament = fifaTournamentName(fixture);
     const stageId = fixture.IdStage;
 
     const fifaHomeScore = fixture.HomeTeamScore ?? fixture.Home?.Score ?? null;
     const fifaAwayScore = fixture.AwayTeamScore ?? fixture.Away?.Score ?? null;
+    const fifaHomePenaltyScore = fixture.HomeTeamPenaltyScore ?? null;
+    const fifaAwayPenaltyScore = fixture.AwayTeamPenaltyScore ?? null;
 
     const existing = await db.match.findUnique({
       where: { externalId },
@@ -84,6 +67,8 @@ export async function syncFifaFixtures(
           status,
           homeScore,
           awayScore,
+          homePenaltyScore: fifaHomePenaltyScore,
+          awayPenaltyScore: fifaAwayPenaltyScore,
           result,
           homeRatio: 0,
           awayRatio: 0,
@@ -119,6 +104,8 @@ export async function syncFifaFixtures(
         status: fifaStatus,
         homeScore: fifaHomeScore,
         awayScore: fifaAwayScore,
+        homePenaltyScore: fifaHomePenaltyScore,
+        awayPenaltyScore: fifaAwayPenaltyScore,
         stageId,
       },
       deriveResult,
@@ -154,6 +141,8 @@ export async function syncFifaFixtures(
           status: patch.status,
           homeScore: patch.homeScore,
           awayScore: patch.awayScore,
+          homePenaltyScore: patch.homePenaltyScore,
+          awayPenaltyScore: patch.awayPenaltyScore,
           result: patch.result,
         }),
       },

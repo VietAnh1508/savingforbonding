@@ -3,13 +3,14 @@
 import { CloseIcon } from "~/app/_components/icons/close-icon";
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
 import { MatchStatusBadge } from "~/app/_components/match-status-badge";
+import { MatchScore } from "~/app/_components/match/match-score";
 import { MatchVoteCounts } from "~/app/_components/match/match-vote-counts";
 import { TeamFlag } from "~/app/_components/match/team-flag";
 import { VoteForm } from "~/app/_components/match/vote-form";
 import { VoterList } from "~/app/_components/match/voter-list";
 import { VotingRatios } from "~/app/_components/match/voting-ratios";
 import { useModalDismiss } from "~/app/hooks/use-modal-dismiss";
-import { formatMatchDateTime, formatMatchScore } from "~/lib/match";
+import { formatMatchDateTime } from "~/lib/match";
 import { api } from "~/trpc/react";
 
 export function MatchDetailModal({
@@ -96,13 +97,14 @@ export function MatchDetailModal({
                   </div>
 
                   <div className="flex flex-col items-center gap-2">
-                    <span className="text-2xl font-bold">
-                      {formatMatchScore(
-                        match.homeScore,
-                        match.awayScore,
-                        match.status,
-                      )}
-                    </span>
+                    <MatchScore
+                      homeScore={match.homeScore}
+                      awayScore={match.awayScore}
+                      homePenaltyScore={match.homePenaltyScore}
+                      awayPenaltyScore={match.awayPenaltyScore}
+                      status={match.status}
+                      className="text-2xl font-bold"
+                    />
                   </div>
 
                   <div className="flex flex-1 flex-col items-center gap-3 text-center">

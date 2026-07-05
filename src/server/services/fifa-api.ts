@@ -37,6 +37,8 @@ export type FifaMatch = {
   Away: FifaTeam | null;
   HomeTeamScore: number | null;
   AwayTeamScore: number | null;
+  HomeTeamPenaltyScore: number | null;
+  AwayTeamPenaltyScore: number | null;
   PlaceHolderA: string | null;
   PlaceHolderB: string | null;
   CompetitionName: FifaLocalizedText[];
@@ -131,4 +133,3 @@ export async function fetchWorldCupFixtures(): Promise<FifaMatch[]> {
     (a, b) => new Date(a.Date).getTime() - new Date(b.Date).getTime(),
   );
 }
-
