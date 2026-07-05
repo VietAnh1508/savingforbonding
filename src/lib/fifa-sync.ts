@@ -84,6 +84,8 @@ export type FifaMatchPatch = {
   status: MatchStatus;
   homeScore: number | null;
   awayScore: number | null;
+  homePenaltyScore: number | null;
+  awayPenaltyScore: number | null;
   result: VoteOutcome | null;
   stageId: string | null;
 };
@@ -97,6 +99,8 @@ export function buildFifaMatchPatch(
     status: MatchStatus;
     homeScore: number | null;
     awayScore: number | null;
+    homePenaltyScore: number | null;
+    awayPenaltyScore: number | null;
     result: VoteOutcome | null;
     stageId: string | null;
   },
@@ -108,6 +112,8 @@ export function buildFifaMatchPatch(
     status: MatchStatus;
     homeScore: number | null;
     awayScore: number | null;
+    homePenaltyScore: number | null;
+    awayPenaltyScore: number | null;
     stageId: string | null;
   },
   deriveResult: (home: number, away: number) => VoteOutcome,
@@ -140,6 +146,8 @@ export function buildFifaMatchPatch(
     status,
     homeScore,
     awayScore,
+    homePenaltyScore: fifa.homePenaltyScore,
+    awayPenaltyScore: fifa.awayPenaltyScore,
     result,
     stageId: fifa.stageId,
   };
@@ -156,7 +164,9 @@ export function buildFifaMatchPatch(
     patch.homeScore !== existing.homeScore ||
     patch.awayScore !== existing.awayScore ||
     patch.result !== existing.result ||
-    patch.stageId !== existing.stageId;
+    patch.stageId !== existing.stageId ||
+    patch.homePenaltyScore !== existing.homePenaltyScore ||
+    patch.awayPenaltyScore !== existing.awayPenaltyScore;
 
   return { patch, teamsUpdated, changed };
 }

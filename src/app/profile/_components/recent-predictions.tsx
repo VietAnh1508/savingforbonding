@@ -1,8 +1,8 @@
 import { StarIcon } from "~/app/_components/icons/star-icon";
+import { MatchScore } from "~/app/_components/match/match-score";
 import {
   deriveEffectiveResult,
   deriveResult,
-  formatMatchScore,
   formatRatioValue,
   hasVotingHandicap,
   outcomeLabel,
@@ -17,6 +17,8 @@ type VoteItem = {
   awayCountry: string;
   homeScore: number | null;
   awayScore: number | null;
+  homePenaltyScore: number | null;
+  awayPenaltyScore: number | null;
   homeRatio: number;
   awayRatio: number;
   outcome: RouterOutputs["vote"]["getMyVotes"][number]["outcome"];
@@ -34,6 +36,8 @@ type MissedItem = {
   awayCountry: string;
   homeScore: number | null;
   awayScore: number | null;
+  homePenaltyScore: number | null;
+  awayPenaltyScore: number | null;
   homeRatio: number;
   awayRatio: number;
   points: number;
@@ -43,11 +47,19 @@ type MissedItem = {
 type LedgerItem = VoteItem | MissedItem;
 
 function MatchLabel({ item }: { item: LedgerItem }) {
-  const score = formatMatchScore(item.homeScore, item.awayScore);
   return (
     <>
       <span>
-        {item.homeCountry} {score} {item.awayCountry}
+        {item.homeCountry}{" "}
+        <MatchScore
+          homeScore={item.homeScore}
+          awayScore={item.awayScore}
+          homePenaltyScore={item.homePenaltyScore}
+          awayPenaltyScore={item.awayPenaltyScore}
+          className=""
+          penaltyClassName="text-foreground/40"
+        />{" "}
+        {item.awayCountry}
       </span>
       {hasVotingHandicap(item.homeRatio, item.awayRatio) && (
         <span className="block text-xs font-normal text-foreground/50">
@@ -220,4 +232,3 @@ export function RecentPredictions({ items }: { items: LedgerItem[] }) {
     </section>
   );
 }
-

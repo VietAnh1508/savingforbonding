@@ -41,6 +41,8 @@ export async function syncFifaFixtures(
 
     const fifaHomeScore = fixture.HomeTeamScore ?? fixture.Home?.Score ?? null;
     const fifaAwayScore = fixture.AwayTeamScore ?? fixture.Away?.Score ?? null;
+    const fifaHomePenaltyScore = fixture.HomeTeamPenaltyScore ?? null;
+    const fifaAwayPenaltyScore = fixture.AwayTeamPenaltyScore ?? null;
 
     const existing = await db.match.findUnique({
       where: { externalId },
@@ -65,6 +67,8 @@ export async function syncFifaFixtures(
           status,
           homeScore,
           awayScore,
+          homePenaltyScore: fifaHomePenaltyScore,
+          awayPenaltyScore: fifaAwayPenaltyScore,
           result,
           homeRatio: 0,
           awayRatio: 0,
@@ -100,6 +104,8 @@ export async function syncFifaFixtures(
         status: fifaStatus,
         homeScore: fifaHomeScore,
         awayScore: fifaAwayScore,
+        homePenaltyScore: fifaHomePenaltyScore,
+        awayPenaltyScore: fifaAwayPenaltyScore,
         stageId,
       },
       deriveResult,
@@ -135,6 +141,8 @@ export async function syncFifaFixtures(
           status: patch.status,
           homeScore: patch.homeScore,
           awayScore: patch.awayScore,
+          homePenaltyScore: patch.homePenaltyScore,
+          awayPenaltyScore: patch.awayPenaltyScore,
           result: patch.result,
         }),
       },

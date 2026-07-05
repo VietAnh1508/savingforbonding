@@ -3,17 +3,13 @@
 import { useState } from "react";
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { MatchStatusBadge } from "~/app/_components/match-status-badge";
+import { MatchScore } from "~/app/_components/match/match-score";
 import { MatchVoteCounts } from "~/app/_components/match/match-vote-counts";
 import { RatioDisplay } from "~/app/_components/match/ratio-display";
 import { TeamFlag } from "~/app/_components/match/team-flag";
 import { Tooltip } from "~/app/_components/tooltip";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
-import {
-  formatBeers,
-  formatKickoffTime,
-  formatMatchScore,
-  hasVotingHandicap,
-} from "~/lib/match";
+import { formatBeers, formatKickoffTime, hasVotingHandicap } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listMatches"][number];
@@ -110,8 +106,6 @@ export function MatchCard({
   const predictsHomeWin = prediction === "HOME_WIN";
   const predictsAwayWin = prediction === "AWAY_WIN";
   const predictsDraw = prediction === "DRAW";
-  const scoreIsTbd =
-    formatMatchScore(match.homeScore, match.awayScore, match.status) === "vs";
   const isCompleted = match.status === "COMPLETED";
   const voteResult = match.userVoteResult;
 
@@ -207,14 +201,16 @@ export function MatchCard({
           )}
         </div>
 
-        <div className={`flex min-w-[6.5rem] flex-col items-center gap-1 ${predictedTeamClass(predictsDraw)}`}>
-          <span
-            className={`text-xl font-bold ${
-              scoreIsTbd ? "text-foreground/40" : ""
-            }`}
-          >
-            {formatMatchScore(match.homeScore, match.awayScore, match.status)}
-          </span>
+        <div
+          className={`flex min-w-[6.5rem] flex-col items-center gap-1 ${predictedTeamClass(predictsDraw)}`}
+        >
+          <MatchScore
+            homeScore={match.homeScore}
+            awayScore={match.awayScore}
+            homePenaltyScore={match.homePenaltyScore}
+            awayPenaltyScore={match.awayPenaltyScore}
+            status={match.status}
+          />
           <RatioDisplay
             homeRatio={match.homeRatio}
             awayRatio={match.awayRatio}
@@ -259,4 +255,3 @@ export function MatchCard({
     </div>
   );
 }
-

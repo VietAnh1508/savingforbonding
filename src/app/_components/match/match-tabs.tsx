@@ -361,7 +361,9 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
     if (!openMatchId || allMatches.length === 0) return;
     const match = allMatches.find((m) => m.id === openMatchId);
     if (!match) return;
-    setActiveTab(match.status === MatchStatus.COMPLETED ? "completed" : "upcoming");
+    setActiveTab(
+      match.status === MatchStatus.COMPLETED ? "completed" : "upcoming",
+    );
   }, [openMatchId, allMatches]);
 
   // Keep the modal in sync with browser back/forward navigation
@@ -502,4 +504,3 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
     </div>
   );
 }
-
