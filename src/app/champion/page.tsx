@@ -21,7 +21,7 @@ export default async function ChampionPage() {
         <p className="mb-4 text-foreground/60">
           Who do you think will win it all? Pick from the Quarter-Final
           teams below — you can change your pick until the first
-          Quarter-Final match kicks off.
+          Semi-Final match kicks off.
         </p>
         <ChampionVoteCard isSignedIn={isSignedIn} />
       </main>

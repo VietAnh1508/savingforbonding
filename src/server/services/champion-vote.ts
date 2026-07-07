@@ -46,16 +46,16 @@ export async function resolveChampionVotes(
 }
 
 export async function isChampionVotingOpen(db: PrismaClient): Promise<boolean> {
-  const quarterFinalStage = await db.stage.findFirst({
-    where: { name: "Quarter-final" },
+  const semiFinalStage = await db.stage.findFirst({
+    where: { name: "Semi-final" },
   });
-  if (!quarterFinalStage) return true;
+  if (!semiFinalStage) return true;
 
-  const firstQfMatch = await db.match.findFirst({
-    where: { stageId: quarterFinalStage.id },
+  const firstSfMatch = await db.match.findFirst({
+    where: { stageId: semiFinalStage.id },
     orderBy: { kickoffAt: "asc" },
   });
-  if (!firstQfMatch) return true;
+  if (!firstSfMatch) return true;
 
-  return new Date() < firstQfMatch.kickoffAt;
+  return new Date() < firstSfMatch.kickoffAt;
 }

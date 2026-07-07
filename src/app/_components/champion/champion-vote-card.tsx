@@ -69,7 +69,7 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
           <p className="mt-1 text-sm">
             {selectedCandidateId
               ? "Your champion pick is locked in."
-              : "You didn't pick a champion before the Quarter-Finals kicked off."}
+              : "You didn't pick a champion before the Semi-Finals kicked off."}
           </p>
         </div>
       )}
