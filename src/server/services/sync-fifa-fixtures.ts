@@ -1,9 +1,11 @@
 import { buildFifaMatchPatch } from "~/lib/fifa-sync";
 import { deriveResult } from "~/lib/match";
 import {
+  fetchQualifiedTeams,
   fetchWorldCupFixtures,
   fifaTeamName,
   fifaTournamentName,
+  localizedDescription,
   mapFifaMatchStatus,
   parseFifaKickoffToUtc,
 } from "~/server/services/fifa-api";
@@ -17,7 +19,36 @@ export type SyncFifaFixturesResult = {
   unchanged: number;
   teamsUpdated: number;
   resolved: number;
+  championCandidatesSynced: number;
 };
+
+async function syncChampionCandidates(db: PrismaClient): Promise<number> {
+  const quarterFinalStage = await db.stage.findFirst({
+    where: { name: "Quarter-final" },
+  });
+  if (!quarterFinalStage) return 0;
+
+  const qualifiedTeams = await fetchQualifiedTeams(quarterFinalStage.id);
+
+  await Promise.all(
+    qualifiedTeams.map((team) =>
+      db.championCandidate.upsert({
+        where: { fifaTeamId: team.IdTeam },
+        create: {
+          fifaTeamId: team.IdTeam,
+          teamName: localizedDescription(team.TeamName) ?? "TBD",
+          countryCode: team.IdCountry,
+        },
+        update: {
+          teamName: localizedDescription(team.TeamName) ?? "TBD",
+          countryCode: team.IdCountry,
+        },
+      }),
+    ),
+  );
+
+  return qualifiedTeams.length;
+}
 
 export async function syncFifaFixtures(
   db: PrismaClient,
@@ -160,6 +191,8 @@ export async function syncFifaFixtures(
     }
   }
 
+  const championCandidatesSynced = await syncChampionCandidates(db);
+
   return {
     fetched: fixtures.length,
     created,
@@ -167,5 +200,6 @@ export async function syncFifaFixtures(
     unchanged,
     teamsUpdated,
     resolved,
+    championCandidatesSynced,
   };
 }
