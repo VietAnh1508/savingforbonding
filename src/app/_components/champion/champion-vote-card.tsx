@@ -1,16 +1,19 @@
 "use client";
 
 import { TeamFlag } from "~/app/_components/match/team-flag";
+import { SignInPrompt } from "~/app/_components/sign-in-prompt";
 import { voterLabel } from "~/lib/match";
 import { api } from "~/trpc/react";
 import { useToast } from "../toast";
 
-export function ChampionVoteCard() {
+export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
   const utils = api.useUtils();
   const toast = useToast();
 
   const { data: voteCounts } = api.championVote.getVoteCounts.useQuery();
-  const { data: myVote } = api.championVote.getMyVote.useQuery();
+  const { data: myVote } = api.championVote.getMyVote.useQuery(undefined, {
+    enabled: isSignedIn,
+  });
   const { data: votingStatus } = api.championVote.getVotingStatus.useQuery();
 
   const castVote = api.championVote.cast.useMutation({
@@ -49,7 +52,7 @@ export function ChampionVoteCard() {
       )}
       <div
         className={`divide-y divide-foreground/10 overflow-hidden rounded-xl border border-foreground/10 ${
-          !votingOpen || castVote.isPending ? "opacity-60" : ""
+          !isSignedIn || !votingOpen || castVote.isPending ? "opacity-60" : ""
         }`}
       >
         {voteCounts.map(({ candidate, count }) => {
@@ -58,7 +61,7 @@ export function ChampionVoteCard() {
             <button
               key={candidate.id}
               type="button"
-              disabled={!votingOpen || castVote.isPending}
+              disabled={!isSignedIn || !votingOpen || castVote.isPending}
               onClick={() => castVote.mutate({ candidateId: candidate.id })}
               aria-label={`Pick ${candidate.teamName} as champion`}
               className={`flex w-full cursor-pointer items-center gap-3 p-4 text-left font-medium transition disabled:cursor-not-allowed ${
@@ -81,11 +84,15 @@ export function ChampionVoteCard() {
           {castVote.error.message}
         </p>
       )}
-      {votingOpen && (
-        <p className="text-center text-sm text-foreground/50">
-          You can change your pick until the first Quarter-Final match kicks
-          off
-        </p>
+      {!isSignedIn ? (
+        <SignInPrompt action="to vote for the champion" />
+      ) : (
+        votingOpen && (
+          <p className="text-center text-sm text-foreground/50">
+            You can change your pick until the first Quarter-Final match
+            kicks off
+          </p>
+        )
       )}
     </div>
   );
