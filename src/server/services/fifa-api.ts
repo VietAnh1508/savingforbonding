@@ -39,6 +39,8 @@ export type FifaMatch = {
   AwayTeamScore: number | null;
   HomeTeamPenaltyScore: number | null;
   AwayTeamPenaltyScore: number | null;
+  /** FIFA-computed winning team's `IdTeam` (accounts for extra time/penalties); null if undecided. */
+  Winner: string | null;
   PlaceHolderA: string | null;
   PlaceHolderB: string | null;
   CompetitionName: FifaLocalizedText[];

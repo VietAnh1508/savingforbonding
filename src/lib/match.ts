@@ -17,6 +17,8 @@ export const BEER_LOSE_PENALTY = 2;
 export const BEER_WIN = BEER_PLATFORM_FEE;
 export const BEER_LOSE = BEER_PLATFORM_FEE + BEER_LOSE_PENALTY;
 export const BEER_NO_VOTE = 2;
+/** Beer swing for a champion pick: correct picks subtract this many, wrong picks add it. */
+export const CHAMPION_VOTE_BONUS = 50;
 
 export function beerCostForStarVote(
   isCorrect: boolean,

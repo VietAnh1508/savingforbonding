@@ -1,5 +1,6 @@
 import { buildFifaMatchPatch } from "~/lib/fifa-sync";
 import { deriveResult } from "~/lib/match";
+import { resolveChampionVotes } from "~/server/services/champion-vote";
 import {
   fetchQualifiedTeams,
   fetchWorldCupFixtures,
@@ -8,6 +9,7 @@ import {
   localizedDescription,
   mapFifaMatchStatus,
   parseFifaKickoffToUtc,
+  type FifaMatch,
 } from "~/server/services/fifa-api";
 import { resolveMatchVotes } from "~/server/services/resolve-votes";
 import { type PrismaClient } from "../../../generated/prisma";
@@ -20,7 +22,42 @@ export type SyncFifaFixturesResult = {
   teamsUpdated: number;
   resolved: number;
   championCandidatesSynced: number;
+  championVotesResolved: number;
 };
+
+/**
+ * When the Final's result is in, settles every champion vote against the
+ * FIFA-reported winner. Checked on every sync (not just the moment the match
+ * transitions to COMPLETED) so a missed candidate lookup or a later re-sync
+ * naturally retries — resolveChampionVotes is delta-based, so repeat calls
+ * with the same winner are no-ops.
+ */
+async function resolveChampionIfFinal(
+  db: PrismaClient,
+  fixture: FifaMatch,
+): Promise<number> {
+  if (mapFifaMatchStatus(fixture) !== "COMPLETED" || !fixture.Winner) {
+    return 0;
+  }
+
+  // Match against the seeded Stage name (same convention as isChampionVotingOpen)
+  // rather than the fixture's own StageName display string, which is unverified.
+  const stage = await db.stage.findUnique({ where: { id: fixture.IdStage } });
+  if (stage?.name !== "Final") return 0;
+
+  const winner = await db.championCandidate.findUnique({
+    where: { fifaTeamId: fixture.Winner },
+  });
+  if (!winner) {
+    console.warn(
+      `Final winner ${fixture.Winner} has no matching ChampionCandidate`,
+    );
+    return 0;
+  }
+
+  const { usersUpdated } = await resolveChampionVotes(db, winner.id);
+  return usersUpdated;
+}
 
 async function syncChampionCandidates(db: PrismaClient): Promise<number> {
   const quarterFinalStage = await db.stage.findFirst({
@@ -60,6 +97,7 @@ export async function syncFifaFixtures(
   let unchanged = 0;
   let teamsUpdated = 0;
   let resolved = 0;
+  let championVotesResolved = 0;
 
   for (const fixture of fixtures) {
     const externalId = fixture.IdMatch;
@@ -74,6 +112,8 @@ export async function syncFifaFixtures(
     const fifaAwayScore = fixture.AwayTeamScore ?? fixture.Away?.Score ?? null;
     const fifaHomePenaltyScore = fixture.HomeTeamPenaltyScore ?? null;
     const fifaAwayPenaltyScore = fixture.AwayTeamPenaltyScore ?? null;
+
+    championVotesResolved += await resolveChampionIfFinal(db, fixture);
 
     const existing = await db.match.findUnique({
       where: { externalId },
@@ -201,5 +241,6 @@ export async function syncFifaFixtures(
     teamsUpdated,
     resolved,
     championCandidatesSynced,
+    championVotesResolved,
   };
 }
