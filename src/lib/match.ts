@@ -217,6 +217,22 @@ export function fromVietnamDatetimeLocal(value: string): Date {
   return new Date(`${value}:00+07:00`);
 }
 
+/** UTC instant range `[start, end)` covering "today" and "tomorrow" in Vietnam time. */
+export function vnTodayTomorrowRangeUTC(now: Date = new Date()): {
+  start: Date;
+  end: Date;
+} {
+  const vnNow = new Date(now.getTime() + VN_OFFSET_MS);
+  const vnMidnightUTC = Date.UTC(
+    vnNow.getUTCFullYear(),
+    vnNow.getUTCMonth(),
+    vnNow.getUTCDate(),
+  );
+  const start = new Date(vnMidnightUTC - VN_OFFSET_MS);
+  const end = new Date(start.getTime() + 2 * 24 * 60 * 60 * 1000);
+  return { start, end };
+}
+
 const matchDateFormatter = new Intl.DateTimeFormat("en-GB", {
   weekday: "long",
   year: "numeric",

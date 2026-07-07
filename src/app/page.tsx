@@ -1,3 +1,4 @@
+import { LeaderboardPicksBanner } from "~/app/_components/leaderboard-picks-banner";
 import { MatchTabs } from "~/app/_components/match/match-tabs";
 import { Nav } from "~/app/_components/nav";
 import { auth } from "~/server/auth";
@@ -7,12 +8,14 @@ export default async function Home() {
   const [session] = await Promise.all([
     auth(),
     api.match.listMatches.prefetch({}),
+    api.leaderboard.bottomThreePicks.prefetch(),
   ]);
 
   return (
     <HydrateClient>
       <Nav />
       <main className="container mx-auto px-4 pb-8">
+        <LeaderboardPicksBanner />
         <MatchTabs isSignedIn={!!session?.user} />
       </main>
     </HydrateClient>
