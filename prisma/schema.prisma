@@ -139,6 +139,8 @@ model ChampionVote {
   candidateId String
   user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   candidate   ChampionCandidate @relation(fields: [candidateId], references: [id])
+  isCorrect   Boolean?
+  points      Int               @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

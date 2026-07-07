@@ -17,6 +17,8 @@ export const BEER_LOSE_PENALTY = 2;
 export const BEER_WIN = BEER_PLATFORM_FEE;
 export const BEER_LOSE = BEER_PLATFORM_FEE + BEER_LOSE_PENALTY;
 export const BEER_NO_VOTE = 2;
+/** Beer swing for a champion pick: correct picks subtract this many, wrong picks add it. */
+export const CHAMPION_VOTE_BONUS = 50;
 
 export function beerCostForStarVote(
   isCorrect: boolean,
@@ -213,6 +215,22 @@ export function toVNDate(date: Date, length = 10): string {
 /** Parse a `datetime-local` input value entered as Vietnam time (UTC+7) into a UTC Date. */
 export function fromVietnamDatetimeLocal(value: string): Date {
   return new Date(`${value}:00+07:00`);
+}
+
+/** UTC instant range `[start, end)` covering "today" and "tomorrow" in Vietnam time. */
+export function vnTodayTomorrowRangeUTC(now: Date = new Date()): {
+  start: Date;
+  end: Date;
+} {
+  const vnNow = new Date(now.getTime() + VN_OFFSET_MS);
+  const vnMidnightUTC = Date.UTC(
+    vnNow.getUTCFullYear(),
+    vnNow.getUTCMonth(),
+    vnNow.getUTCDate(),
+  );
+  const start = new Date(vnMidnightUTC - VN_OFFSET_MS);
+  const end = new Date(start.getTime() + 2 * 24 * 60 * 60 * 1000);
+  return { start, end };
 }
 
 const matchDateFormatter = new Intl.DateTimeFormat("en-GB", {

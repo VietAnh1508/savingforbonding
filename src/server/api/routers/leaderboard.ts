@@ -1,4 +1,9 @@
-import { noVotePenaltyForStage, toVNDate } from "~/lib/match";
+import { isKnownCountry } from "~/lib/country-flag";
+import {
+  noVotePenaltyForStage,
+  toVNDate,
+  vnTodayTomorrowRangeUTC,
+} from "~/lib/match";
 import {
   assignRanks,
   compareLeaderboardEntries,
@@ -6,7 +11,7 @@ import {
 } from "~/lib/rank-history";
 import { resolveUserJoiningDate } from "~/lib/user-joining-date";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { type PrismaClient } from "../../../../generated/prisma";
+import { MatchStatus, type PrismaClient } from "../../../../generated/prisma";
 
 const leaderboardUserSelect = {
   id: true,
@@ -34,22 +39,65 @@ async function fetchLeaderboardUsers(db: PrismaClient) {
   }
 }
 
+async function getSortedLeaderboardEntries(db: PrismaClient) {
+  const [users, voteCounts, completedMatchCount] = await Promise.all([
+    fetchLeaderboardUsers(db),
+    db.vote.groupBy({
+      by: ["userId", "isCorrect"],
+      where: { isCorrect: { not: null } },
+      _count: { _all: true },
+    }),
+    db.match.count({ where: { status: "COMPLETED" } }),
+  ]);
+
+  const voteCountMap = new Map<
+    string,
+    { correct: number; incorrect: number }
+  >();
+  for (const vc of voteCounts) {
+    if (vc.isCorrect === null) continue;
+    const entry = voteCountMap.get(vc.userId) ?? { correct: 0, incorrect: 0 };
+    if (vc.isCorrect) entry.correct = vc._count._all;
+    else entry.incorrect = vc._count._all;
+    voteCountMap.set(vc.userId, entry);
+  }
+
+  const unsortedEntries = users.map((user) => {
+    const createdAt =
+      "createdAt" in user && user.createdAt instanceof Date
+        ? user.createdAt
+        : null;
+
+    const { correct, incorrect } = voteCountMap.get(user.id) ?? {
+      correct: 0,
+      incorrect: 0,
+    };
+    const totalVotes = correct + incorrect;
+    const accuracy = totalVotes > 0 ? correct / totalVotes : 0;
+
+    return {
+      id: user.id,
+      name: user.name,
+      image: user.image,
+      joiningDate: resolveUserJoiningDate({
+        createdAt,
+        earliestVoteAt: null,
+      }),
+      beers: user.totalPoints,
+      correctPredictions: correct,
+      incorrectPredictions: incorrect,
+      missedPredictions: completedMatchCount - correct - incorrect,
+      accuracy,
+    };
+  });
+
+  return unsortedEntries.sort(compareLeaderboardEntries);
+}
+
 export const leaderboardRouter = createTRPCRouter({
   global: publicProcedure.query(async ({ ctx }) => {
-    const [
-      users,
-      voteCounts,
-      completedMatchCount,
-      lastVoteUpdate,
-      lastMatchUpdate,
-    ] = await Promise.all([
-      fetchLeaderboardUsers(ctx.db),
-      ctx.db.vote.groupBy({
-        by: ["userId", "isCorrect"],
-        where: { isCorrect: { not: null } },
-        _count: { _all: true },
-      }),
-      ctx.db.match.count({ where: { status: "COMPLETED" } }),
+    const [sorted, lastVoteUpdate, lastMatchUpdate] = await Promise.all([
+      getSortedLeaderboardEntries(ctx.db),
       ctx.db.vote.findFirst({
         where: { isCorrect: { not: null } },
         orderBy: { updatedAt: "desc" },
@@ -61,18 +109,6 @@ export const leaderboardRouter = createTRPCRouter({
       }),
     ]);
 
-    const voteCountMap = new Map<
-      string,
-      { correct: number; incorrect: number }
-    >();
-    for (const vc of voteCounts) {
-      if (vc.isCorrect === null) continue;
-      const entry = voteCountMap.get(vc.userId) ?? { correct: 0, incorrect: 0 };
-      if (vc.isCorrect) entry.correct = vc._count._all;
-      else entry.incorrect = vc._count._all;
-      voteCountMap.set(vc.userId, entry);
-    }
-
     const candidates = [
       lastVoteUpdate?.updatedAt,
       lastMatchUpdate?.updatedAt,
@@ -82,40 +118,45 @@ export const leaderboardRouter = createTRPCRouter({
         ? new Date(Math.max(...candidates.map((d) => d.getTime())))
         : null;
 
-    const unsortedEntries = users.map((user) => {
-      const createdAt =
-        "createdAt" in user && user.createdAt instanceof Date
-          ? user.createdAt
-          : null;
-
-      const { correct, incorrect } = voteCountMap.get(user.id) ?? {
-        correct: 0,
-        incorrect: 0,
-      };
-      const totalVotes = correct + incorrect;
-      const accuracy = totalVotes > 0 ? correct / totalVotes : 0;
-
-      return {
-        id: user.id,
-        name: user.name,
-        image: user.image,
-        joiningDate: resolveUserJoiningDate({
-          createdAt,
-          earliestVoteAt: null,
-        }),
-        beers: user.totalPoints,
-        correctPredictions: correct,
-        incorrectPredictions: incorrect,
-        missedPredictions: completedMatchCount - correct - incorrect,
-        accuracy,
-      };
-    });
-
-    const sorted = unsortedEntries.sort(compareLeaderboardEntries);
-
     const entries = assignRanks(sorted);
 
     return { entries, lastUpdated };
+  }),
+
+  bottomThreePicks: publicProcedure.query(async ({ ctx }) => {
+    const sorted = await getSortedLeaderboardEntries(ctx.db);
+    const bottomUsers = sorted.slice(-3).map((entry) => ({
+      id: entry.id,
+      name: entry.name,
+      image: entry.image,
+    }));
+    const userIds = bottomUsers.map((u) => u.id);
+
+    const { start, end } = vnTodayTomorrowRangeUTC();
+    const rawMatches = await ctx.db.match.findMany({
+      where: {
+        kickoffAt: { gte: start, lt: end },
+        status: {
+          in: [MatchStatus.SCHEDULED, MatchStatus.LIVE, MatchStatus.POSTPONED],
+        },
+      },
+      orderBy: { kickoffAt: "asc" },
+      select: { id: true, homeCountry: true, awayCountry: true, kickoffAt: true },
+    });
+    const matches = rawMatches.filter(
+      (m) => isKnownCountry(m.homeCountry) && isKnownCountry(m.awayCountry),
+    );
+    const matchIds = matches.map((m) => m.id);
+
+    const votes =
+      userIds.length > 0 && matchIds.length > 0
+        ? await ctx.db.vote.findMany({
+            where: { userId: { in: userIds }, matchId: { in: matchIds } },
+            select: { userId: true, matchId: true, outcome: true, hasStar: true },
+          })
+        : [];
+
+    return { users: bottomUsers, matches, votes };
   }),
 
   totalBeerPool: publicProcedure.query(async ({ ctx }) => {

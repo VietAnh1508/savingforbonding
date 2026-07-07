@@ -72,24 +72,28 @@ export const adminRouter = createTRPCRouter({
   }),
 
   repairBeerTotals: adminProcedure.mutation(async ({ ctx }) => {
-    const [completedMatches, resolvedVotes, users] = await Promise.all([
-      ctx.db.match.findMany({
-        where: { status: "COMPLETED" },
-        select: {
-          id: true,
-          kickoffAt: true,
-          stage: { select: { penalty: true } },
-        },
-        orderBy: { kickoffAt: "asc" },
-      }),
-      ctx.db.vote.findMany({
-        where: { match: { status: "COMPLETED" } },
-        select: { userId: true, matchId: true, points: true, isCorrect: true },
-      }),
-      ctx.db.user.findMany({
-        select: { id: true, name: true, image: true, totalPoints: true },
-      }),
-    ]);
+    const [completedMatches, resolvedVotes, users, championVotes] =
+      await Promise.all([
+        ctx.db.match.findMany({
+          where: { status: "COMPLETED" },
+          select: {
+            id: true,
+            kickoffAt: true,
+            stage: { select: { penalty: true } },
+          },
+          orderBy: { kickoffAt: "asc" },
+        }),
+        ctx.db.vote.findMany({
+          where: { match: { status: "COMPLETED" } },
+          select: { userId: true, matchId: true, points: true, isCorrect: true },
+        }),
+        ctx.db.user.findMany({
+          select: { id: true, name: true, image: true, totalPoints: true },
+        }),
+        ctx.db.championVote.findMany({
+          select: { userId: true, points: true },
+        }),
+      ]);
 
     const matchInputs = completedMatches.map((match) => ({
       id: match.id,
@@ -101,11 +105,16 @@ export const adminRouter = createTRPCRouter({
     // chart, so a repair can never diverge from what the chart/badges show.
     const { days } = computeRankHistory(matchInputs, resolvedVotes, users);
     const finalBeers = days[days.length - 1]?.beers ?? {};
+    const championPointsByUser = new Map(
+      championVotes.map((v) => [v.userId, v.points]),
+    );
 
     let usersUpdated = 0;
 
     for (const user of users) {
-      const newTotalPoints = finalBeers[user.id] ?? 0;
+      const baseBeers = finalBeers[user.id] ?? 0;
+      const championPoints = championPointsByUser.get(user.id) ?? 0;
+      const newTotalPoints = Math.max(0, baseBeers + championPoints);
 
       if (newTotalPoints !== user.totalPoints) {
         await ctx.db.user.update({
