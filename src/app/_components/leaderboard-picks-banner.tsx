@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 
 import { StarIcon } from "~/app/_components/icons/star-icon";
+import { TeamFlag } from "~/app/_components/match/team-flag";
 import { formatKickoffTime, outcomeLabel } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
@@ -25,11 +26,30 @@ function PickCell({
   awayCountry: string;
 }) {
   if (!vote) {
-    return <span className="text-foreground/40">No vote</span>;
+    return (
+      <span className="text-foreground/40" title="No vote">
+        –
+      </span>
+    );
   }
+
+  const pickedCountry =
+    vote.outcome === "HOME_WIN"
+      ? homeCountry
+      : vote.outcome === "AWAY_WIN"
+        ? awayCountry
+        : null;
+
   return (
-    <span className="inline-flex items-center gap-1">
-      {outcomeLabel(vote.outcome, homeCountry, awayCountry)}
+    <span
+      className="inline-flex items-center gap-1"
+      title={outcomeLabel(vote.outcome, homeCountry, awayCountry)}
+    >
+      {pickedCountry ? (
+        <TeamFlag country={pickedCountry} size="sm" />
+      ) : (
+        <span className="text-foreground/60 text-xs font-medium">Draw</span>
+      )}
       {vote.hasStar && (
         <span className="text-amber-500 dark:text-amber-400">
           <StarIcon filled />
@@ -65,7 +85,10 @@ export function LeaderboardPicksBanner() {
         onClick={() => setCollapsed((c) => !c)}
         className="flex w-full items-center justify-between font-semibold text-sky-700 dark:text-sky-300"
       >
-        <span>🎯 What are the top predictors calling? — today & tomorrow</span>
+        <span>
+          🎯 What are the top predictors calling?
+          <br />— today & tomorrow
+        </span>
         <span className="text-foreground/40">{collapsed ? "Show" : "Hide"}</span>
       </button>
 
@@ -76,8 +99,16 @@ export function LeaderboardPicksBanner() {
               <tr className="border-b border-foreground/10 text-left text-foreground/50">
                 <th className="pb-1 pr-3 font-normal">Player</th>
                 {matches.map((match) => (
-                  <th key={match.id} className="pb-1 pr-3 font-normal whitespace-nowrap">
-                    {match.homeCountry} vs {match.awayCountry}
+                  <th
+                    key={match.id}
+                    className="pb-1 pr-3 text-center font-normal whitespace-nowrap"
+                    title={`${match.homeCountry} vs ${match.awayCountry}`}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <TeamFlag country={match.homeCountry} size="sm" />
+                      <span className="text-foreground/35 text-[10px]">vs</span>
+                      <TeamFlag country={match.awayCountry} size="sm" />
+                    </div>
                     <div className="text-foreground/35">
                       {formatKickoffTime(match.kickoffAt)}
                     </div>
@@ -107,7 +138,10 @@ export function LeaderboardPicksBanner() {
                     </div>
                   </td>
                   {matches.map((match) => (
-                    <td key={match.id} className="py-1.5 pr-3 whitespace-nowrap">
+                    <td
+                      key={match.id}
+                      className="py-1.5 pr-3 text-center whitespace-nowrap"
+                    >
                       <PickCell
                         vote={votesByKey.get(voteKey(user.id, match.id))}
                         homeCountry={match.homeCountry}
