@@ -84,16 +84,7 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
           {castVote.error.message}
         </p>
       )}
-      {!isSignedIn ? (
-        <SignInPrompt action="to vote for the champion" />
-      ) : (
-        votingOpen && (
-          <p className="text-center text-sm text-foreground/50">
-            You can change your pick until the first Quarter-Final match
-            kicks off
-          </p>
-        )
-      )}
+      {!isSignedIn && <SignInPrompt action="to vote for the champion" />}
     </div>
   );
 }
