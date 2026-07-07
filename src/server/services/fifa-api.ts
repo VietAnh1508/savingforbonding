@@ -133,3 +133,33 @@ export async function fetchWorldCupFixtures(): Promise<FifaMatch[]> {
     (a, b) => new Date(a.Date).getTime() - new Date(b.Date).getTime(),
   );
 }
+
+export type FifaQualifiedTeam = {
+  IdTeam: string;
+  IdCountry: string;
+  TeamName: FifaLocalizedText[];
+};
+
+type FifaQualifiedTeamsResponse = {
+  Results: FifaQualifiedTeam[];
+  ContinuationToken?: string | null;
+};
+
+export async function fetchQualifiedTeams(
+  stageId: string,
+): Promise<FifaQualifiedTeam[]> {
+  const url = `${FIFA_API_BASE}/teamsqualified/season/${FIFA_WORLD_CUP_SEASON_ID}/stage/${stageId}`;
+  const response = await fetch(url, {
+    headers: { Accept: "application/json" },
+    next: { revalidate: 0 },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `FIFA API error: ${response.status} ${response.statusText}`,
+    );
+  }
+
+  const data = (await response.json()) as FifaQualifiedTeamsResponse;
+  return data.Results ?? [];
+}

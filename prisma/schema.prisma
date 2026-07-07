@@ -95,19 +95,20 @@ model Vote {
 }
 
 model User {
-  id                 String       @id @default(cuid())
+  id                 String        @id @default(cuid())
   name               String?
-  email              String       @unique
+  email              String        @unique
   passwordHash       String?
   emailVerified      DateTime?
   image              String?
-  totalPoints        Int          @default(0)
-  weeklyPoints       Int          @default(0)
-  mustChangePassword Boolean      @default(false)
-  createdAt          DateTime     @default(now())
+  totalPoints        Int           @default(0)
+  weeklyPoints       Int           @default(0)
+  mustChangePassword Boolean       @default(false)
+  createdAt          DateTime      @default(now())
   votes              Vote[]
-  following          UserFollow[] @relation("FollowerFollows")
-  followers          UserFollow[] @relation("FollowingFollows")
+  following          UserFollow[]  @relation("FollowerFollows")
+  followers          UserFollow[]  @relation("FollowingFollows")
+  championVote       ChampionVote?
 }
 
 model UserFollow {
@@ -119,4 +120,28 @@ model UserFollow {
   createdAt   DateTime @default(now())
 
   @@unique([followerId, followingId])
+}
+
+model ChampionCandidate {
+  id          String         @id @default(cuid())
+  fifaTeamId  String         @unique
+  teamName    String
+  countryCode String
+  votes       ChampionVote[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ChampionVote {
+  id          String            @id @default(cuid())
+  userId      String            @unique
+  candidateId String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  candidate   ChampionCandidate @relation(fields: [candidateId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([candidateId])
 }
