@@ -21,19 +21,24 @@ export const championVoteRouter = createTRPCRouter({
   }),
 
   getVoteCounts: publicProcedure.query(async ({ ctx }) => {
-    const counts = await ctx.db.championVote.groupBy({
-      by: ["candidateId"],
-      _count: true,
-    });
-    const candidates = await ctx.db.championCandidate.findMany({
-      orderBy: { teamName: "asc" },
-    });
+    const [candidates, votes] = await Promise.all([
+      ctx.db.championCandidate.findMany({
+        orderBy: { teamName: "asc" },
+      }),
+      ctx.db.championVote.findMany({
+        select: {
+          candidateId: true,
+          user: { select: { id: true, name: true } },
+        },
+      }),
+    ]);
 
-    return candidates.map((candidate) => ({
-      candidate,
-      count:
-        counts.find((c) => c.candidateId === candidate.id)?._count ?? 0,
-    }));
+    return candidates.map((candidate) => {
+      const voters = votes
+        .filter((v) => v.candidateId === candidate.id)
+        .map((v) => v.user);
+      return { candidate, count: voters.length, voters };
+    });
   }),
 
   cast: protectedProcedure
