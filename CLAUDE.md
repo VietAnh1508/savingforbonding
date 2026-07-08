@@ -101,7 +101,7 @@ Pages are async server components that call `api.*.prefetch()` to populate the R
 
 `src/server/services/fifa-api.ts` calls `api.fifa.com/api/v3`. Syncing happens two ways:
 
-- **Automatic (daily):** A Vercel cron job hits `GET /api/cron/sync-fifa` at 12:00 ICT (05:00 UTC) every day. Auth is via `Authorization: Bearer <CRON_SECRET>` header. Configured in `vercel.json`.
+- **Automatic (daily):** A Vercel cron job hits `GET /api/cron/sync-fifa` at 08:00 ICT (01:00 UTC) every day. Auth is via `Authorization: Bearer <CRON_SECRET>` header. Configured in `vercel.json`.
 - **Manual (on-demand):** Admin panel button POSTs to `/api/admin/sync-fifa` (requires admin cookie), or run `npm run sync:fifa` locally.
 
 ### Voting / beer logic
