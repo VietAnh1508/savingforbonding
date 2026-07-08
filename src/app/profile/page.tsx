@@ -12,12 +12,14 @@ export default async function ProfilePage() {
   const session = await auth();
   if (!session?.user) redirect("/auth/signin");
 
-  const [stats, votes, missedMatches, followers] = await Promise.all([
-    api.vote.getMyStats(),
-    api.vote.getMyVotes(),
-    api.vote.getMyMissedMatches(),
-    api.vote.getMyFollowers(),
-  ]);
+  const [stats, votes, missedMatches, followers, nameUpdatedAt] =
+    await Promise.all([
+      api.vote.getMyStats(),
+      api.vote.getMyVotes(),
+      api.vote.getMyMissedMatches(),
+      api.vote.getMyFollowers(),
+      api.user.getNameUpdatedAt(),
+    ]);
 
   const voteItems = votes.map((v) => ({
     kind: "vote" as const,
@@ -92,6 +94,7 @@ export default async function ProfilePage() {
             <EditProfileName
               initialName={session.user.name}
               email={session.user.email}
+              nameUpdatedAt={nameUpdatedAt}
             />
           </div>
 
