@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -7,17 +8,21 @@ import { useEffect, useRef, useState } from "react";
 import { ThemeToggle } from "~/app/_components/theme-toggle";
 
 interface NavClientProps {
-  isLoggedIn: boolean;
-  userName?: string | null;
-  userEmail?: string | null;
+  user: {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  } | null;
 }
 
-export function NavMenu({ isLoggedIn, userName, userEmail }: NavClientProps) {
+export function NavMenu({ user }: NavClientProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const displayName = userName?.trim() || userEmail?.split("@")[0] || "Account";
+  const isLoggedIn = !!user;
+  const displayName =
+    user?.name?.trim() || user?.email?.split("@")[0] || "Account";
 
   const navItems = [
     { href: "/", label: "Matches" },
@@ -91,9 +96,19 @@ export function NavMenu({ isLoggedIn, userName, userEmail }: NavClientProps) {
           aria-label="Account menu"
           className="flex cursor-pointer items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-500/30 dark:text-emerald-300"
         >
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/30 text-xs font-bold uppercase">
-            {displayName[0]}
-          </span>
+          {user?.image ? (
+            <Image
+              src={user.image}
+              alt={displayName}
+              width={24}
+              height={24}
+              className="h-6 w-6 rounded-full object-cover"
+            />
+          ) : (
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/30 text-xs font-bold uppercase">
+              {displayName[0]}
+            </span>
+          )}
           <svg
             aria-hidden="true"
             viewBox="0 0 20 20"
@@ -140,9 +155,9 @@ export function NavMenu({ isLoggedIn, userName, userEmail }: NavClientProps) {
               className="block border-b border-foreground/10 px-4 py-3 transition-colors hover:bg-foreground/10"
             >
               <p className="truncate text-sm font-medium">{displayName}</p>
-              {userEmail && (
+              {user?.email && (
                 <p className="truncate text-xs text-foreground/50">
-                  {userEmail}
+                  {user.email}
                 </p>
               )}
             </Link>
