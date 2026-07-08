@@ -105,6 +105,7 @@ model User {
   weeklyPoints       Int           @default(0)
   mustChangePassword Boolean       @default(false)
   createdAt          DateTime      @default(now())
+  nameUpdatedAt      DateTime?
   votes              Vote[]
   following          UserFollow[]  @relation("FollowerFollows")
   followers          UserFollow[]  @relation("FollowingFollows")

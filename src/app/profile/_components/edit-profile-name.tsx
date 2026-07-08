@@ -3,23 +3,30 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { nameChangeAvailableAt } from "~/lib/user";
 import { api } from "~/trpc/react";
 
 export function EditProfileName({
   initialName,
   email,
+  nameUpdatedAt,
 }: {
   initialName: string | null | undefined;
   email: string | null | undefined;
+  nameUpdatedAt: Date | null;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(initialName ?? "");
+  const [lockedUntil, setLockedUntil] = useState(() =>
+    nameChangeAvailableAt(nameUpdatedAt),
+  );
 
   const updateName = api.user.updateName.useMutation({
     onSuccess: (user) => {
       setName(user.name ?? "");
       setEditing(false);
+      setLockedUntil(nameChangeAvailableAt(user.nameUpdatedAt));
       router.refresh();
     },
   });
@@ -87,8 +94,14 @@ export function EditProfileName({
             <button
               type="button"
               onClick={() => setEditing(true)}
+              disabled={!!lockedUntil}
               aria-label="Edit name"
-              className="rounded-md p-1 text-foreground/40 transition hover:bg-foreground/10 hover:text-foreground"
+              title={
+                lockedUntil
+                  ? `You can change your name again on ${lockedUntil.toLocaleString()}`
+                  : "Edit name"
+              }
+              className="rounded-md p-1 text-foreground/40 transition hover:bg-foreground/10 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
@@ -97,6 +110,11 @@ export function EditProfileName({
             </button>
           </div>
           <p className="text-sm text-foreground/60 sm:text-base">{email}</p>
+          {lockedUntil && (
+            <p className="mt-1 text-xs text-foreground/40">
+              You can change your name again on {lockedUntil.toLocaleString()}
+            </p>
+          )}
         </div>
       )}
     </div>
