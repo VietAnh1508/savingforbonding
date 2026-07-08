@@ -2,6 +2,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 
 import { Nav } from "~/app/_components/nav";
+import { EditAvatar } from "~/app/profile/_components/edit-avatar";
 import { EditProfileName } from "~/app/profile/_components/edit-profile-name";
 import { noVotePenaltyForStage } from "~/lib/match";
 import { auth } from "~/server/auth";
@@ -78,24 +79,16 @@ export default async function ProfilePage() {
         <Nav />
         <main className="container mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 py-8">
           <div className="mb-6 flex items-center gap-3 sm:mb-8 sm:gap-4">
-            {session.user.image ? (
-              <Image
-                src={session.user.image}
-                alt={session.user.name ?? "User"}
-                width={64}
-                height={64}
-                className="h-10 w-10 rounded-full sm:h-16 sm:w-16"
-              />
-            ) : (
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-lg sm:h-16 sm:w-16 sm:text-2xl">
-                {(session.user.name ?? "?")[0]}
-              </div>
-            )}
+            <EditAvatar image={session.user.image} name={session.user.name} />
             <EditProfileName
               initialName={session.user.name}
               email={session.user.email}
               nameUpdatedAt={nameUpdatedAt}
             />
+          </div>
+
+          <div className="mb-6 rounded-xl border border-sky-500/20 bg-sky-500/5 p-3 text-sm text-sky-700 dark:text-sky-300">
+            📸 New: click your profile picture above to upload an avatar.
           </div>
 
           <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">

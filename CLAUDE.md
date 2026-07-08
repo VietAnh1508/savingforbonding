@@ -75,7 +75,9 @@ Note: `DATABASE_URL` in `.env` is a legacy field kept for schema validation; the
 
 ### API layer (tRPC)
 
-All client–server communication goes through tRPC. Routers live in `src/server/api/routers/`:
+All client–server communication goes through tRPC, except for file uploads — tRPC's JSON transport doesn't fit multipart bodies. Avatar upload (`src/app/api/user/avatar/route.ts`) is a plain Next.js Route Handler: it does its own `auth()` check instead of `protectedProcedure`, and validates/proxies the upload to Cloudflare R2 (`src/server/services/r2.ts`) directly. The FIFA sync admin routes under `src/app/api/admin/` follow the same non-tRPC pattern for cookie-based admin auth.
+
+Routers live in `src/server/api/routers/`:
 
 | Router | Key procedures |
 |--------|---------------|

@@ -12,11 +12,7 @@ export async function Nav() {
         <Link href="/" className="text-base font-bold text-emerald-400 md:text-xl">
           ⚽ SavingForBonding
         </Link>
-        <NavMenu
-          isLoggedIn={!!session?.user}
-          userName={session?.user?.name}
-          userEmail={session?.user?.email}
-        />
+        <NavMenu user={session?.user ?? null} />
       </div>
     </nav>
   );
