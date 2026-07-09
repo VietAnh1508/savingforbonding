@@ -65,6 +65,12 @@ export const championVoteRouter = createTRPCRouter({
       if (!candidate) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Team not found" });
       }
+      if (candidate.eliminatedAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This team has been eliminated",
+        });
+      }
 
       const existingVote = await ctx.db.championVote.findUnique({
         where: { userId: ctx.session.user.id },
@@ -91,7 +97,7 @@ export const championVoteRouter = createTRPCRouter({
       const vote = await ctx.db.championVote.findUnique({
         where: { userId: ctx.session.user.id },
       });
-      if (!vote) {
+      if (!vote || !vote.candidateId) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "You haven't picked a champion yet",

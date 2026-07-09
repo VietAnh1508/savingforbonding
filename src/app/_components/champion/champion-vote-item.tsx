@@ -41,6 +41,8 @@ export function ChampionVoteItem({
   onToggleStar: (tier: StarTier) => void;
   isTogglingStar: boolean;
 }) {
+  const eliminated = !!candidate.eliminatedAt;
+
   return (
     <div>
       <div
@@ -57,10 +59,15 @@ export function ChampionVoteItem({
           selected
             ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
             : "bg-foreground/5 hover:bg-foreground/10"
-        }`}
+        } ${eliminated ? "opacity-50" : ""}`}
       >
         <TeamFlag country={candidate.teamName} size="md" />
         <span className="flex-1">{candidate.teamName}</span>
+        {eliminated && (
+          <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-red-600 dark:text-red-400">
+            OUT
+          </span>
+        )}
         <span className="text-sm font-normal text-foreground/50">
           {voterLabel(count)}
         </span>
@@ -81,7 +88,7 @@ export function ChampionVoteItem({
         {isSignedIn && (
           <button
             type="button"
-            disabled={!votingOpen || isCastPending}
+            disabled={!votingOpen || isCastPending || eliminated}
             onClick={(e) => {
               e.stopPropagation();
               onVote();
