@@ -66,6 +66,12 @@ export const championVoteRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Team not found" });
       }
 
+      const existingVote = await ctx.db.championVote.findUnique({
+        where: { userId: ctx.session.user.id },
+      });
+      const changingCandidate =
+        !!existingVote && existingVote.candidateId !== input.candidateId;
+
       return ctx.db.championVote.upsert({
         where: { userId: ctx.session.user.id },
         create: {
@@ -74,6 +80,7 @@ export const championVoteRouter = createTRPCRouter({
         },
         update: {
           candidateId: input.candidateId,
+          ...(changingCandidate && { starTier: null }),
         },
       });
     }),
