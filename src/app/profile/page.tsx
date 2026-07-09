@@ -13,13 +13,14 @@ export default async function ProfilePage() {
   const session = await auth();
   if (!session?.user) redirect("/auth/signin");
 
-  const [stats, votes, missedMatches, followers, nameUpdatedAt] =
+  const [stats, votes, missedMatches, followers, nameUpdatedAt, championVote] =
     await Promise.all([
       api.vote.getMyStats(),
       api.vote.getMyVotes(),
       api.vote.getMyMissedMatches(),
       api.vote.getMyFollowers(),
       api.user.getNameUpdatedAt(),
+      api.championVote.getMyVote(),
     ]);
 
   const voteItems = votes.map((v) => ({
@@ -73,12 +74,15 @@ export default async function ProfilePage() {
     return { ...item, runningTotal };
   });
 
+  const championResolved = championVote != null && championVote.isCorrect !== null;
+  const championPoints = championVote?.points ?? 0;
+
   return (
     <HydrateClient>
       <div className="flex h-screen flex-col">
         <Nav />
-        <main className="container mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 py-8">
-          <div className="mb-6 flex items-center gap-3 sm:mb-8 sm:gap-4">
+        <main className="container mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 py-4">
+          <div className="mb-4 flex items-center gap-3">
             <EditAvatar image={session.user.image} name={session.user.name} />
             <EditProfileName
               initialName={session.user.name}
@@ -87,19 +91,18 @@ export default async function ProfilePage() {
             />
           </div>
 
-          <div className="mb-6 rounded-xl border border-sky-500/20 bg-sky-500/5 p-3 text-sm text-sky-700 dark:text-sky-300">
-            📸 New: click your profile picture above to upload an avatar.
-          </div>
-
-          <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div
+            className={`mb-4 grid grid-cols-2 gap-3 ${
+              championResolved ? "sm:grid-cols-4" : "sm:grid-cols-3"
+            }`}
+          >
             {[
               { label: "Total Beers", value: `${stats.totalBeers}` },
-              { label: "Weekly Beers", value: `${stats.weeklyBeers}` },
               { label: "Accuracy", value: `${stats.accuracy}%` },
             ].map((stat) => (
               <div
                 key={stat.label}
-                className="flex min-h-16 flex-col items-center justify-center rounded-xl border border-foreground/10 bg-foreground/5 p-3 text-center sm:min-h-24 sm:p-4"
+                className="flex min-h-14 flex-col items-center justify-center rounded-xl border border-foreground/10 bg-foreground/5 p-2.5 text-center sm:min-h-16 sm:p-3"
               >
                 <div className="text-xl font-bold sm:text-2xl">
                   {stat.value}
@@ -107,7 +110,25 @@ export default async function ProfilePage() {
                 <div className="text-xs text-foreground/50">{stat.label}</div>
               </div>
             ))}
-            <div className="flex min-h-16 flex-col items-center justify-center rounded-xl border border-foreground/10 bg-foreground/5 p-3 text-center sm:min-h-24 sm:p-4">
+            {championResolved && (
+              <div className="flex min-h-14 flex-col items-center justify-center rounded-xl border border-foreground/10 bg-foreground/5 p-2.5 text-center sm:min-h-16 sm:p-3">
+                <div
+                  className={`text-xl font-bold sm:text-2xl ${
+                    championPoints > 0
+                      ? "text-red-700 dark:text-red-300"
+                      : championPoints < 0
+                        ? "text-emerald-700 dark:text-emerald-300"
+                        : ""
+                  }`}
+                >
+                  {championPoints > 0 ? `+${championPoints}` : championPoints}
+                </div>
+                <div className="text-xs text-foreground/50">
+                  Champion Vote
+                </div>
+              </div>
+            )}
+            <div className="flex min-h-14 flex-col items-center justify-center rounded-xl border border-foreground/10 bg-foreground/5 p-2.5 text-center sm:min-h-16 sm:p-3">
               <div className="text-xl font-bold sm:text-2xl">
                 <span className="text-green-400">{stats.correctVotes}</span>
                 <span className="mx-1 text-foreground/30">/</span>
@@ -121,8 +142,8 @@ export default async function ProfilePage() {
             </div>
           </div>
 
-          <div className="mb-8">
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-foreground/50">
+          <div className="mb-4">
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-foreground/50">
               Followers
             </h2>
             {followers.length === 0 ? (

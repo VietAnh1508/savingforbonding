@@ -406,7 +406,7 @@ export const voteRouter = createTRPCRouter({
         ctx.db.match.count({ where: { status: "COMPLETED" } }),
         ctx.db.user.findUnique({
           where: { id: userId },
-          select: { totalPoints: true, weeklyPoints: true },
+          select: { totalPoints: true },
         }),
       ]);
 
@@ -421,7 +421,6 @@ export const voteRouter = createTRPCRouter({
       missedVotes,
       accuracy,
       totalBeers: user?.totalPoints ?? 0,
-      weeklyBeers: user?.weeklyPoints ?? 0,
     };
   }),
 });

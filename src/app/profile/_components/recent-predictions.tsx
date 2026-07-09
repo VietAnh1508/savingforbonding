@@ -120,7 +120,7 @@ function ResultCell({ item }: { item: LedgerItem }) {
 export function RecentPredictions({ items }: { items: LedgerItem[] }) {
   return (
     <section className="flex min-h-0 flex-1 flex-col">
-      <h2 className="mb-4 text-xl font-semibold">Match History</h2>
+      <h2 className="mb-2 text-xl font-semibold">Match History</h2>
       {items.length === 0 ? (
         <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-8 text-center text-foreground/50">
           No predictions yet.{" "}
