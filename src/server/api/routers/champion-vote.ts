@@ -1,7 +1,10 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { isChampionVotingOpen } from "~/server/services/champion-vote";
+import {
+  getChampionVotingDeadline,
+  isChampionVotingOpen,
+} from "~/server/services/champion-vote";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -10,7 +13,11 @@ import {
 
 export const championVoteRouter = createTRPCRouter({
   getVotingStatus: publicProcedure.query(async ({ ctx }) => {
-    return { isOpen: await isChampionVotingOpen(ctx.db) };
+    const deadline = await getChampionVotingDeadline(ctx.db);
+    return {
+      isOpen: !deadline || new Date() < deadline,
+      deadline,
+    };
   }),
 
   getMyVote: protectedProcedure.query(async ({ ctx }) => {
