@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { ThemeToggle } from "~/app/_components/theme-toggle";
+import { api } from "~/trpc/react";
 
 interface NavClientProps {
   user: {
@@ -13,6 +14,15 @@ interface NavClientProps {
     email?: string | null;
     image?: string | null;
   } | null;
+}
+
+function NavBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+      {count}
+    </span>
+  );
 }
 
 export function NavMenu({ user }: NavClientProps) {
@@ -24,9 +34,16 @@ export function NavMenu({ user }: NavClientProps) {
   const displayName =
     user?.name?.trim() || user?.email?.split("@")[0] || "Account";
 
+  const { data: challengeCountData } =
+    api.challenge.getOpenIncomingCount.useQuery(undefined, {
+      enabled: isLoggedIn,
+    });
+  const openChallengeCount = challengeCountData?.count ?? 0;
+
   const navItems = [
     { href: "/", label: "Matches" },
     { href: "/champion", label: "Champion" },
+    { href: "/challenge", label: "Challenge" },
     { href: "/leaderboard", label: "Leaderboard" },
     { href: "/insight", label: "Insight" },
     { href: "/rules", label: "Rules" },
@@ -82,6 +99,7 @@ export function NavMenu({ user }: NavClientProps) {
         {navItems.map(({ href, label }) => (
           <Link key={href} href={href} className={desktopLinkClass(href)}>
             {label}
+            {href === "/challenge" && <NavBadge count={openChallengeCount} />}
           </Link>
         ))}
       </div>
@@ -173,6 +191,7 @@ export function NavMenu({ user }: NavClientProps) {
                 onClick={() => setOpen(false)}
               >
                 {label}
+                {href === "/challenge" && <NavBadge count={openChallengeCount} />}
               </Link>
             ))}
           </div>

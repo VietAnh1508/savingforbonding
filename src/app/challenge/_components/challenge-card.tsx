@@ -1,0 +1,155 @@
+"use client";
+
+import {
+  beerDeltaClasses,
+  CHALLENGE_STATUS_BADGE_CLASSES,
+  CHALLENGE_STATUS_LABELS,
+  canCancel,
+  canRespond,
+  canSubmitPick,
+  formatBeerDelta,
+  myChallengeDelta,
+} from "~/lib/challenge";
+import { formatBeers, formatMatchDateTime } from "~/lib/match";
+import { type RouterOutputs } from "~/trpc/react";
+
+type Challenge = RouterOutputs["challenge"]["listMine"][number];
+
+export function ChallengeCard({
+  challenge,
+  currentUserId,
+  onAccept,
+  onRequestReject,
+  onRequestCancel,
+  onSubmitPick,
+  isResponding,
+  isSubmittingPick,
+}: {
+  challenge: Challenge;
+  currentUserId: string;
+  onAccept: (id: string) => void;
+  onRequestReject: (id: string) => void;
+  onRequestCancel: (id: string) => void;
+  onSubmitPick: (id: string, pickedUserId: string) => void;
+  isResponding: boolean;
+  isSubmittingPick: boolean;
+}) {
+  const isChallenger = challenge.challengerId === currentUserId;
+  const myPick = isChallenger
+    ? challenge.challengerPickedWinnerId
+    : challenge.opponentPickedWinnerId;
+  const myDelta = myChallengeDelta(challenge, currentUserId);
+
+  const nameFor = (userId: string) =>
+    userId === currentUserId
+      ? "You"
+      : userId === challenge.challenger.id
+        ? (challenge.challenger.name ?? "Anonymous")
+        : (challenge.opponent.name ?? "Anonymous");
+
+  return (
+    <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-sm text-foreground/60">
+          {challenge.match.homeCountry} vs {challenge.match.awayCountry} —{" "}
+          {formatMatchDateTime(challenge.match.kickoffAt)}
+        </span>
+        <span
+          className={`rounded-full px-2 py-0.5 text-xs font-medium ${CHALLENGE_STATUS_BADGE_CLASSES[challenge.status]}`}
+        >
+          {CHALLENGE_STATUS_LABELS[challenge.status]}
+        </span>
+      </div>
+
+      <p className="mb-2 font-medium">
+        {nameFor(challenge.challenger.id)} vs {nameFor(challenge.opponent.id)}
+        <span className="ml-2 text-amber-600 dark:text-amber-400">
+          {formatBeers(challenge.stakeBeers)}
+        </span>
+      </p>
+
+      <p className="mb-3 text-sm text-foreground/70">{challenge.condition}</p>
+
+      {canRespond(challenge, currentUserId) && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            disabled={isResponding}
+            onClick={() => onAccept(challenge.id)}
+            className="cursor-pointer rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-card transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Accept
+          </button>
+          <button
+            type="button"
+            disabled={isResponding}
+            onClick={() => onRequestReject(challenge.id)}
+            className="cursor-pointer rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Reject
+          </button>
+        </div>
+      )}
+
+      {canCancel(challenge, currentUserId) && (
+        <button
+          type="button"
+          onClick={() => onRequestCancel(challenge.id)}
+          className="cursor-pointer rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10 hover:text-foreground"
+        >
+          Cancel challenge
+        </button>
+      )}
+
+      {canSubmitPick(challenge, currentUserId) && (
+        <div>
+          <p className="mb-2 text-sm text-foreground/60">
+            Who won?{" "}
+            {challenge.status === "CONFLICT" &&
+              "(You disagreed — talk it out and resubmit)"}
+          </p>
+          <div className="flex gap-2">
+            {[challenge.challenger, challenge.opponent].map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                disabled={isSubmittingPick}
+                onClick={() => onSubmitPick(challenge.id, p.id)}
+                className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                  myPick === p.id
+                    ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                    : "bg-foreground/10 text-foreground hover:bg-foreground/20"
+                }`}
+              >
+                {nameFor(p.id)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {challenge.status === "DONE" && (
+        <p className="text-sm text-foreground/60">
+          Winner: {nameFor(challenge.winnerId ?? "")}
+          {myDelta !== null && (
+            <span className={`ml-2 font-semibold ${beerDeltaClasses(myDelta)}`}>
+              {formatBeerDelta(myDelta)} beers
+            </span>
+          )}
+        </p>
+      )}
+
+      {challenge.status === "ACCEPTED" && (
+        <p className="text-sm text-foreground/50">
+          Waiting for the match to finish.
+        </p>
+      )}
+
+      {challenge.status === "REVIEW" && !canSubmitPick(challenge, currentUserId) && (
+        <p className="text-sm text-foreground/50">
+          You picked {myPick === currentUserId ? "yourself" : nameFor(myPick ?? "")} to win — waiting for the other player.
+        </p>
+      )}
+    </div>
+  );
+}
