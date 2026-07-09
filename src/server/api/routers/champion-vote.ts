@@ -1,7 +1,10 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { isChampionVotingOpen } from "~/server/services/champion-vote";
+import {
+  getChampionVotingDeadline,
+  isChampionVotingOpen,
+} from "~/server/services/champion-vote";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -10,7 +13,11 @@ import {
 
 export const championVoteRouter = createTRPCRouter({
   getVotingStatus: publicProcedure.query(async ({ ctx }) => {
-    return { isOpen: await isChampionVotingOpen(ctx.db) };
+    const deadline = await getChampionVotingDeadline(ctx.db);
+    return {
+      isOpen: !deadline || new Date() < deadline,
+      deadline,
+    };
   }),
 
   getMyVote: protectedProcedure.query(async ({ ctx }) => {
@@ -28,6 +35,7 @@ export const championVoteRouter = createTRPCRouter({
       ctx.db.championVote.findMany({
         select: {
           candidateId: true,
+          starTier: true,
           user: { select: { id: true, name: true } },
         },
       }),
@@ -36,7 +44,7 @@ export const championVoteRouter = createTRPCRouter({
     return candidates.map((candidate) => {
       const voters = votes
         .filter((v) => v.candidateId === candidate.id)
-        .map((v) => v.user);
+        .map((v) => ({ ...v.user, starTier: v.starTier }));
       return { candidate, count: voters.length, voters };
     });
   }),
@@ -58,6 +66,12 @@ export const championVoteRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Team not found" });
       }
 
+      const existingVote = await ctx.db.championVote.findUnique({
+        where: { userId: ctx.session.user.id },
+      });
+      const changingCandidate =
+        !!existingVote && existingVote.candidateId !== input.candidateId;
+
       return ctx.db.championVote.upsert({
         where: { userId: ctx.session.user.id },
         create: {
@@ -66,7 +80,36 @@ export const championVoteRouter = createTRPCRouter({
         },
         update: {
           candidateId: input.candidateId,
+          ...(changingCandidate && { starTier: null }),
         },
+      });
+    }),
+
+  toggleStar: protectedProcedure
+    .input(z.object({ tier: z.enum(["YELLOW", "RED"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const vote = await ctx.db.championVote.findUnique({
+        where: { userId: ctx.session.user.id },
+      });
+      if (!vote) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "You haven't picked a champion yet",
+        });
+      }
+
+      if (!(await isChampionVotingOpen(ctx.db))) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Champion voting is closed",
+        });
+      }
+
+      const nextTier = vote.starTier === input.tier ? null : input.tier;
+
+      return ctx.db.championVote.update({
+        where: { userId: ctx.session.user.id },
+        data: { starTier: nextTier },
       });
     }),
 });

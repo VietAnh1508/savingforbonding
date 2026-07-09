@@ -36,11 +36,7 @@ function MatchCardFooter({
   stageNoVotePenalty: number;
 }) {
   if (isSignedIn && isCompleted && voteResult) {
-    const starIcon = voteResult.hasStar ? (
-      <span className="text-amber-500 dark:text-amber-400">
-        <StarIcon filled />
-      </span>
-    ) : null;
+    const starIcon = voteResult.hasStar ? <StarIcon filled /> : null;
 
     if (voteResult.isCorrect === null) {
       return (
@@ -176,13 +172,11 @@ export function MatchCard({
                       : "text-foreground/25 hover:text-amber-400"
                   }`}
                 >
-                  <StarIcon filled={isStarred} />
+                  <StarIcon filled={isStarred} color="inherit" />
                 </button>
               </Tooltip>
             ) : (
-              <span className="text-amber-500 dark:text-amber-400">
-                <StarIcon filled />
-              </span>
+              <StarIcon filled />
             ))}
           {formatKickoffTime(match.kickoffAt)}
         </span>

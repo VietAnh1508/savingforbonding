@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { SignInPrompt } from "~/app/_components/sign-in-prompt";
+import { StarIcon } from "~/app/_components/icons/star-icon";
 import { CHAMPION_VOTE_BONUS, formatBeers } from "~/lib/match";
 import { api } from "~/trpc/react";
 import { useToast } from "../toast";
@@ -11,18 +12,43 @@ import { ChampionVoteItem } from "./champion-vote-item";
 function ChampionStakesBanner() {
   return (
     <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 text-sm text-foreground/70">
-      <h3 className="mb-1 font-semibold text-violet-700 dark:text-violet-300">
+      <h3 className="mb-2 font-semibold text-violet-700 dark:text-violet-300">
         🏆 Champion stakes
       </h3>
-      <p>
-        <span className="text-emerald-600 dark:text-emerald-300">
-          Pick the champion right
-        </span>{" "}
-        and {formatBeers(CHAMPION_VOTE_BONUS)} come off your tab.{" "}
-        <span className="text-red-600 dark:text-red-400">Pick wrong</span> and
-        it&apos;s {formatBeers(CHAMPION_VOTE_BONUS)} more. No penalty if you
-        skip the pick entirely.
-      </p>
+      <ul className="space-y-1.5">
+        <li>
+          <span className="font-medium text-emerald-600 dark:text-emerald-300">
+            Pick right
+          </span>{" "}
+          — {formatBeers(CHAMPION_VOTE_BONUS)} come off your tab.
+        </li>
+        <li>
+          <span className="font-medium text-red-600 dark:text-red-400">
+            Pick wrong
+          </span>{" "}
+          — {formatBeers(CHAMPION_VOTE_BONUS)} go on your tab.
+        </li>
+        <li>
+          <span className="font-medium text-foreground/80">No pick</span> —
+          no penalty either way.
+        </li>
+      </ul>
+      <hr className="my-2.5 border-violet-500/20" />
+      <ul className="space-y-1.5">
+        <li className="flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
+            <StarIcon filled /> Yellow star
+          </span>
+          — doubles the stakes ({formatBeers(CHAMPION_VOTE_BONUS * 2)} swing).
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 font-medium text-red-600 dark:text-red-400">
+            <StarIcon filled color="red" /> Red star
+          </span>
+          — quadruples the stakes ({formatBeers(CHAMPION_VOTE_BONUS * 4)}{" "}
+          swing).
+        </li>
+      </ul>
     </div>
   );
 }
@@ -45,6 +71,22 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
     onSettled: () => {
       void utils.championVote.getMyVote.invalidate();
       void utils.championVote.getVoteCounts.invalidate();
+    },
+  });
+
+  const toggleStar = api.championVote.toggleStar.useMutation({
+    onSuccess: (data) => {
+      toast.success(
+        data.starTier
+          ? `${data.starTier === "RED" ? "Red" : "Yellow"} star applied!`
+          : "Star removed",
+      );
+    },
+    onError: () => {
+      toast.error("Couldn't update star");
+    },
+    onSettled: () => {
+      void utils.championVote.getMyVote.invalidate();
     },
   });
 
@@ -103,6 +145,9 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
               isSignedIn={isSignedIn}
               votingOpen={votingOpen}
               isCastPending={castVote.isPending}
+              starTier={selected ? (myVote?.starTier ?? null) : null}
+              onToggleStar={(tier) => toggleStar.mutate({ tier })}
+              isTogglingStar={toggleStar.isPending}
             />
           );
         })}
@@ -110,6 +155,11 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
       {castVote.error && (
         <p className="text-sm text-red-600 dark:text-red-400">
           {castVote.error.message}
+        </p>
+      )}
+      {toggleStar.error && (
+        <p className="text-sm text-red-600 dark:text-red-400">
+          {toggleStar.error.message}
         </p>
       )}
       {!isSignedIn && <SignInPrompt action="to vote for the champion" />}

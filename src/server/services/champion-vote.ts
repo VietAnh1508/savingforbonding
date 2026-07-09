@@ -1,4 +1,4 @@
-import { CHAMPION_VOTE_BONUS } from "~/lib/match";
+import { beerCostForChampionVote } from "~/lib/match";
 import { type PrismaClient } from "../../../generated/prisma";
 
 /**
@@ -16,7 +16,7 @@ export async function resolveChampionVotes(
 
   for (const vote of votes) {
     const isCorrect = vote.candidateId === winningCandidateId;
-    const newPoints = isCorrect ? -CHAMPION_VOTE_BONUS : CHAMPION_VOTE_BONUS;
+    const newPoints = beerCostForChampionVote(isCorrect, vote.starTier);
     const delta = newPoints - vote.points;
 
     if (delta !== 0) {
@@ -45,17 +45,18 @@ export async function resolveChampionVotes(
   return { votesResolved: votes.length, usersUpdated };
 }
 
-export async function isChampionVotingOpen(db: PrismaClient): Promise<boolean> {
+/** Kickoff of the Semi-final stage, or null if it isn't scheduled yet. */
+export async function getChampionVotingDeadline(
+  db: PrismaClient,
+): Promise<Date | null> {
   const semiFinalStage = await db.stage.findFirst({
     where: { name: "Semi-final" },
+    select: { startDate: true },
   });
-  if (!semiFinalStage) return true;
+  return semiFinalStage?.startDate ?? null;
+}
 
-  const firstSfMatch = await db.match.findFirst({
-    where: { stageId: semiFinalStage.id },
-    orderBy: { kickoffAt: "asc" },
-  });
-  if (!firstSfMatch) return true;
-
-  return new Date() < firstSfMatch.kickoffAt;
+export async function isChampionVotingOpen(db: PrismaClient): Promise<boolean> {
+  const deadline = await getChampionVotingDeadline(db);
+  return !deadline || new Date() < deadline;
 }
