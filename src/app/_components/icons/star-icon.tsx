@@ -1,9 +1,29 @@
-export function StarIcon({ filled }: { filled: boolean }) {
+const STAR_ICON_COLOR_CLASSES = {
+  yellow: "text-amber-500 dark:text-amber-400",
+  red: "text-red-500 dark:text-red-400",
+  inherit: "",
+} as const;
+
+export type StarIconColor = keyof typeof STAR_ICON_COLOR_CLASSES;
+
+export function StarIcon({
+  filled,
+  color = "yellow",
+  className = "",
+}: {
+  filled: boolean;
+  /** Defaults to "yellow" (the app's single star color). Pass "inherit" to let a parent's text color control it, e.g. an active/inactive toggle button. */
+  color?: StarIconColor;
+  className?: string;
+}) {
+  const classes =
+    `h-4 w-4 ${STAR_ICON_COLOR_CLASSES[color]} ${className}`.trim();
+
   return filled ? (
     <svg
       viewBox="0 0 20 20"
       fill="currentColor"
-      className="h-4 w-4"
+      className={classes}
       aria-hidden="true"
     >
       <path
@@ -18,7 +38,7 @@ export function StarIcon({ filled }: { filled: boolean }) {
       fill="none"
       stroke="currentColor"
       strokeWidth={1.5}
-      className="h-4 w-4"
+      className={classes}
       aria-hidden="true"
     >
       <path

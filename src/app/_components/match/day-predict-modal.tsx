@@ -211,7 +211,7 @@ export function DayPredictModal({
                                 : "cursor-not-allowed text-foreground/20"
                           }`}
                         >
-                          <StarIcon filled={isStarred} />
+                          <StarIcon filled={isStarred} color="inherit" />
                         </button>
                       </Tooltip>
                     )}

@@ -1,4 +1,4 @@
-import { CHAMPION_VOTE_BONUS } from "~/lib/match";
+import { beerCostForChampionVote } from "~/lib/match";
 import { type PrismaClient } from "../../../generated/prisma";
 
 /**
@@ -16,7 +16,7 @@ export async function resolveChampionVotes(
 
   for (const vote of votes) {
     const isCorrect = vote.candidateId === winningCandidateId;
-    const newPoints = isCorrect ? -CHAMPION_VOTE_BONUS : CHAMPION_VOTE_BONUS;
+    const newPoints = beerCostForChampionVote(isCorrect, vote.starTier);
     const delta = newPoints - vote.points;
 
     if (delta !== 0) {

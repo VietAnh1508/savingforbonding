@@ -28,6 +28,7 @@ export const championVoteRouter = createTRPCRouter({
       ctx.db.championVote.findMany({
         select: {
           candidateId: true,
+          starTier: true,
           user: { select: { id: true, name: true } },
         },
       }),
@@ -36,7 +37,7 @@ export const championVoteRouter = createTRPCRouter({
     return candidates.map((candidate) => {
       const voters = votes
         .filter((v) => v.candidateId === candidate.id)
-        .map((v) => v.user);
+        .map((v) => ({ ...v.user, starTier: v.starTier }));
       return { candidate, count: voters.length, voters };
     });
   }),
@@ -67,6 +68,34 @@ export const championVoteRouter = createTRPCRouter({
         update: {
           candidateId: input.candidateId,
         },
+      });
+    }),
+
+  toggleStar: protectedProcedure
+    .input(z.object({ tier: z.enum(["YELLOW", "RED"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const vote = await ctx.db.championVote.findUnique({
+        where: { userId: ctx.session.user.id },
+      });
+      if (!vote) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "You haven't picked a champion yet",
+        });
+      }
+
+      if (!(await isChampionVotingOpen(ctx.db))) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Champion voting is closed",
+        });
+      }
+
+      const nextTier = vote.starTier === input.tier ? null : input.tier;
+
+      return ctx.db.championVote.update({
+        where: { userId: ctx.session.user.id },
+        data: { starTier: nextTier },
       });
     }),
 });

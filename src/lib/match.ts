@@ -1,4 +1,8 @@
-import { type MatchStatus, type VoteOutcome } from "../../generated/prisma";
+import {
+  type ChampionStarTier,
+  type MatchStatus,
+  type VoteOutcome,
+} from "../../generated/prisma";
 
 export type MatchVoteCounts = {
   home: number;
@@ -19,6 +23,25 @@ export const BEER_LOSE = BEER_PLATFORM_FEE + BEER_LOSE_PENALTY;
 export const BEER_NO_VOTE = 2;
 /** Beer swing for a champion pick: correct picks subtract this many, wrong picks add it. */
 export const CHAMPION_VOTE_BONUS = 50;
+
+export function championStarMultiplier(tier: ChampionStarTier | null): number {
+  switch (tier) {
+    case "RED":
+      return 4;
+    case "YELLOW":
+      return 2;
+    default:
+      return 1;
+  }
+}
+
+export function beerCostForChampionVote(
+  isCorrect: boolean,
+  starTier: ChampionStarTier | null,
+): number {
+  const bonus = CHAMPION_VOTE_BONUS * championStarMultiplier(starTier);
+  return isCorrect ? -bonus : bonus;
+}
 
 export function beerCostForStarVote(
   isCorrect: boolean,

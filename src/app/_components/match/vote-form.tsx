@@ -148,11 +148,7 @@ export function VoteForm({
         <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4 text-center">
           <p className="text-sm text-foreground/50">Voting is locked</p>
           <p className="mt-2 flex items-center justify-center gap-1.5 font-medium">
-            {hasStar && (
-              <span className="text-amber-500 dark:text-amber-400">
-                <StarIcon filled />
-              </span>
-            )}
+            {hasStar && <StarIcon filled />}
             <span>
               Your prediction:{" "}
               <strong>
@@ -171,11 +167,7 @@ export function VoteForm({
       return (
         <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center text-emerald-700 dark:text-emerald-300">
           <p className="flex items-center justify-center gap-1.5 text-lg font-semibold">
-            {hasStar && (
-              <span className="text-amber-500 dark:text-amber-400">
-                <StarIcon filled />
-              </span>
-            )}
+            {hasStar && <StarIcon filled />}
             Correct
           </p>
           <p className="mt-1 text-sm">
@@ -192,11 +184,7 @@ export function VoteForm({
     return (
       <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-center text-red-700 dark:text-red-300">
         <p className="flex items-center justify-center gap-1.5 text-lg font-semibold">
-          {hasStar && (
-            <span className="text-amber-500 dark:text-amber-400">
-              <StarIcon filled />
-            </span>
-          )}
+          {hasStar && <StarIcon filled />}
           Wrong
         </p>
         <p className="mt-1 text-sm">
@@ -234,11 +222,7 @@ export function VoteForm({
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 text-sm font-medium">
-                {hasStarOnThisVote && (
-                  <span className="text-amber-500 dark:text-amber-400">
-                    <StarIcon filled />
-                  </span>
-                )}
+                {hasStarOnThisVote && <StarIcon filled />}
                 {hasStarOnThisVote ? "Starred" : "Star of Hope"}
               </p>
               <p className="mt-0.5 text-xs text-foreground/50">
@@ -269,9 +253,7 @@ export function VoteForm({
                   "Remove"
                 ) : (
                   <span className="flex items-center gap-1.5">
-                    <span className="text-amber-500 dark:text-amber-400">
-                      <StarIcon filled />
-                    </span>
+                    <StarIcon filled />
                     Star it
                   </span>
                 )}

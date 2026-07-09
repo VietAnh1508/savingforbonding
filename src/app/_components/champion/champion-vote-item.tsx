@@ -1,11 +1,14 @@
 "use client";
 
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
+import { StarIcon } from "~/app/_components/icons/star-icon";
 import { TeamFlag } from "~/app/_components/match/team-flag";
+import { Tooltip } from "~/app/_components/tooltip";
 import { voterLabel } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
 type VoteCount = RouterOutputs["championVote"]["getVoteCounts"][number];
+type StarTier = "YELLOW" | "RED";
 
 export function ChampionVoteItem({
   candidate,
@@ -19,6 +22,9 @@ export function ChampionVoteItem({
   isSignedIn,
   votingOpen,
   isCastPending,
+  starTier,
+  onToggleStar,
+  isTogglingStar,
 }: {
   candidate: VoteCount["candidate"];
   count: VoteCount["count"];
@@ -31,6 +37,9 @@ export function ChampionVoteItem({
   isSignedIn: boolean;
   votingOpen: boolean;
   isCastPending: boolean;
+  starTier: StarTier | null;
+  onToggleStar: (tier: StarTier) => void;
+  isTogglingStar: boolean;
 }) {
   return (
     <div>
@@ -88,6 +97,38 @@ export function ChampionVoteItem({
             {selected ? "Picked" : "Pick"}
           </button>
         )}
+        {isSignedIn && selected && (
+          <div className="flex items-center gap-1.5">
+            {(["YELLOW", "RED"] as const).map((tier) => {
+              const active = starTier === tier;
+              const color = tier === "YELLOW" ? "yellow" : "red";
+              return (
+                <Tooltip
+                  key={tier}
+                  label={`${active ? "Remove" : "Apply"} ${
+                    tier === "YELLOW" ? "yellow star (2x)" : "red star (4x)"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    disabled={!votingOpen || isTogglingStar}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleStar(tier);
+                    }}
+                    aria-label={`${active ? "Remove" : "Apply"} ${
+                      tier === "YELLOW" ? "yellow (2x)" : "red (4x)"
+                    } star`}
+                    aria-pressed={active}
+                    className="flex items-center justify-center p-1 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <StarIcon filled={active} color={color} />
+                  </button>
+                </Tooltip>
+              );
+            })}
+          </div>
+        )}
       </div>
       {expanded && (
         <div className="bg-foreground/[0.02] px-4 py-3">
@@ -96,7 +137,17 @@ export function ChampionVoteItem({
           ) : (
             <ul className="flex flex-wrap gap-x-4 gap-y-1">
               {voters.map((voter) => (
-                <li key={voter.id} className="text-xs text-foreground/60">
+                <li
+                  key={voter.id}
+                  className="flex items-center gap-1 text-xs text-foreground/60"
+                >
+                  {voter.starTier && (
+                    <StarIcon
+                      filled
+                      color={voter.starTier === "YELLOW" ? "yellow" : "red"}
+                      className="h-3 w-3"
+                    />
+                  )}
                   {voter.name}
                 </li>
               ))}
