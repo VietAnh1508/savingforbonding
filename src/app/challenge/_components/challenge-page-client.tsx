@@ -43,7 +43,30 @@ function Section({
   );
 }
 
-type Tab = "mine" | "community";
+type Tab = "mine" | "community" | "how-it-works";
+
+const HOW_IT_WORKS_STEPS = [
+  {
+    title: "1. Create a challenge",
+    body: "Pick who you're challenging, how many beers to stake (capped at whichever of you has fewer), an upcoming match, and describe the specific outcome you're staking on — e.g. \"France scores in the first half\".",
+  },
+  {
+    title: "2. They accept or reject",
+    body: "Your opponent sees it under Needs your attention and can accept or reject before the match kicks off. If they reject or you cancel first, it's over — no beers change hands.",
+  },
+  {
+    title: "3. The match plays out",
+    body: "Once accepted, the challenge just waits for the match to finish — nothing to do until then.",
+  },
+  {
+    title: "4. Both of you pick the winner",
+    body: "After the match ends, you'll both be asked who won. Talk it out in person if you need to, then each submit your pick.",
+  },
+  {
+    title: "5. It settles automatically",
+    body: "If you agree, the challenge is done: the loser's beer count goes up by the stake, the winner's goes down. If you disagree, it shows as Conflict — resubmit once you've sorted it out.",
+  },
+];
 
 export function ChallengePageClient({
   currentUserId,
@@ -159,6 +182,14 @@ export function ChallengePageClient({
         >
           Community challenges
         </button>
+        <span className="text-foreground/20">|</span>
+        <button
+          type="button"
+          onClick={() => setActiveTab("how-it-works")}
+          className={`cursor-pointer transition ${activeTab === "how-it-works" ? "" : "text-foreground/30 hover:text-foreground/50"}`}
+        >
+          How it works
+        </button>
       </div>
 
       {activeTab === "mine" && (
@@ -269,6 +300,20 @@ export function ChallengePageClient({
             ))}
           </div>
         </>
+      )}
+
+      {activeTab === "how-it-works" && (
+        <div className="space-y-4">
+          {HOW_IT_WORKS_STEPS.map((step) => (
+            <div
+              key={step.title}
+              className="rounded-xl border border-foreground/10 bg-foreground/5 p-4"
+            >
+              <h3 className="mb-1 font-semibold">{step.title}</h3>
+              <p className="text-sm text-foreground/70">{step.body}</p>
+            </div>
+          ))}
+        </div>
       )}
 
       {showCreate && (
