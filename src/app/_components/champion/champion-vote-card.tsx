@@ -32,6 +32,12 @@ function ChampionStakesBanner() {
           <span className="font-medium text-foreground/80">No pick</span> —
           no penalty either way.
         </li>
+        <li>
+          <span className="font-medium text-orange-600 dark:text-orange-400">
+            Your pick gets eliminated
+          </span>{" "}
+          — pick again from the teams still standing.
+        </li>
       </ul>
       <hr className="my-2.5 border-violet-500/20" />
       <ul className="space-y-1.5">
@@ -92,6 +98,7 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
 
   const votingOpen = votingStatus?.isOpen ?? true;
   const selectedCandidateId = myVote?.candidateId;
+  const pickWasEliminated = !!myVote && !myVote.candidateId;
 
   if (!voteCounts?.length) {
     return (
@@ -108,6 +115,14 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
   return (
     <div className="space-y-4">
       <ChampionStakesBanner />
+      {votingOpen && pickWasEliminated && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-center text-red-700 dark:text-red-300">
+          <p className="font-medium">Your pick was eliminated</p>
+          <p className="mt-1 text-sm">
+            Choose a new team below to stay in the running.
+          </p>
+        </div>
+      )}
       {!votingOpen && (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-center text-amber-700 dark:text-amber-300">
           <p className="font-medium">Voting is locked</p>

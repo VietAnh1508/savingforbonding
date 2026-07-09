@@ -55,23 +55,23 @@ model StagePenalty {
 }
 
 model Match {
-  id                String       @id @default(cuid())
-  externalId        String?      @unique
-  tournament        String       @default("FIFA World Cup")
-  homeCountry       String
-  awayCountry       String
-  kickoffAt         DateTime
-  status            MatchStatus  @default(SCHEDULED)
-  homeScore         Int?
-  awayScore         Int?
-  homePenaltyScore  Int?
-  awayPenaltyScore  Int?
-  result            VoteOutcome?
-  homeRatio         Float        @default(0)
-  awayRatio         Float        @default(0)
-  stageId           String?
-  stage             Stage?       @relation(fields: [stageId], references: [id])
-  votes             Vote[]
+  id               String       @id @default(cuid())
+  externalId       String?      @unique
+  tournament       String       @default("FIFA World Cup")
+  homeCountry      String
+  awayCountry      String
+  kickoffAt        DateTime
+  status           MatchStatus  @default(SCHEDULED)
+  homeScore        Int?
+  awayScore        Int?
+  homePenaltyScore Int?
+  awayPenaltyScore Int?
+  result           VoteOutcome?
+  homeRatio        Float        @default(0)
+  awayRatio        Float        @default(0)
+  stageId          String?
+  stage            Stage?       @relation(fields: [stageId], references: [id])
+  votes            Vote[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -129,25 +129,26 @@ model UserFollow {
 }
 
 model ChampionCandidate {
-  id          String         @id @default(cuid())
-  fifaTeamId  String         @unique
-  teamName    String
-  countryCode String
-  votes       ChampionVote[]
+  id           String         @id @default(cuid())
+  fifaTeamId   String         @unique
+  teamName     String
+  countryCode  String
+  eliminatedAt DateTime?
+  votes        ChampionVote[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model ChampionVote {
-  id          String            @id @default(cuid())
-  userId      String            @unique
-  candidateId String
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  candidate   ChampionCandidate @relation(fields: [candidateId], references: [id])
+  id          String             @id @default(cuid())
+  userId      String             @unique
+  candidateId String?
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  candidate   ChampionCandidate? @relation(fields: [candidateId], references: [id])
   isCorrect   Boolean?
   starTier    ChampionStarTier?
-  points      Int               @default(0)
+  points      Int                @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
