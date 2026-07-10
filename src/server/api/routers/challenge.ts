@@ -3,7 +3,11 @@ import { z } from "zod";
 
 import { isChallengeableMatch, maxStakeBeers } from "~/lib/challenge";
 import { isKnownCountry } from "~/lib/country-flag";
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "~/server/api/trpc";
 
 // Shared by listMine and listCommunity so the two tabs can't drift apart.
 const challengeListInclude = {
@@ -142,6 +146,77 @@ export const challengeRouter = createTRPCRouter({
       });
     }),
 
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        stakeBeers: z.number().int().min(1),
+        condition: z.string().trim().min(1).max(500),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const challenge = await ctx.db.challenge.findUnique({
+        where: { id: input.id },
+        include: { match: true },
+      });
+      if (!challenge) throw new TRPCError({ code: "NOT_FOUND" });
+      if (challenge.challengerId !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      if (challenge.status !== "OPEN") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Challenge can no longer be edited",
+        });
+      }
+      if (!isChallengeableMatch(challenge.match)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Match has already started",
+        });
+      }
+
+      const [challenger, opponent] = await Promise.all([
+        ctx.db.user.findUnique({
+          where: { id: challenge.challengerId },
+          select: { totalPoints: true },
+        }),
+        ctx.db.user.findUnique({
+          where: { id: challenge.opponentId },
+          select: { totalPoints: true },
+        }),
+      ]);
+      // Server-side recompute — never trust the client's cap.
+      const cap = maxStakeBeers(
+        challenger?.totalPoints ?? 0,
+        opponent?.totalPoints ?? 0,
+      );
+      if (cap < 1) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "One of you has no beers to stake",
+        });
+      }
+      if (input.stakeBeers > cap) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Stake cannot exceed ${cap} beers`,
+        });
+      }
+
+      const res = await ctx.db.challenge.updateMany({
+        where: { id: input.id, status: "OPEN" },
+        data: { stakeBeers: input.stakeBeers, condition: input.condition },
+      });
+      if (res.count === 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Challenge can no longer be edited",
+        });
+      }
+      return { stakeBeers: input.stakeBeers, condition: input.condition };
+    }),
+
   listMine: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
     return ctx.db.challenge.findMany({
@@ -151,10 +226,12 @@ export const challengeRouter = createTRPCRouter({
     });
   }),
 
-  listCommunity: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
+  // Public so logged-out visitors can browse the community feed — only
+  // creating/responding to challenges requires a session. Shows every
+  // challenge, including the caller's own (those also surface under
+  // "My challenges" for logged-in users).
+  listCommunity: publicProcedure.query(async ({ ctx }) => {
     return ctx.db.challenge.findMany({
-      where: { NOT: { OR: [{ challengerId: userId }, { opponentId: userId }] } },
       include: challengeListInclude,
       orderBy: { updatedAt: "desc" },
     });

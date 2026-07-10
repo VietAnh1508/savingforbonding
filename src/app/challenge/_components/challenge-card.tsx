@@ -8,6 +8,7 @@ import {
   canRespond,
   canSubmitPick,
   challengeSettlement,
+  isParticipant,
 } from "~/lib/challenge";
 import { formatBeers, formatMatchDateTime } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
@@ -20,24 +21,30 @@ export function ChallengeCard({
   onAccept,
   onRequestReject,
   onRequestCancel,
+  onRequestEdit,
   onSubmitPick,
   isResponding,
   isSubmittingPick,
+  highlightOwn,
 }: {
   challenge: Challenge;
   currentUserId: string;
   onAccept: (id: string) => void;
   onRequestReject: (id: string) => void;
   onRequestCancel: (id: string) => void;
+  onRequestEdit: (challenge: Challenge) => void;
   onSubmitPick: (id: string, pickedUserId: string) => void;
   isResponding: boolean;
   isSubmittingPick: boolean;
+  /** Show a "Yours" badge and highlight the card when the caller is a participant — used in the Community tab, where that isn't otherwise obvious. */
+  highlightOwn?: boolean;
 }) {
   const isChallenger = challenge.challengerId === currentUserId;
   const myPick = isChallenger
     ? challenge.challengerPickedWinnerId
     : challenge.opponentPickedWinnerId;
   const settlement = challengeSettlement(challenge, currentUserId);
+  const isMine = !!highlightOwn && isParticipant(challenge, currentUserId);
 
   const nameFor = (userId: string) =>
     userId === currentUserId
@@ -47,17 +54,30 @@ export function ChallengeCard({
         : (challenge.opponent.name ?? "Anonymous");
 
   return (
-    <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4">
+    <div
+      className={`rounded-xl border p-4 ${
+        isMine
+          ? "border-emerald-500/30 bg-emerald-500/5"
+          : "border-foreground/10 bg-foreground/5"
+      }`}
+    >
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="text-sm text-foreground/60">
           {challenge.match.homeCountry} vs {challenge.match.awayCountry} —{" "}
           {formatMatchDateTime(challenge.match.kickoffAt)}
         </span>
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs font-medium ${CHALLENGE_STATUS_BADGE_CLASSES[challenge.status]}`}
-        >
-          {CHALLENGE_STATUS_LABELS[challenge.status]}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {isMine && (
+            <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+              Yours
+            </span>
+          )}
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs font-medium ${CHALLENGE_STATUS_BADGE_CLASSES[challenge.status]}`}
+          >
+            {CHALLENGE_STATUS_LABELS[challenge.status]}
+          </span>
+        </div>
       </div>
 
       <p className="mb-2 flex items-center gap-1.5 font-medium">
@@ -90,30 +110,39 @@ export function ChallengeCard({
           <button
             type="button"
             disabled={isResponding}
-            onClick={() => onAccept(challenge.id)}
-            className="cursor-pointer rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-card transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Accept
-          </button>
-          <button
-            type="button"
-            disabled={isResponding}
             onClick={() => onRequestReject(challenge.id)}
             className="cursor-pointer rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Reject
           </button>
+          <button
+            type="button"
+            disabled={isResponding}
+            onClick={() => onAccept(challenge.id)}
+            className="cursor-pointer rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Accept
+          </button>
         </div>
       )}
 
       {canCancel(challenge, currentUserId) && (
-        <button
-          type="button"
-          onClick={() => onRequestCancel(challenge.id)}
-          className="cursor-pointer rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10 hover:text-foreground"
-        >
-          Cancel challenge
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onRequestEdit(challenge)}
+            className="cursor-pointer rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10 hover:text-foreground"
+          >
+            Edit challenge
+          </button>
+          <button
+            type="button"
+            onClick={() => onRequestCancel(challenge.id)}
+            className="cursor-pointer rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10 hover:text-foreground"
+          >
+            Cancel challenge
+          </button>
+        </div>
       )}
 
       {canSubmitPick(challenge, currentUserId) && (
