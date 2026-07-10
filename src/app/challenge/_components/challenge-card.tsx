@@ -1,19 +1,40 @@
 "use client";
 
+import Image from "next/image";
+
 import {
-  beerDeltaClasses,
   CHALLENGE_STATUS_BADGE_CLASSES,
   CHALLENGE_STATUS_LABELS,
   canCancel,
   canRespond,
   canSubmitPick,
-  formatBeerDelta,
-  myChallengeDelta,
+  challengeSettlement,
 } from "~/lib/challenge";
 import { formatBeers, formatMatchDateTime } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
 type Challenge = RouterOutputs["challenge"]["listMine"][number];
+
+function PersonAvatar({
+  person,
+}: {
+  person: { name: string | null; image: string | null };
+}) {
+  const label = person.name ?? "Anonymous";
+  return person.image ? (
+    <Image
+      src={person.image}
+      alt={label}
+      width={20}
+      height={20}
+      className="h-5 w-5 rounded-full object-cover"
+    />
+  ) : (
+    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-foreground/10 text-[10px] font-bold uppercase">
+      {label[0]}
+    </span>
+  );
+}
 
 export function ChallengeCard({
   challenge,
@@ -38,7 +59,7 @@ export function ChallengeCard({
   const myPick = isChallenger
     ? challenge.challengerPickedWinnerId
     : challenge.opponentPickedWinnerId;
-  const myDelta = myChallengeDelta(challenge, currentUserId);
+  const settlement = challengeSettlement(challenge, currentUserId);
 
   const nameFor = (userId: string) =>
     userId === currentUserId
@@ -61,14 +82,20 @@ export function ChallengeCard({
         </span>
       </div>
 
-      <p className="mb-2 font-medium">
-        {nameFor(challenge.challenger.id)} vs {nameFor(challenge.opponent.id)}
-        <span className="ml-2 text-amber-600 dark:text-amber-400">
+      <p className="mb-2 flex items-center gap-1.5 font-medium">
+        <PersonAvatar person={challenge.challenger} />
+        {nameFor(challenge.challenger.id)}
+        <span className="text-foreground/40">vs</span>
+        <PersonAvatar person={challenge.opponent} />
+        {nameFor(challenge.opponent.id)}
+        <span className="ml-1 text-amber-600 dark:text-amber-400">
           {formatBeers(challenge.stakeBeers)}
         </span>
       </p>
 
-      <p className="mb-3 text-sm text-foreground/70">{challenge.condition}</p>
+      <p className="mb-3 text-sm text-foreground/70 italic">
+        “{challenge.condition}”
+      </p>
 
       {canRespond(challenge, currentUserId) && (
         <div className="flex gap-2">
@@ -128,13 +155,33 @@ export function ChallengeCard({
         </div>
       )}
 
-      {challenge.status === "DONE" && (
+      {settlement && (
         <p className="text-sm text-foreground/60">
-          Winner: {nameFor(challenge.winnerId ?? "")}
-          {myDelta !== null && (
-            <span className={`ml-2 font-semibold ${beerDeltaClasses(myDelta)}`}>
-              {formatBeerDelta(myDelta)} beers
-            </span>
+          {settlement.perspective === "won" && (
+            <>
+              <span className="font-semibold text-emerald-700 dark:text-emerald-300">
+                You won
+              </span>{" "}
+              — <span className="font-semibold">{nameFor(settlement.loserId)}</span>{" "}
+              owes you {formatBeers(settlement.amount)}
+            </>
+          )}
+          {settlement.perspective === "lost" && (
+            <>
+              <span className="font-semibold text-red-700 dark:text-red-300">
+                You lost
+              </span>{" "}
+              — you owe{" "}
+              <span className="font-semibold">{nameFor(settlement.winnerId)}</span>{" "}
+              {formatBeers(settlement.amount)}
+            </>
+          )}
+          {settlement.perspective === "spectating" && (
+            <>
+              <span className="font-semibold">{nameFor(settlement.winnerId)}</span>{" "}
+              won — {nameFor(settlement.loserId)} owes{" "}
+              {formatBeers(settlement.amount)}
+            </>
           )}
         </p>
       )}

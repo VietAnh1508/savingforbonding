@@ -58,6 +58,46 @@ export function canSubmitPick(
   return myPick === null;
 }
 
+/** Who owes whom once a challenge is DONE, and how the card's viewer relates to it — null if not yet settled. */
+export function challengeSettlement(
+  challenge: {
+    challengerId: string;
+    opponentId: string;
+    winnerId: string | null;
+    challengerPoints: number | null;
+    opponentPoints: number | null;
+    stakeBeers: number;
+  },
+  currentUserId: string,
+): {
+  amount: number;
+  winnerId: string;
+  loserId: string;
+  perspective: "won" | "lost" | "spectating";
+} | null {
+  if (!challenge.winnerId) return null;
+  const loserId =
+    challenge.winnerId === challenge.challengerId
+      ? challenge.opponentId
+      : challenge.challengerId;
+  const loserDelta =
+    challenge.winnerId === challenge.challengerId
+      ? challenge.opponentPoints
+      : challenge.challengerPoints;
+  const perspective =
+    currentUserId === challenge.winnerId
+      ? "won"
+      : currentUserId === loserId
+        ? "lost"
+        : "spectating";
+  return {
+    amount: Math.abs(loserDelta ?? challenge.stakeBeers),
+    winnerId: challenge.winnerId,
+    loserId,
+    perspective,
+  };
+}
+
 /** Beer delta applied to `userId` when a DONE challenge settled — null if not a participant or not yet settled. */
 export function myChallengeDelta(
   challenge: {
