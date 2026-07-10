@@ -90,18 +90,18 @@ export function ChallengeCard({
           <button
             type="button"
             disabled={isResponding}
-            onClick={() => onAccept(challenge.id)}
-            className="cursor-pointer rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-card transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Accept
-          </button>
-          <button
-            type="button"
-            disabled={isResponding}
             onClick={() => onRequestReject(challenge.id)}
             className="cursor-pointer rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Reject
+          </button>
+          <button
+            type="button"
+            disabled={isResponding}
+            onClick={() => onAccept(challenge.id)}
+            className="cursor-pointer rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Accept
           </button>
         </div>
       )}
