@@ -34,13 +34,6 @@ export function canCancel(
   return challenge.challengerId === userId && challenge.status === "OPEN";
 }
 
-export function canEdit(
-  challenge: { challengerId: string; status: string },
-  userId: string,
-): boolean {
-  return challenge.challengerId === userId && challenge.status === "OPEN";
-}
-
 export function canSubmitPick(
   challenge: {
     challengerId: string;

@@ -25,7 +25,7 @@ export function EditChallengeModal({
 
   // Reuses the create-modal context query to get fresh totalPoints for the
   // cap — the challenge list only carries id/name/image for each side.
-  const { data } = api.challenge.getCreateContext.useQuery();
+  const { data, isLoading } = api.challenge.getCreateContext.useQuery();
   const opponent =
     data?.others.find((o) => o.id === challenge.opponentId) ?? null;
   const cap = opponent
@@ -73,44 +73,54 @@ export function EditChallengeModal({
         </div>
 
         <div className="space-y-6 px-6 py-4">
-          <section>
-            <h3 className="mb-2 text-sm font-semibold text-foreground/70">
-              How many beers?
-            </h3>
-            {opponent && (
-              <p className="mb-2 text-xs text-foreground/50">
-                You: {formatBeers(data?.myTotalPoints ?? 0)} ·{" "}
-                {opponent.name ?? "Anonymous"}:{" "}
-                {formatBeers(opponent.totalPoints)} · max stake:{" "}
-                {formatBeers(cap)}
-              </p>
-            )}
-            <input
-              type="number"
-              min={1}
-              max={cap}
-              value={stakeBeers}
-              onChange={(e) =>
-                setStakeBeers(
-                  Math.max(1, Math.min(cap, Number(e.target.value) || 1)),
-                )
-              }
-              className="w-full rounded-lg border border-foreground/10 bg-transparent px-3 py-2 text-sm"
-            />
-          </section>
+          {isLoading && (
+            <div className="flex justify-center py-12">
+              <SpinnerIcon className="h-6 w-6 text-foreground/40" />
+            </div>
+          )}
 
-          <section>
-            <h3 className="mb-2 text-sm font-semibold text-foreground/70">
-              What&apos;s the outcome?
-            </h3>
-            <textarea
-              value={condition}
-              onChange={(e) => setCondition(e.target.value)}
-              maxLength={500}
-              rows={3}
-              className="w-full rounded-lg border border-foreground/10 bg-transparent px-3 py-2 text-sm"
-            />
-          </section>
+          {!isLoading && (
+            <>
+              <section>
+                <h3 className="mb-2 text-sm font-semibold text-foreground/70">
+                  How many beers?
+                </h3>
+                {opponent && (
+                  <p className="mb-2 text-xs text-foreground/50">
+                    You: {formatBeers(data?.myTotalPoints ?? 0)} ·{" "}
+                    {opponent.name ?? "Anonymous"}:{" "}
+                    {formatBeers(opponent.totalPoints)} · max stake:{" "}
+                    {formatBeers(cap)}
+                  </p>
+                )}
+                <input
+                  type="number"
+                  min={1}
+                  max={cap}
+                  value={stakeBeers}
+                  onChange={(e) =>
+                    setStakeBeers(
+                      Math.max(1, Math.min(cap, Number(e.target.value) || 1)),
+                    )
+                  }
+                  className="w-full rounded-lg border border-foreground/10 bg-transparent px-3 py-2 text-sm"
+                />
+              </section>
+
+              <section>
+                <h3 className="mb-2 text-sm font-semibold text-foreground/70">
+                  What&apos;s the outcome?
+                </h3>
+                <textarea
+                  value={condition}
+                  onChange={(e) => setCondition(e.target.value)}
+                  maxLength={500}
+                  rows={3}
+                  className="w-full rounded-lg border border-foreground/10 bg-transparent px-3 py-2 text-sm"
+                />
+              </section>
+            </>
+          )}
         </div>
 
         <div className="sticky bottom-0 flex justify-end gap-2 border-t border-foreground/10 bg-card px-6 py-4">

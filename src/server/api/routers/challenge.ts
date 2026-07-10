@@ -157,6 +157,7 @@ export const challengeRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const challenge = await ctx.db.challenge.findUnique({
         where: { id: input.id },
+        include: { match: true },
       });
       if (!challenge) throw new TRPCError({ code: "NOT_FOUND" });
       if (challenge.challengerId !== ctx.session.user.id) {
@@ -166,6 +167,12 @@ export const challengeRouter = createTRPCRouter({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Challenge can no longer be edited",
+        });
+      }
+      if (!isChallengeableMatch(challenge.match)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Match has already started",
         });
       }
 
@@ -184,6 +191,12 @@ export const challengeRouter = createTRPCRouter({
         challenger?.totalPoints ?? 0,
         opponent?.totalPoints ?? 0,
       );
+      if (cap < 1) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "One of you has no beers to stake",
+        });
+      }
       if (input.stakeBeers > cap) {
         throw new TRPCError({
           code: "BAD_REQUEST",

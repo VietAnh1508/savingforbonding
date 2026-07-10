@@ -5,7 +5,6 @@ import {
   CHALLENGE_STATUS_BADGE_CLASSES,
   CHALLENGE_STATUS_LABELS,
   canCancel,
-  canEdit,
   canRespond,
   canSubmitPick,
   challengeSettlement,
@@ -129,15 +128,13 @@ export function ChallengeCard({
 
       {canCancel(challenge, currentUserId) && (
         <div className="flex gap-2">
-          {canEdit(challenge, currentUserId) && (
-            <button
-              type="button"
-              onClick={() => onRequestEdit(challenge)}
-              className="cursor-pointer rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10 hover:text-foreground"
-            >
-              Edit challenge
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => onRequestEdit(challenge)}
+            className="cursor-pointer rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10 hover:text-foreground"
+          >
+            Edit challenge
+          </button>
           <button
             type="button"
             onClick={() => onRequestCancel(challenge.id)}
