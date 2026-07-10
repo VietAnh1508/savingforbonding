@@ -110,7 +110,7 @@ Pages are async server components that call `api.*.prefetch()` to populate the R
 
 - Voting closes 5 minutes before kickoff (`VOTE_LOCK_MINUTES = 5` in `src/lib/match.ts`).
 - Beer penalties: correct prediction = 1 beer, wrong = 3 beers, no vote on a completed match = 2 beers.
-- `src/server/services/resolve-votes.ts` marks votes correct/incorrect — this is called manually, not triggered automatically when a match finishes.
+- `src/server/services/resolve-votes.ts` marks votes correct/incorrect. It's called from `syncFifaFixtures` whenever a sync sees a match newly transition to `COMPLETED` — so it runs on the same cadence as the FIFA sync above (daily cron, or on-demand), not the instant the match itself finishes.
 
 ### Path alias
 
