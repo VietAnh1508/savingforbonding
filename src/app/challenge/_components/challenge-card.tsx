@@ -1,7 +1,6 @@
 "use client";
 
-import Image from "next/image";
-
+import { UserAvatar } from "~/app/_components/user-avatar";
 import {
   CHALLENGE_STATUS_BADGE_CLASSES,
   CHALLENGE_STATUS_LABELS,
@@ -14,27 +13,6 @@ import { formatBeers, formatMatchDateTime } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
 type Challenge = RouterOutputs["challenge"]["listMine"][number];
-
-function PersonAvatar({
-  person,
-}: {
-  person: { name: string | null; image: string | null };
-}) {
-  const label = person.name ?? "Anonymous";
-  return person.image ? (
-    <Image
-      src={person.image}
-      alt={label}
-      width={20}
-      height={20}
-      className="h-5 w-5 rounded-full object-cover"
-    />
-  ) : (
-    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-foreground/10 text-[10px] font-bold uppercase">
-      {label[0]}
-    </span>
-  );
-}
 
 export function ChallengeCard({
   challenge,
@@ -83,10 +61,20 @@ export function ChallengeCard({
       </div>
 
       <p className="mb-2 flex items-center gap-1.5 font-medium">
-        <PersonAvatar person={challenge.challenger} />
+        <UserAvatar
+          name={challenge.challenger.name}
+          image={challenge.challenger.image}
+          size={20}
+          fallbackClassName="bg-foreground/10 text-[10px] font-bold uppercase"
+        />
         {nameFor(challenge.challenger.id)}
         <span className="text-foreground/40">vs</span>
-        <PersonAvatar person={challenge.opponent} />
+        <UserAvatar
+          name={challenge.opponent.name}
+          image={challenge.opponent.image}
+          size={20}
+          fallbackClassName="bg-foreground/10 text-[10px] font-bold uppercase"
+        />
         {nameFor(challenge.opponent.id)}
         <span className="ml-1 text-amber-600 dark:text-amber-400">
           {formatBeers(challenge.stakeBeers)}

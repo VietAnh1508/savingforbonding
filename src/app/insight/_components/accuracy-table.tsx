@@ -1,7 +1,6 @@
 "use client";
 
-import Image from "next/image";
-
+import { UserAvatar } from "~/app/_components/user-avatar";
 import { type RouterOutputs } from "~/trpc/react";
 
 import {
@@ -102,19 +101,12 @@ export function AccuracyTable({
                 </td>
                 <td className="px-1 py-3 sm:px-2">
                   <div className="flex items-center gap-3">
-                    {entry.image ? (
-                      <Image
-                        src={entry.image}
-                        alt={entry.name ?? "User"}
-                        width={32}
-                        height={32}
-                        className="shrink-0 rounded-full"
-                      />
-                    ) : (
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-sm">
-                        {[...(entry.name ?? "?")][0]}
-                      </div>
-                    )}
+                    <UserAvatar
+                      name={entry.name}
+                      image={entry.image}
+                      size={32}
+                      fallbackClassName="bg-emerald-500/20 text-sm"
+                    />
                     <div className="flex flex-col gap-0.5">
                       <span className="font-medium">
                         {entry.name ?? "Anonymous"}

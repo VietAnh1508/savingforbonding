@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 
 import { CloseIcon } from "~/app/_components/icons/close-icon";
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
 import { useToast } from "~/app/_components/toast";
+import { UserAvatar } from "~/app/_components/user-avatar";
 import { useModalDismiss } from "~/app/hooks/use-modal-dismiss";
 import { maxStakeBeers } from "~/lib/challenge";
 import { formatBeers, formatMatchDateTime } from "~/lib/match";
@@ -99,19 +99,12 @@ export function CreateChallengeModal({ onClose }: { onClose: () => void }) {
                           : "hover:bg-foreground/5"
                       }`}
                     >
-                      {o.image ? (
-                        <Image
-                          src={o.image}
-                          alt={o.name ?? "User"}
-                          width={28}
-                          height={28}
-                          className="shrink-0 rounded-full"
-                        />
-                      ) : (
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-sm">
-                          {(o.name ?? "?")[0]}
-                        </div>
-                      )}
+                      <UserAvatar
+                        name={o.name}
+                        image={o.image}
+                        size={28}
+                        fallbackClassName="bg-emerald-500/20 text-sm"
+                      />
                       <span className="flex-1 text-sm">
                         {o.name ?? "Anonymous"}
                       </span>

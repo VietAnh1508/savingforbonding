@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { useMemo, useState } from "react";
 
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { useToast } from "~/app/_components/toast";
+import { UserAvatar } from "~/app/_components/user-avatar";
 import { FollowConfirmDialog } from "~/app/leaderboard/_components/follow-confirm-dialog";
 import { RankGapBadge } from "~/app/leaderboard/_components/rank-gap-badge";
 import { formatJoiningDate } from "~/lib/match";
@@ -261,19 +261,12 @@ export function LeaderboardTable({
                   </td>
                   <td className="px-1 py-3 sm:px-2">
                     <div className="flex items-center gap-3">
-                      {entry.image ? (
-                        <Image
-                          src={entry.image}
-                          alt={entry.name ?? "User"}
-                          width={32}
-                          height={32}
-                          className="shrink-0 rounded-full"
-                        />
-                      ) : (
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-sm">
-                          {[...(entry.name ?? "?")][0]}
-                        </div>
-                      )}
+                      <UserAvatar
+                        name={entry.name}
+                        image={entry.image}
+                        size={32}
+                        fallbackClassName="bg-emerald-500/20 text-sm"
+                      />
                       <div className="flex flex-col gap-0.5">
                         <span className="font-medium">
                           {entry.name ?? "Anonymous"}

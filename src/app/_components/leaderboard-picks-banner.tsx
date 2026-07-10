@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { TeamFlag } from "~/app/_components/match/team-flag";
+import { UserAvatar } from "~/app/_components/user-avatar";
 import { formatKickoffTime, outcomeLabel } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
@@ -121,19 +121,12 @@ export function LeaderboardPicksBanner() {
                 <tr key={user.id} className="border-b border-foreground/5 last:border-0">
                   <td className="py-1.5 pr-3">
                     <div className="flex items-center gap-2">
-                      {user.image ? (
-                        <Image
-                          src={user.image}
-                          alt={user.name ?? "Player"}
-                          width={20}
-                          height={20}
-                          className="shrink-0 rounded-full"
-                        />
-                      ) : (
-                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-xs">
-                          {[...(user.name ?? "?")][0]}
-                        </div>
-                      )}
+                      <UserAvatar
+                        name={user.name}
+                        image={user.image}
+                        size={20}
+                        fallbackClassName="bg-sky-500/20 text-xs"
+                      />
                       <span className="text-foreground/80">{user.name ?? "Unknown"}</span>
                     </div>
                   </td>
