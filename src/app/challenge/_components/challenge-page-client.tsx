@@ -75,7 +75,9 @@ export function ChallengePageClient({
 }) {
   const toast = useToast();
   const utils = api.useUtils();
-  const { data: challenges } = api.challenge.listMine.useQuery();
+  const { data: challenges } = api.challenge.listMine.useQuery(undefined, {
+    refetchOnWindowFocus: "always",
+  });
 
   const [activeTab, setActiveTab] = useState<Tab>("mine");
   const { data: communityChallenges } = api.challenge.listCommunity.useQuery(

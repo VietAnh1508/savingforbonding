@@ -37,6 +37,7 @@ export function NavMenu({ user }: NavClientProps) {
   const { data: challengeCountData } =
     api.challenge.getOpenIncomingCount.useQuery(undefined, {
       enabled: isLoggedIn,
+      refetchOnWindowFocus: "always",
     });
   const openChallengeCount = challengeCountData?.count ?? 0;
 
