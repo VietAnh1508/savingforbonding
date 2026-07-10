@@ -134,7 +134,7 @@ export function ChallengePageClient({
       !needsAttentionIds.has(c.id),
   );
   const history = list.filter((c) =>
-    ["REJECTED", "CANCELLED", "DONE"].includes(c.status),
+    ["REJECTED", "CANCELLED", "ABANDONED", "DONE"].includes(c.status),
   );
 
   const doneChallenges = list.filter((c) => c.status === "DONE");
