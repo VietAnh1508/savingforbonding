@@ -1,7 +1,7 @@
-import Image from "next/image";
 import { redirect } from "next/navigation";
 
 import { Nav } from "~/app/_components/nav";
+import { UserAvatar } from "~/app/_components/user-avatar";
 import { EditAvatar } from "~/app/profile/_components/edit-avatar";
 import { EditProfileName } from "~/app/profile/_components/edit-profile-name";
 import { noVotePenaltyForStage } from "~/lib/match";
@@ -157,19 +157,12 @@ export default async function ProfilePage() {
                     key={follower.id}
                     className="flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1.5"
                   >
-                    {follower.image ? (
-                      <Image
-                        src={follower.image}
-                        alt={follower.name ?? "User"}
-                        width={20}
-                        height={20}
-                        className="rounded-full"
-                      />
-                    ) : (
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-xs">
-                        {(follower.name ?? "?")[0]}
-                      </div>
-                    )}
+                    <UserAvatar
+                      name={follower.name}
+                      image={follower.image}
+                      size={20}
+                      fallbackClassName="bg-emerald-500/20 text-xs"
+                    />
                     <span className="text-sm">
                       {follower.name ?? "Anonymous"}
                     </span>

@@ -247,6 +247,21 @@ export const adminRouter = createTRPCRouter({
         });
       }
 
+      // Challenge.match cascades on delete — block instead of silently
+      // wiping out an unresolved challenge between two users.
+      const activeChallengeCount = await ctx.db.challenge.count({
+        where: {
+          matchId: input.id,
+          status: { notIn: ["REJECTED", "CANCELLED", "DONE"] },
+        },
+      });
+      if (activeChallengeCount > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Cannot delete: ${activeChallengeCount} active challenge(s) reference this match. Resolve or cancel them first.`,
+        });
+      }
+
       await ctx.db.match.delete({ where: { id: input.id } });
       return { success: true };
     }),

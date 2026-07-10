@@ -27,6 +27,16 @@ enum ChampionStarTier {
   RED
 }
 
+enum ChallengeStatus {
+  OPEN
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  REVIEW
+  CONFLICT
+  DONE
+}
+
 model Stage {
   id             String        @id
   name           String
@@ -72,6 +82,7 @@ model Match {
   stageId          String?
   stage            Stage?       @relation(fields: [stageId], references: [id])
   votes            Vote[]
+  challenges       Challenge[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -115,6 +126,8 @@ model User {
   following          UserFollow[]  @relation("FollowerFollows")
   followers          UserFollow[]  @relation("FollowingFollows")
   championVote       ChampionVote?
+  challengesSent     Challenge[]   @relation("ChallengeChallenger")
+  challengesReceived Challenge[]   @relation("ChallengeOpponent")
 }
 
 model UserFollow {
@@ -154,4 +167,36 @@ model ChampionVote {
   updatedAt DateTime @updatedAt
 
   @@index([candidateId])
+}
+
+model Challenge {
+  id           String          @id @default(cuid())
+  challengerId String
+  opponentId   String
+  matchId      String
+  stakeBeers   Int
+  condition    String
+  status       ChallengeStatus @default(OPEN)
+
+  challengerPickedWinnerId String?
+  opponentPickedWinnerId   String?
+  winnerId                 String?
+  resolvedAt               DateTime?
+
+  // Beer delta actually applied to each side on settlement (mirrors
+  // Vote.points / ChampionVote.points) — an audit trail, not a source of
+  // truth. User.totalPoints stays authoritative.
+  challengerPoints Int?
+  opponentPoints   Int?
+
+  challenger User  @relation("ChallengeChallenger", fields: [challengerId], references: [id], onDelete: Cascade)
+  opponent   User  @relation("ChallengeOpponent", fields: [opponentId], references: [id], onDelete: Cascade)
+  match      Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([matchId, status])
+  @@index([opponentId, status])
+  @@index([challengerId])
 }

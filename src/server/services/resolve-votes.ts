@@ -51,6 +51,14 @@ export async function resolveMatchVotes(
     },
   });
 
+  // Any accepted challenges on this match now move to REVIEW so both
+  // participants can submit their winner pick. Idempotent on re-entry —
+  // once transitioned, no ACCEPTED rows remain for this matchId.
+  await db.challenge.updateMany({
+    where: { matchId, status: "ACCEPTED" },
+    data: { status: "REVIEW" },
+  });
+
   const unresolvedVotes = await db.vote.findMany({
     where: { matchId, isCorrect: null },
   });

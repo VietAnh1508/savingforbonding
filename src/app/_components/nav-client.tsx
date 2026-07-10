@@ -1,11 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { ThemeToggle } from "~/app/_components/theme-toggle";
+import { UserAvatar } from "~/app/_components/user-avatar";
+import { api } from "~/trpc/react";
 
 interface NavClientProps {
   user: {
@@ -13,6 +14,15 @@ interface NavClientProps {
     email?: string | null;
     image?: string | null;
   } | null;
+}
+
+function NavBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+      {count}
+    </span>
+  );
 }
 
 export function NavMenu({ user }: NavClientProps) {
@@ -24,9 +34,17 @@ export function NavMenu({ user }: NavClientProps) {
   const displayName =
     user?.name?.trim() || user?.email?.split("@")[0] || "Account";
 
+  const { data: challengeCountData } =
+    api.challenge.getOpenIncomingCount.useQuery(undefined, {
+      enabled: isLoggedIn,
+      refetchOnWindowFocus: "always",
+    });
+  const openChallengeCount = challengeCountData?.count ?? 0;
+
   const navItems = [
     { href: "/", label: "Matches" },
     { href: "/champion", label: "Champion" },
+    { href: "/challenge", label: "Challenge" },
     { href: "/leaderboard", label: "Leaderboard" },
     { href: "/insight", label: "Insight" },
     { href: "/rules", label: "Rules" },
@@ -82,6 +100,7 @@ export function NavMenu({ user }: NavClientProps) {
         {navItems.map(({ href, label }) => (
           <Link key={href} href={href} className={desktopLinkClass(href)}>
             {label}
+            {href === "/challenge" && <NavBadge count={openChallengeCount} />}
           </Link>
         ))}
       </div>
@@ -96,19 +115,12 @@ export function NavMenu({ user }: NavClientProps) {
           aria-label="Account menu"
           className="flex cursor-pointer items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-500/30 dark:text-emerald-300"
         >
-          {user?.image ? (
-            <Image
-              src={user.image}
-              alt={displayName}
-              width={24}
-              height={24}
-              className="h-6 w-6 rounded-full object-cover"
-            />
-          ) : (
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/30 text-xs font-bold uppercase">
-              {displayName[0]}
-            </span>
-          )}
+          <UserAvatar
+            name={displayName}
+            image={user?.image ?? null}
+            size={24}
+            fallbackClassName="bg-emerald-500/30 text-xs font-bold uppercase"
+          />
           <svg
             aria-hidden="true"
             viewBox="0 0 20 20"
@@ -173,6 +185,7 @@ export function NavMenu({ user }: NavClientProps) {
                 onClick={() => setOpen(false)}
               >
                 {label}
+                {href === "/challenge" && <NavBadge count={openChallengeCount} />}
               </Link>
             ))}
           </div>

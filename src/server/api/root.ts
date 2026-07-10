@@ -1,4 +1,5 @@
 import { adminRouter } from "~/server/api/routers/admin";
+import { challengeRouter } from "~/server/api/routers/challenge";
 import { championVoteRouter } from "~/server/api/routers/champion-vote";
 import { leaderboardRouter } from "~/server/api/routers/leaderboard";
 import { matchRouter } from "~/server/api/routers/match";
@@ -15,6 +16,7 @@ export const appRouter = createTRPCRouter({
   user: userRouter,
   stage: stageRouter,
   championVote: championVoteRouter,
+  challenge: challengeRouter,
 });
 
 export type AppRouter = typeof appRouter;
