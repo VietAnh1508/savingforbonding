@@ -21,6 +21,7 @@ export function ChallengeCard({
   onAccept,
   onRequestReject,
   onRequestCancel,
+  onRequestEdit,
   onSubmitPick,
   isResponding,
   isSubmittingPick,
@@ -31,6 +32,7 @@ export function ChallengeCard({
   onAccept: (id: string) => void;
   onRequestReject: (id: string) => void;
   onRequestCancel: (id: string) => void;
+  onRequestEdit: (challenge: Challenge) => void;
   onSubmitPick: (id: string, pickedUserId: string) => void;
   isResponding: boolean;
   isSubmittingPick: boolean;
@@ -125,13 +127,22 @@ export function ChallengeCard({
       )}
 
       {canCancel(challenge, currentUserId) && (
-        <button
-          type="button"
-          onClick={() => onRequestCancel(challenge.id)}
-          className="cursor-pointer rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10 hover:text-foreground"
-        >
-          Cancel challenge
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onRequestEdit(challenge)}
+            className="cursor-pointer rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10 hover:text-foreground"
+          >
+            Edit challenge
+          </button>
+          <button
+            type="button"
+            onClick={() => onRequestCancel(challenge.id)}
+            className="cursor-pointer rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10 hover:text-foreground"
+          >
+            Cancel challenge
+          </button>
+        </div>
       )}
 
       {canSubmitPick(challenge, currentUserId) && (
