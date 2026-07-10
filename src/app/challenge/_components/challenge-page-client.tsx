@@ -71,15 +71,19 @@ const HOW_IT_WORKS_STEPS = [
 export function ChallengePageClient({
   currentUserId,
 }: {
-  currentUserId: string;
+  currentUserId: string | undefined;
 }) {
+  const isLoggedIn = !!currentUserId;
   const toast = useToast();
   const utils = api.useUtils();
   const { data: challenges } = api.challenge.listMine.useQuery(undefined, {
+    enabled: isLoggedIn,
     refetchOnWindowFocus: "always",
   });
 
-  const [activeTab, setActiveTab] = useState<Tab>("mine");
+  const [activeTab, setActiveTab] = useState<Tab>(
+    isLoggedIn ? "mine" : "community",
+  );
   const { data: communityChallenges } = api.challenge.listCommunity.useQuery(
     undefined,
     { enabled: activeTab === "community" },
@@ -107,14 +111,15 @@ export function ChallengePageClient({
     onError: (err) => toast.error(err.message),
   });
 
+  const uid = currentUserId ?? "";
   const list = challenges ?? [];
 
   const needsAttention = list.filter(
-    (c) => canRespond(c, currentUserId) || canSubmitPick(c, currentUserId),
+    (c) => canRespond(c, uid) || canSubmitPick(c, uid),
   );
   const needsAttentionIds = new Set(needsAttention.map((c) => c.id));
   const sent = list.filter(
-    (c) => c.challengerId === currentUserId && c.status === "OPEN",
+    (c) => c.challengerId === uid && c.status === "OPEN",
   );
   // ACCEPTED (waiting for the match), or REVIEW where the caller already
   // picked and is just waiting on the other side — anything actionable is
@@ -130,7 +135,7 @@ export function ChallengePageClient({
 
   const doneChallenges = list.filter((c) => c.status === "DONE");
   const myTotalDelta = doneChallenges.reduce(
-    (sum, c) => sum + (myChallengeDelta(c, currentUserId) ?? 0),
+    (sum, c) => sum + (myChallengeDelta(c, uid) ?? 0),
     0,
   );
 
@@ -160,23 +165,29 @@ export function ChallengePageClient({
 
   return (
     <div>
-      <button
-        type="button"
-        onClick={() => setShowCreate(true)}
-        className="mb-6 cursor-pointer rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-card transition hover:bg-foreground/90"
-      >
-        Create challenge
-      </button>
-
-      <div className="mb-6 flex items-baseline gap-3 text-2xl font-bold">
+      {isLoggedIn && (
         <button
           type="button"
-          onClick={() => setActiveTab("mine")}
-          className={`cursor-pointer transition ${activeTab === "mine" ? "" : "text-foreground/30 hover:text-foreground/50"}`}
+          onClick={() => setShowCreate(true)}
+          className="mb-6 cursor-pointer rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-card transition hover:bg-foreground/90"
         >
-          My challenges
+          Create challenge
         </button>
-        <span className="text-foreground/20">|</span>
+      )}
+
+      <div className="mb-6 flex items-baseline gap-3 text-2xl font-bold">
+        {isLoggedIn && (
+          <>
+            <button
+              type="button"
+              onClick={() => setActiveTab("mine")}
+              className={`cursor-pointer transition ${activeTab === "mine" ? "" : "text-foreground/30 hover:text-foreground/50"}`}
+            >
+              My challenges
+            </button>
+            <span className="text-foreground/20">|</span>
+          </>
+        )}
         <button
           type="button"
           onClick={() => setActiveTab("community")}
@@ -218,7 +229,7 @@ export function ChallengePageClient({
               <ChallengeCard
                 key={c.id}
                 challenge={c}
-                currentUserId={currentUserId}
+                currentUserId={uid}
                 onAccept={handleAccept}
                 onRequestReject={setPendingRejectId}
                 onRequestCancel={setPendingCancelId}
@@ -234,7 +245,7 @@ export function ChallengePageClient({
               <ChallengeCard
                 key={c.id}
                 challenge={c}
-                currentUserId={currentUserId}
+                currentUserId={uid}
                 onAccept={handleAccept}
                 onRequestReject={setPendingRejectId}
                 onRequestCancel={setPendingCancelId}
@@ -250,7 +261,7 @@ export function ChallengePageClient({
               <ChallengeCard
                 key={c.id}
                 challenge={c}
-                currentUserId={currentUserId}
+                currentUserId={uid}
                 onAccept={handleAccept}
                 onRequestReject={setPendingRejectId}
                 onRequestCancel={setPendingCancelId}
@@ -266,7 +277,7 @@ export function ChallengePageClient({
               <ChallengeCard
                 key={c.id}
                 challenge={c}
-                currentUserId={currentUserId}
+                currentUserId={uid}
                 onAccept={handleAccept}
                 onRequestReject={setPendingRejectId}
                 onRequestCancel={setPendingCancelId}
@@ -291,13 +302,14 @@ export function ChallengePageClient({
               <ChallengeCard
                 key={c.id}
                 challenge={c}
-                currentUserId={currentUserId}
+                currentUserId={uid}
                 onAccept={handleAccept}
                 onRequestReject={setPendingRejectId}
                 onRequestCancel={setPendingCancelId}
                 onSubmitPick={handleSubmitPick}
                 isResponding={respondMut.isPending}
                 isSubmittingPick={submitPickMut.isPending}
+                highlightOwn
               />
             ))}
           </div>

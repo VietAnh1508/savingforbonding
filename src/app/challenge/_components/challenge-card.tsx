@@ -8,6 +8,7 @@ import {
   canRespond,
   canSubmitPick,
   challengeSettlement,
+  isParticipant,
 } from "~/lib/challenge";
 import { formatBeers, formatMatchDateTime } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
@@ -23,6 +24,7 @@ export function ChallengeCard({
   onSubmitPick,
   isResponding,
   isSubmittingPick,
+  highlightOwn,
 }: {
   challenge: Challenge;
   currentUserId: string;
@@ -32,12 +34,15 @@ export function ChallengeCard({
   onSubmitPick: (id: string, pickedUserId: string) => void;
   isResponding: boolean;
   isSubmittingPick: boolean;
+  /** Show a "Yours" badge and highlight the card when the caller is a participant — used in the Community tab, where that isn't otherwise obvious. */
+  highlightOwn?: boolean;
 }) {
   const isChallenger = challenge.challengerId === currentUserId;
   const myPick = isChallenger
     ? challenge.challengerPickedWinnerId
     : challenge.opponentPickedWinnerId;
   const settlement = challengeSettlement(challenge, currentUserId);
+  const isMine = !!highlightOwn && isParticipant(challenge, currentUserId);
 
   const nameFor = (userId: string) =>
     userId === currentUserId
@@ -47,17 +52,30 @@ export function ChallengeCard({
         : (challenge.opponent.name ?? "Anonymous");
 
   return (
-    <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4">
+    <div
+      className={`rounded-xl border p-4 ${
+        isMine
+          ? "border-emerald-500/30 bg-emerald-500/5"
+          : "border-foreground/10 bg-foreground/5"
+      }`}
+    >
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="text-sm text-foreground/60">
           {challenge.match.homeCountry} vs {challenge.match.awayCountry} —{" "}
           {formatMatchDateTime(challenge.match.kickoffAt)}
         </span>
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs font-medium ${CHALLENGE_STATUS_BADGE_CLASSES[challenge.status]}`}
-        >
-          {CHALLENGE_STATUS_LABELS[challenge.status]}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {isMine && (
+            <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+              Yours
+            </span>
+          )}
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs font-medium ${CHALLENGE_STATUS_BADGE_CLASSES[challenge.status]}`}
+          >
+            {CHALLENGE_STATUS_LABELS[challenge.status]}
+          </span>
+        </div>
       </div>
 
       <p className="mb-2 flex items-center gap-1.5 font-medium">

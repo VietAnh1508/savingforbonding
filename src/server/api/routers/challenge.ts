@@ -3,7 +3,11 @@ import { z } from "zod";
 
 import { isChallengeableMatch, maxStakeBeers } from "~/lib/challenge";
 import { isKnownCountry } from "~/lib/country-flag";
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "~/server/api/trpc";
 
 // Shared by listMine and listCommunity so the two tabs can't drift apart.
 const challengeListInclude = {
@@ -151,10 +155,12 @@ export const challengeRouter = createTRPCRouter({
     });
   }),
 
-  listCommunity: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
+  // Public so logged-out visitors can browse the community feed — only
+  // creating/responding to challenges requires a session. Shows every
+  // challenge, including the caller's own (those also surface under
+  // "My challenges" for logged-in users).
+  listCommunity: publicProcedure.query(async ({ ctx }) => {
     return ctx.db.challenge.findMany({
-      where: { NOT: { OR: [{ challengerId: userId }, { opponentId: userId }] } },
       include: challengeListInclude,
       orderBy: { updatedAt: "desc" },
     });
