@@ -6,6 +6,7 @@ import { ConfirmDialog } from "~/app/_components/confirm-dialog";
 import { useToast } from "~/app/_components/toast";
 import { ChallengeCard } from "~/app/challenge/_components/challenge-card";
 import { CreateChallengeModal } from "~/app/challenge/_components/create-challenge-modal";
+import { EditChallengeModal } from "~/app/challenge/_components/edit-challenge-modal";
 import {
   beerDeltaClasses,
   canRespond,
@@ -92,6 +93,9 @@ export function ChallengePageClient({
   const [showCreate, setShowCreate] = useState(false);
   const [pendingRejectId, setPendingRejectId] = useState<string | null>(null);
   const [pendingCancelId, setPendingCancelId] = useState<string | null>(null);
+  const [editingChallenge, setEditingChallenge] = useState<Challenge | null>(
+    null,
+  );
 
   const invalidateAll = () => {
     void utils.challenge.listMine.invalidate();
@@ -233,6 +237,7 @@ export function ChallengePageClient({
                 onAccept={handleAccept}
                 onRequestReject={setPendingRejectId}
                 onRequestCancel={setPendingCancelId}
+                onRequestEdit={setEditingChallenge}
                 onSubmitPick={handleSubmitPick}
                 isResponding={respondMut.isPending}
                 isSubmittingPick={submitPickMut.isPending}
@@ -249,6 +254,7 @@ export function ChallengePageClient({
                 onAccept={handleAccept}
                 onRequestReject={setPendingRejectId}
                 onRequestCancel={setPendingCancelId}
+                onRequestEdit={setEditingChallenge}
                 onSubmitPick={handleSubmitPick}
                 isResponding={respondMut.isPending}
                 isSubmittingPick={submitPickMut.isPending}
@@ -265,6 +271,7 @@ export function ChallengePageClient({
                 onAccept={handleAccept}
                 onRequestReject={setPendingRejectId}
                 onRequestCancel={setPendingCancelId}
+                onRequestEdit={setEditingChallenge}
                 onSubmitPick={handleSubmitPick}
                 isResponding={respondMut.isPending}
                 isSubmittingPick={submitPickMut.isPending}
@@ -281,6 +288,7 @@ export function ChallengePageClient({
                 onAccept={handleAccept}
                 onRequestReject={setPendingRejectId}
                 onRequestCancel={setPendingCancelId}
+                onRequestEdit={setEditingChallenge}
                 onSubmitPick={handleSubmitPick}
                 isResponding={respondMut.isPending}
                 isSubmittingPick={submitPickMut.isPending}
@@ -306,6 +314,7 @@ export function ChallengePageClient({
                 onAccept={handleAccept}
                 onRequestReject={setPendingRejectId}
                 onRequestCancel={setPendingCancelId}
+                onRequestEdit={setEditingChallenge}
                 onSubmitPick={handleSubmitPick}
                 isResponding={respondMut.isPending}
                 isSubmittingPick={submitPickMut.isPending}
@@ -332,6 +341,13 @@ export function ChallengePageClient({
 
       {showCreate && (
         <CreateChallengeModal onClose={() => setShowCreate(false)} />
+      )}
+
+      {editingChallenge && (
+        <EditChallengeModal
+          challenge={editingChallenge}
+          onClose={() => setEditingChallenge(null)}
+        />
       )}
 
       <ConfirmDialog
