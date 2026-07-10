@@ -32,6 +32,7 @@ enum ChallengeStatus {
   ACCEPTED
   REJECTED
   CANCELLED
+  ABANDONED
   REVIEW
   CONFLICT
   DONE
