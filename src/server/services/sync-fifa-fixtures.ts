@@ -1,9 +1,6 @@
 import { buildFifaMatchPatch } from "~/lib/fifa-sync";
 import { deriveResult } from "~/lib/match";
-import {
-  eliminateChampionCandidate,
-  resolveChampionVotes,
-} from "~/server/services/champion-vote";
+import { resolveChampionVotes } from "~/server/services/champion-vote";
 import {
   fetchQualifiedTeams,
   fetchWorldCupFixtures,
@@ -26,7 +23,6 @@ export type SyncFifaFixturesResult = {
   resolved: number;
   championCandidatesSynced: number;
   championVotesResolved: number;
-  championEliminationsApplied: number;
 };
 
 /**
@@ -63,68 +59,13 @@ async function resolveChampionIfFinal(
   return usersUpdated;
 }
 
-/**
- * Once a Quarter-final match completes, its loser is the surviving candidate
- * from that match whose opponent has shown up among the Semi-final's
- * qualified teams — the same `fetchQualifiedTeams` used to populate
- * candidates in the first place, just pointed at the next stage. Checked
- * pairwise per match (rather than "any candidate missing from the
- * qualified list") so a sync that lands between "match completed" and
- * "FIFA's qualified-teams endpoint updated" can't mistake both sides of an
- * undecided pair for eliminated — it just retries next sync. Re-run safe:
- * only candidates still marked alive (`eliminatedAt: null`) are considered.
- */
-async function resolveChampionEliminations(db: PrismaClient): Promise<number> {
-  const [quarterFinalStage, semiFinalStage] = await Promise.all([
-    db.stage.findFirst({ where: { name: "Quarter-final" } }),
-    db.stage.findFirst({ where: { name: "Semi-final" } }),
-  ]);
-  if (!quarterFinalStage || !semiFinalStage) return 0;
-
-  const [semiFinalists, completedQuarterFinals, aliveCandidates] =
-    await Promise.all([
-      fetchQualifiedTeams(semiFinalStage.id),
-      db.match.findMany({
-        where: { stageId: quarterFinalStage.id, status: "COMPLETED" },
-        select: { homeCountry: true, awayCountry: true },
-      }),
-      db.championCandidate.findMany({ where: { eliminatedAt: null } }),
-    ]);
-
-  const semiFinalistIds = new Set(semiFinalists.map((team) => team.IdTeam));
-  const aliveByName = new Map(
-    aliveCandidates.map((candidate) => [candidate.teamName, candidate]),
-  );
-
-  let usersAffected = 0;
-  for (const match of completedQuarterFinals) {
-    const home = aliveByName.get(match.homeCountry);
-    const away = aliveByName.get(match.awayCountry);
-    const homeQualified = !!home && semiFinalistIds.has(home.fifaTeamId);
-    const awayQualified = !!away && semiFinalistIds.has(away.fifaTeamId);
-
-    const loser =
-      homeQualified && away && !awayQualified
-        ? away
-        : awayQualified && home && !homeQualified
-          ? home
-          : null;
-    if (!loser) continue;
-
-    const result = await eliminateChampionCandidate(db, loser.id);
-    usersAffected += result.usersAffected;
-  }
-
-  return usersAffected;
-}
-
 async function syncChampionCandidates(db: PrismaClient): Promise<number> {
-  const quarterFinalStage = await db.stage.findFirst({
-    where: { name: "Quarter-final" },
+  const semiFinalStage = await db.stage.findFirst({
+    where: { name: "Semi-final" },
   });
-  if (!quarterFinalStage) return 0;
+  if (!semiFinalStage) return 0;
 
-  const qualifiedTeams = await fetchQualifiedTeams(quarterFinalStage.id);
+  const qualifiedTeams = await fetchQualifiedTeams(semiFinalStage.id);
 
   await Promise.all(
     qualifiedTeams.map((team) =>
@@ -291,7 +232,6 @@ export async function syncFifaFixtures(
   }
 
   const championCandidatesSynced = await syncChampionCandidates(db);
-  const championEliminationsApplied = await resolveChampionEliminations(db);
 
   return {
     fetched: fixtures.length,
@@ -302,6 +242,5 @@ export async function syncFifaFixtures(
     resolved,
     championCandidatesSynced,
     championVotesResolved,
-    championEliminationsApplied,
   };
 }

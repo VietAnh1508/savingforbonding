@@ -63,6 +63,7 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
   const utils = api.useUtils();
   const toast = useToast();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   const { data: voteCounts } = api.championVote.getVoteCounts.useQuery();
   const { data: myVote } = api.championVote.getMyVote.useQuery(undefined, {
@@ -105,12 +106,16 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
       <div className="space-y-4">
         <ChampionStakesBanner />
         <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4 text-center text-sm text-foreground/50">
-          Quarter-Final teams haven&apos;t been confirmed yet — check back once
-          the Round of 16 wraps up.
+          Semi-Final teams haven&apos;t been confirmed yet — check back once
+          the Quarter-Finals wrap up.
         </div>
       </div>
     );
   }
+
+  const visibleCandidates = showAll
+    ? voteCounts
+    : voteCounts.filter(({ candidate }) => !candidate.eliminatedAt);
 
   return (
     <div className="space-y-4">
@@ -133,12 +138,23 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
           </p>
         </div>
       )}
+      <div className="flex items-center justify-end">
+        <label className="flex cursor-pointer items-center gap-1.5 text-xs text-foreground/60">
+          <input
+            type="checkbox"
+            checked={showAll}
+            onChange={(e) => setShowAll(e.target.checked)}
+            className="h-3.5 w-3.5 rounded border-foreground/30 accent-violet-600"
+          />
+          Show all candidates
+        </label>
+      </div>
       <div
         className={`divide-y divide-foreground/10 overflow-hidden rounded-xl border border-foreground/10 ${
           votingOpen ? "" : "opacity-60"
         }`}
       >
-        {voteCounts.map(({ candidate, count, voters }) => {
+        {visibleCandidates.map(({ candidate, count, voters }) => {
           const selected = selectedCandidateId === candidate.id;
           const isVotingForThis =
             castVote.isPending &&

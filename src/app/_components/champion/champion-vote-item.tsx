@@ -87,7 +87,7 @@ export function ChampionVoteItem({
         {isSignedIn && (
           <button
             type="button"
-            disabled={!votingOpen || isCastPending || eliminated}
+            disabled={!votingOpen || isCastPending || eliminated || selected}
             onClick={(e) => {
               e.stopPropagation();
               onVote();

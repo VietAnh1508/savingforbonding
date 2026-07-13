@@ -1,6 +1,12 @@
-export function SpinnerIcon({ className = "h-4 w-4" }: { className?: string }) {
+export function SpinnerIcon({
+  className = "h-4 w-4",
+  spin = true,
+}: {
+  className?: string;
+  spin?: boolean;
+}) {
   return (
-    <svg className={`animate-spin ${className}`} viewBox="0 0 24 24" fill="currentColor">
+    <svg className={`${spin ? "animate-spin " : ""}${className}`} viewBox="0 0 24 24" fill="currentColor">
       {/* Ball */}
       <circle cx="12" cy="12" r="10" fillOpacity="0.1" stroke="currentColor" strokeWidth="1.2" />
       {/* Center pentagon */}

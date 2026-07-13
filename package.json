@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "next build",
+    "setup:worktree": "bash scripts/setup-worktree.sh",
     "db:generate": "prisma migrate dev",
     "db:migrate": "prisma migrate deploy",
     "db:push": "node --env-file=.env ./node_modules/.bin/prisma db push",
