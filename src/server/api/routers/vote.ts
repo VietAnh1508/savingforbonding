@@ -2,8 +2,9 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { type PrismaClient } from "../../../../generated/prisma";
-import { isVotingOpen } from "~/lib/match";
+import { isRedStarEligibleStage, isVotingOpen } from "~/lib/match";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { getSemiFinalSequenceOrder } from "~/server/services/vote-star";
 
 const voteOutcomeSchema = z.enum(["HOME_WIN", "DRAW", "AWAY_WIN"]);
 
@@ -312,9 +313,10 @@ export const voteRouter = createTRPCRouter({
   }),
 
   toggleStar: protectedProcedure
-    .input(z.object({ matchId: z.string() }))
+    .input(z.object({ matchId: z.string(), tier: z.enum(["YELLOW", "RED"]) }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
+      const semiFinalOrder = await getSemiFinalSequenceOrder(ctx.db);
 
       return ctx.db.$transaction(async (tx) => {
         const [vote, match] = await Promise.all([
@@ -325,7 +327,7 @@ export const voteRouter = createTRPCRouter({
             where: { id: input.matchId },
             select: {
               stageId: true,
-              stage: { select: { starsAllocated: true } },
+              stage: { select: { starsAllocated: true, sequenceOrder: true } },
               kickoffAt: true,
               status: true,
             },
@@ -347,9 +349,25 @@ export const voteRouter = createTRPCRouter({
           throw new TRPCError({ code: "BAD_REQUEST", message: "Stars are not available for this stage" });
         }
 
-        if (!vote.hasStar) {
+        const nextTier = vote.starTier === input.tier ? null : input.tier;
+
+        // Only gate *placing* red — removing an existing red star (or
+        // downgrading it to yellow) must always be allowed, even if the
+        // eligibility lookup would now say no (e.g. the Semi-final stage
+        // record changed after the star was placed).
+        if (
+          nextTier === "RED" &&
+          !isRedStarEligibleStage(match.stage?.sequenceOrder, semiFinalOrder)
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Red star is only available from the Semi-final stage onward",
+          });
+        }
+
+        if (vote.starTier === null && nextTier !== null) {
           const usedStars = await tx.vote.count({
-            where: { userId, hasStar: true, match: { stageId: match.stageId } },
+            where: { userId, starTier: { not: null }, match: { stageId: match.stageId } },
           });
           if (usedStars >= allocated) {
             throw new TRPCError({
@@ -361,7 +379,7 @@ export const voteRouter = createTRPCRouter({
 
         return tx.vote.update({
           where: { id: vote.id },
-          data: { hasStar: !vote.hasStar },
+          data: { starTier: nextTier },
         });
       });
     }),
@@ -375,7 +393,7 @@ export const voteRouter = createTRPCRouter({
         select: { name: true, starsAllocated: true },
       }),
       ctx.db.vote.findMany({
-        where: { userId, hasStar: true },
+        where: { userId, starTier: { not: null } },
         select: { match: { select: { stage: { select: { name: true } } } } },
       }),
     ]);

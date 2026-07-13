@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { isKnownCountry } from "~/lib/country-flag";
 import {
+  isRedStarEligibleStage,
   isVotingOpen,
   noVotePenaltyForStage,
   wrongPenaltyForStage,
@@ -14,6 +15,7 @@ import {
   emptyMatchVoteCounts,
   getVoteCountsByMatchId,
 } from "~/server/services/match-vote-counts";
+import { getSemiFinalSequenceOrder } from "~/server/services/vote-star";
 
 export const matchRouter = createTRPCRouter({
   listMatches: publicProcedure
@@ -44,10 +46,10 @@ export const matchRouter = createTRPCRouter({
 
       const matchIds = matches.map((match) => match.id);
 
-      const voteCountsByMatchId = await getVoteCountsByMatchId(
-        ctx.db,
-        matchIds,
-      );
+      const [voteCountsByMatchId, semiFinalOrder] = await Promise.all([
+        getVoteCountsByMatchId(ctx.db, matchIds),
+        getSemiFinalSequenceOrder(ctx.db),
+      ]);
 
       const userVotes = ctx.session?.user
         ? await ctx.db.vote.findMany({
@@ -60,7 +62,7 @@ export const matchRouter = createTRPCRouter({
               outcome: true,
               isCorrect: true,
               points: true,
-              hasStar: true,
+              starTier: true,
             },
           })
         : [];
@@ -75,6 +77,10 @@ export const matchRouter = createTRPCRouter({
         stageWrongPenalty: wrongPenaltyForStage(match.stage?.penalty),
         stageNoVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
         stageStarsAllocated: match.stage?.starsAllocated ?? 0,
+        redStarEligible: isRedStarEligibleStage(
+          match.stage?.sequenceOrder,
+          semiFinalOrder,
+        ),
         userVoteOutcome: userVoteByMatchId.get(match.id)?.outcome ?? null,
         userVoteResult: userVoteByMatchId.get(match.id) ?? null,
         voteCounts: voteCountsByMatchId.get(match.id) ?? emptyMatchVoteCounts(),
@@ -85,7 +91,7 @@ export const matchRouter = createTRPCRouter({
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const [match, allVotes, userVote] = await Promise.all([
+      const [match, allVotes, userVote, semiFinalOrder] = await Promise.all([
         ctx.db.match.findUnique({
           where: { id: input.id },
           include: { stage: { include: { penalty: true } } },
@@ -94,7 +100,7 @@ export const matchRouter = createTRPCRouter({
           where: { matchId: input.id },
           select: {
             outcome: true,
-            hasStar: true,
+            starTier: true,
             user: { select: { id: true, name: true } },
           },
         }),
@@ -108,6 +114,7 @@ export const matchRouter = createTRPCRouter({
               },
             })
           : null,
+        getSemiFinalSequenceOrder(ctx.db),
       ]);
 
       if (!match) return null;
@@ -119,7 +126,7 @@ export const matchRouter = createTRPCRouter({
         away: MatchVoter[];
       } = { home: [], draw: [], away: [] };
       for (const v of allVotes) {
-        const entry = { ...v.user, hasStar: v.hasStar };
+        const entry = { ...v.user, starTier: v.starTier };
         if (v.outcome === "HOME_WIN") {
           voteCounts.home++;
           voters.home.push(entry);
@@ -138,6 +145,10 @@ export const matchRouter = createTRPCRouter({
         stageWrongPenalty: wrongPenaltyForStage(match.stage?.penalty),
         stageNoVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
         stageStarsAllocated: match.stage?.starsAllocated ?? 0,
+        redStarEligible: isRedStarEligibleStage(
+          match.stage?.sequenceOrder,
+          semiFinalOrder,
+        ),
         votingOpen: isVotingOpen(match.kickoffAt, match.status),
         userVote,
         voteCounts,

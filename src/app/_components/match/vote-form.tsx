@@ -2,12 +2,19 @@
 
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { OutcomePicker } from "~/app/_components/match/outcome-picker";
+import { STAR_TIERS, StarTierButtons } from "~/app/_components/star-tier-buttons";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
 import { BEER_LOSE, BEER_NO_VOTE, formatBeers, outcomeLabel } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
+import { type VoteStarTier } from "../../../../generated/prisma";
 import { useToast } from "../toast";
 
 type MatchDetail = NonNullable<RouterOutputs["match"]["getById"]>;
+
+const STAR_TIER_DESCRIPTIONS: Record<VoteStarTier, string> = {
+  YELLOW: "Double risk, double reward",
+  RED: "Quadruple risk, quadruple reward",
+};
 
 export function VoteForm({
   matchId,
@@ -31,8 +38,9 @@ export function VoteForm({
   const currentVote = match?.userVote?.outcome;
   const votingOpen = match?.votingOpen ?? false;
   const matchStage = match?.stage ?? null;
-  const hasStarOnThisVote = match?.userVote?.hasStar ?? false;
+  const currentTier = match?.userVote?.starTier ?? null;
   const starsAllocated = match?.stageStarsAllocated ?? 0;
+  const redStarEligible = match?.redStarEligible ?? false;
 
   const { data: starAllotments } = api.vote.getStarAllotments.useQuery(
     undefined,
@@ -67,7 +75,7 @@ export function VoteForm({
                 matchId,
                 outcome,
                 isCorrect: null,
-                hasStar: false,
+                starTier: null,
                 points: 0,
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -92,28 +100,34 @@ export function VoteForm({
   });
 
   const toggleStar = useToggleStar({
-    onMutate: async () => {
-      const wasStarred = hasStarOnThisVote; // capture before optimistic flip changes the cache
+    onMutate: async ({ tier }) => {
+      const previousTier = currentTier; // capture before optimistic flip changes the cache
       await utils.match.getById.cancel({ id: matchId });
       const previous = utils.match.getById.getData({ id: matchId });
       utils.match.getById.setData({ id: matchId }, (old) => {
         if (!old?.userVote) return old;
+        const nextTier = old.userVote.starTier === tier ? null : tier;
         return {
           ...old,
-          userVote: { ...old.userVote, hasStar: !old.userVote.hasStar },
+          userVote: { ...old.userVote, starTier: nextTier },
         };
       });
-      return { previous, wasStarred };
+      return { previous, previousTier };
     },
-    onSuccess: (_result, _input, ctx) => {
+    onSuccess: (_result, variables, ctx) => {
       const context = ctx as
-        | { wasStarred: boolean; previous: MatchDetail | undefined }
+        | { previousTier: VoteStarTier | null; previous: MatchDetail | undefined }
         | undefined;
-      toast.success(context?.wasStarred ? "Star removed" : "Star placed!");
+      const removed = context?.previousTier === variables.tier;
+      toast.success(
+        removed
+          ? "Star removed"
+          : `${variables.tier === "RED" ? "Red" : "Yellow"} star placed!`,
+      );
     },
     onError: (_error, _input, ctx) => {
       const context = ctx as
-        | { wasStarred: boolean; previous: MatchDetail | undefined }
+        | { previousTier: VoteStarTier | null; previous: MatchDetail | undefined }
         | undefined;
       if (context?.previous) {
         utils.match.getById.setData({ id: matchId }, context.previous);
@@ -121,6 +135,7 @@ export function VoteForm({
     },
     onSettled: () => {
       void utils.match.getById.invalidate({ id: matchId });
+      void utils.match.listMatches.invalidate();
     },
   });
 
@@ -141,14 +156,17 @@ export function VoteForm({
       );
     }
 
-    const hasStar = userVote?.hasStar ?? false;
+    const starTier = userVote?.starTier ?? null;
+    const starIcon = starTier && (
+      <StarIcon filled color={starTier === "RED" ? "red" : "yellow"} />
+    );
 
     if (isCorrect === null) {
       return (
         <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4 text-center">
           <p className="text-sm text-foreground/50">Voting is locked</p>
           <p className="mt-2 flex items-center justify-center gap-1.5 font-medium">
-            {hasStar && <StarIcon filled />}
+            {starIcon}
             <span>
               Your prediction:{" "}
               <strong>
@@ -167,7 +185,7 @@ export function VoteForm({
       return (
         <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center text-emerald-700 dark:text-emerald-300">
           <p className="flex items-center justify-center gap-1.5 text-lg font-semibold">
-            {hasStar && <StarIcon filled />}
+            {starIcon}
             Correct
           </p>
           <p className="mt-1 text-sm">
@@ -184,7 +202,7 @@ export function VoteForm({
     return (
       <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-center text-red-700 dark:text-red-300">
         <p className="flex items-center justify-center gap-1.5 text-lg font-semibold">
-          {hasStar && <StarIcon filled />}
+          {starIcon}
           Wrong
         </p>
         <p className="mt-1 text-sm">
@@ -222,42 +240,35 @@ export function VoteForm({
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 text-sm font-medium">
-                {hasStarOnThisVote && <StarIcon filled />}
-                {hasStarOnThisVote ? "Starred" : "Star of Hope"}
+                {currentTier && (
+                  <StarIcon
+                    filled
+                    color={currentTier === "RED" ? "red" : "yellow"}
+                  />
+                )}
+                {currentTier ? "Starred" : "Star of Hope"}
               </p>
               <p className="mt-0.5 text-xs text-foreground/50">
-                {hasStarOnThisVote
-                  ? "Double risk, double reward"
-                  : `Right: clear ${formatBeers((match?.stageWrongPenalty ?? BEER_LOSE) * 2)}. Wrong: double penalty`}
+                {currentTier
+                  ? STAR_TIER_DESCRIPTIONS[currentTier]
+                  : `Yellow: clear ${formatBeers((match?.stageWrongPenalty ?? BEER_LOSE) * 2)}. Red: quadruple stakes${redStarEligible ? "" : " (Semi-final onward)"}`}
               </p>
             </div>
             <div className="flex shrink-0 flex-col items-center gap-1">
-              <button
-                type="button"
-                disabled={
+              <StarTierButtons
+                tiers={STAR_TIERS.filter(
+                  (tier) => tier !== "RED" || redStarEligible || currentTier === "RED",
+                )}
+                activeTier={currentTier}
+                isTierDisabled={(tier) =>
                   toggleStar.isPending ||
-                  (!hasStarOnThisVote &&
+                  (currentTier !== tier &&
+                    currentTier === null &&
                     starsRemaining !== null &&
                     starsRemaining === 0)
                 }
-                onClick={() => toggleStar.mutate({ matchId })}
-                className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                  hasStarOnThisVote
-                    ? "border-amber-500 bg-amber-500/20 text-amber-700 dark:text-amber-300"
-                    : starsRemaining === null || starsRemaining > 0
-                      ? "border-foreground/10 bg-foreground/5 hover:border-amber-500/50 hover:bg-amber-500/10"
-                      : "cursor-not-allowed border-foreground/10 bg-foreground/5 opacity-40"
-                }`}
-              >
-                {hasStarOnThisVote ? (
-                  "Remove"
-                ) : (
-                  <span className="flex items-center gap-1.5">
-                    <StarIcon filled />
-                    Star it
-                  </span>
-                )}
-              </button>
+                onToggle={(tier) => toggleStar.mutate({ matchId, tier })}
+              />
               <span className="text-xs text-foreground/40">
                 {starsRemaining === null
                   ? "..."

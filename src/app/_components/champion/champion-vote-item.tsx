@@ -3,12 +3,11 @@
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { TeamFlag } from "~/app/_components/match/team-flag";
-import { Tooltip } from "~/app/_components/tooltip";
+import { StarTierButtons, type StarTier } from "~/app/_components/star-tier-buttons";
 import { voterLabel } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
 type VoteCount = RouterOutputs["championVote"]["getVoteCounts"][number];
-type StarTier = "YELLOW" | "RED";
 
 export function ChampionVoteItem({
   candidate,
@@ -105,36 +104,11 @@ export function ChampionVoteItem({
           </button>
         )}
         {isSignedIn && selected && (
-          <div className="flex items-center gap-1.5">
-            {(["YELLOW", "RED"] as const).map((tier) => {
-              const active = starTier === tier;
-              const color = tier === "YELLOW" ? "yellow" : "red";
-              return (
-                <Tooltip
-                  key={tier}
-                  label={`${active ? "Remove" : "Apply"} ${
-                    tier === "YELLOW" ? "yellow star (2x)" : "red star (4x)"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    disabled={!votingOpen || isTogglingStar}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleStar(tier);
-                    }}
-                    aria-label={`${active ? "Remove" : "Apply"} ${
-                      tier === "YELLOW" ? "yellow (2x)" : "red (4x)"
-                    } star`}
-                    aria-pressed={active}
-                    className="flex items-center justify-center p-1 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <StarIcon filled={active} color={color} />
-                  </button>
-                </Tooltip>
-              );
-            })}
-          </div>
+          <StarTierButtons
+            activeTier={starTier}
+            isTierDisabled={() => !votingOpen || isTogglingStar}
+            onToggle={onToggleStar}
+          />
         )}
       </div>
       {expanded && (

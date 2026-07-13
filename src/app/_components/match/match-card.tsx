@@ -7,7 +7,11 @@ import { MatchScore } from "~/app/_components/match/match-score";
 import { MatchVoteCounts } from "~/app/_components/match/match-vote-counts";
 import { RatioDisplay } from "~/app/_components/match/ratio-display";
 import { TeamFlag } from "~/app/_components/match/team-flag";
-import { Tooltip } from "~/app/_components/tooltip";
+import {
+  STAR_TIERS,
+  StarTierButtons,
+  type StarTier,
+} from "~/app/_components/star-tier-buttons";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
 import { formatBeers, formatKickoffTime, hasVotingHandicap } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
@@ -36,7 +40,9 @@ function MatchCardFooter({
   stageNoVotePenalty: number;
 }) {
   if (isSignedIn && isCompleted && voteResult) {
-    const starIcon = voteResult.hasStar ? <StarIcon filled /> : null;
+    const starIcon = voteResult.starTier ? (
+      <StarIcon filled color={voteResult.starTier === "RED" ? "red" : "yellow"} />
+    ) : null;
 
     if (voteResult.isCorrect === null) {
       return (
@@ -105,9 +111,13 @@ export function MatchCard({
   const isCompleted = match.status === "COMPLETED";
   const voteResult = match.userVoteResult;
 
-  // Star toggle — interactive when voting is open and user has a saved vote
-  const [localStar, setLocalStar] = useState<boolean | null>(null);
-  const isStarred = localStar ?? voteResult?.hasStar ?? false;
+  // Star toggle — interactive when voting is open and user has a saved vote.
+  const currentTier = voteResult?.starTier ?? null;
+  const [tierOverride, setTierOverride] = useState<StarTier | null | undefined>(
+    undefined,
+  );
+  const activeTier = tierOverride !== undefined ? tierOverride : currentTier;
+  const isStarred = activeTier != null;
   const starTogglePossible =
     isSignedIn &&
     match.votingOpen &&
@@ -128,8 +138,9 @@ export function MatchCard({
 
   const utils = api.useUtils();
   const toggleStar = useToggleStar({
-    onMutate: () => setLocalStar(!isStarred),
-    onError: () => setLocalStar(null),
+    onMutate: (variables) =>
+      setTierOverride(activeTier === variables.tier ? null : variables.tier),
+    onError: () => setTierOverride(undefined),
     onSettled: () => void utils.match.listMatches.invalidate(),
   });
 
@@ -151,32 +162,26 @@ export function MatchCard({
         <span className="flex items-center gap-1.5 text-xs text-foreground/50">
           {showStar &&
             (canToggleStar ? (
-              <Tooltip
-                label={
-                  isStarred
-                    ? "Remove star"
-                    : "Believe in your luck? Star this match and get double reward"
+              <StarTierButtons
+                tiers={STAR_TIERS.filter(
+                  (tier) =>
+                    tier !== "RED" || match.redStarEligible || activeTier === "RED",
+                )}
+                activeTier={activeTier}
+                isTierDisabled={(tier) =>
+                  toggleStar.isPending ||
+                  (activeTier !== tier &&
+                    activeTier === null &&
+                    starsRemaining !== null &&
+                    starsRemaining === 0)
                 }
-              >
-                <button
-                  type="button"
-                  disabled={toggleStar.isPending}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    toggleStar.mutate({ matchId: match.id });
-                  }}
-                  className={`transition ${
-                    isStarred
-                      ? "text-amber-500 dark:text-amber-400"
-                      : "text-foreground/25 hover:text-amber-400"
-                  }`}
-                >
-                  <StarIcon filled={isStarred} color="inherit" />
-                </button>
-              </Tooltip>
+                onToggle={(tier) => {
+                  toggleStar.mutate({ matchId: match.id, tier });
+                }}
+                gapClassName="gap-0.5"
+              />
             ) : (
-              <StarIcon filled />
+              <StarIcon filled color={activeTier === "RED" ? "red" : "yellow"} />
             ))}
           {formatKickoffTime(match.kickoffAt)}
         </span>

@@ -4,16 +4,15 @@ import { useState } from "react";
 
 import { CloseIcon } from "~/app/_components/icons/close-icon";
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
-import { StarIcon } from "~/app/_components/icons/star-icon";
 import { OutcomePicker } from "~/app/_components/match/outcome-picker";
 import { RatioDisplay } from "~/app/_components/match/ratio-display";
+import { STAR_TIERS, StarTierButtons } from "~/app/_components/star-tier-buttons";
 import { useToast } from "~/app/_components/toast";
-import { Tooltip } from "~/app/_components/tooltip";
 import { useModalDismiss } from "~/app/hooks/use-modal-dismiss";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
 import { formatKickoffTime, voterLabel } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
-import { type VoteOutcome } from "../../../../generated/prisma";
+import { type VoteOutcome, type VoteStarTier } from "../../../../generated/prisma";
 
 type Match = RouterOutputs["match"]["listMatches"][number];
 
@@ -37,10 +36,10 @@ export function DayPredictModal({
   const [selections, setSelections] = useState<Selections>(() =>
     initSelections(matches),
   );
-  // Optimistic local star state: matchId → hasStar (overrides server data until invalidated)
-  const [starOverrides, setStarOverrides] = useState<Record<string, boolean>>(
-    {},
-  );
+  // Optimistic local star state: matchId → starTier (overrides server data until invalidated)
+  const [starOverrides, setStarOverrides] = useState<
+    Record<string, VoteStarTier | null>
+  >({});
   const utils = api.useUtils();
   const toast = useToast();
 
@@ -53,13 +52,16 @@ export function DayPredictModal({
   );
 
   const toggleStar = useToggleStar({
-    onMutate: ({ matchId }) => {
+    onMutate: ({ matchId, tier }) => {
       const current =
         matchId in starOverrides
           ? starOverrides[matchId]
-          : (matches.find((m) => m.id === matchId)?.userVoteResult?.hasStar ??
-            false);
-      setStarOverrides((prev) => ({ ...prev, [matchId]: !current }));
+          : (matches.find((m) => m.id === matchId)?.userVoteResult?.starTier ??
+            null);
+      setStarOverrides((prev) => ({
+        ...prev,
+        [matchId]: current === tier ? null : tier,
+      }));
     },
     onError: (_err, { matchId }) => {
       setStarOverrides((prev) => {
@@ -148,26 +150,30 @@ export function DayPredictModal({
 
             const starsAllocated = match.stageStarsAllocated;
             const hasExistingVote = match.userVoteOutcome !== null;
-            const isStarred =
+            const currentTier =
               match.id in starOverrides
-                ? (starOverrides[match.id] ?? false)
-                : (match.userVoteResult?.hasStar ?? false);
+                ? (starOverrides[match.id] ?? null)
+                : (match.userVoteResult?.starTier ?? null);
+            const isStarred = currentTier != null;
             const stageAllotment = starAllotments?.find(
               (a) => a.stage === match.stage,
             );
-            // Adjust remaining count for optimistic toggles in this session
-            const optimisticUsed = Object.entries(starOverrides).filter(
-              ([mid, starred]) =>
-                starred &&
-                matches.find((m) => m.id === mid)?.stage === match.stage,
-            ).length;
+            // Adjust the server's remaining count for this session's pending
+            // overrides — only a null→tier change spends a star and only a
+            // tier→null change frees one; switching between YELLOW and RED on
+            // an already-starred vote is net zero.
+            const stageDelta = matches
+              .filter((m) => m.stage === match.stage && m.id in starOverrides)
+              .reduce((sum, m) => {
+                const original = m.userVoteResult?.starTier ?? null;
+                const effective = starOverrides[m.id] ?? null;
+                if (original == null && effective != null) return sum + 1;
+                if (original != null && effective == null) return sum - 1;
+                return sum;
+              }, 0);
             const serverRemaining = stageAllotment?.remaining ?? starsAllocated;
-            const starsRemaining = Math.max(
-              0,
-              serverRemaining -
-                optimisticUsed +
-                (isStarred && match.id in starOverrides ? 1 : 0),
-            );
+            const starsRemaining = Math.max(0, serverRemaining - stageDelta);
+            // Whether a NEW star (either tier) can be placed on this vote
             const canStar =
               starsAllocated > 0 &&
               hasExistingVote &&
@@ -190,30 +196,24 @@ export function DayPredictModal({
                   </span>
                   <div className="flex items-center gap-2">
                     {starsAllocated > 0 && hasExistingVote && (
-                      <Tooltip
-                        label={
-                          isStarred
-                            ? "Remove star"
-                            : `Star this pick (${starsRemaining} remaining)`
+                      <StarTierButtons
+                        tiers={STAR_TIERS.filter(
+                          (tier) =>
+                            tier !== "RED" ||
+                            match.redStarEligible ||
+                            currentTier === "RED",
+                        )}
+                        activeTier={currentTier}
+                        isTierDisabled={(tier) =>
+                          toggleStar.isPending ||
+                          locked ||
+                          (currentTier !== tier && !canStar)
                         }
-                      >
-                        <button
-                          type="button"
-                          disabled={!canStar || toggleStar.isPending}
-                          onClick={() =>
-                            toggleStar.mutate({ matchId: match.id })
-                          }
-                          className={`transition ${
-                            isStarred
-                              ? "text-amber-500 dark:text-amber-400"
-                              : canStar
-                                ? "text-foreground/30 hover:text-amber-400"
-                                : "cursor-not-allowed text-foreground/20"
-                          }`}
-                        >
-                          <StarIcon filled={isStarred} color="inherit" />
-                        </button>
-                      </Tooltip>
+                        onToggle={(tier) =>
+                          toggleStar.mutate({ matchId: match.id, tier })
+                        }
+                        gapClassName="gap-0.5"
+                      />
                     )}
                     <RatioDisplay
                       homeRatio={match.homeRatio}
