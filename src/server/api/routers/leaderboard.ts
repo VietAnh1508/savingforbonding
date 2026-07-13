@@ -152,7 +152,7 @@ export const leaderboardRouter = createTRPCRouter({
       userIds.length > 0 && matchIds.length > 0
         ? await ctx.db.vote.findMany({
             where: { userId: { in: userIds }, matchId: { in: matchIds } },
-            select: { userId: true, matchId: true, outcome: true, hasStar: true },
+            select: { userId: true, matchId: true, outcome: true, starTier: true },
           })
         : [];
 

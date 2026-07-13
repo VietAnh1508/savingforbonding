@@ -50,10 +50,8 @@ function PickCell({
       ) : (
         <span className="text-foreground/60 text-xs font-medium">Draw</span>
       )}
-      {vote.hasStar && (
-        <span className="text-amber-500 dark:text-amber-400">
-          <StarIcon filled />
-        </span>
+      {vote.starTier && (
+        <StarIcon filled color={vote.starTier === "RED" ? "red" : "yellow"} />
       )}
     </span>
   );

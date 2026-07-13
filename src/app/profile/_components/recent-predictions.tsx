@@ -8,6 +8,7 @@ import {
   outcomeLabel,
 } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
+import { type VoteStarTier } from "../../../../generated/prisma";
 
 type VoteItem = {
   kind: "vote";
@@ -24,7 +25,7 @@ type VoteItem = {
   outcome: RouterOutputs["vote"]["getMyVotes"][number]["outcome"];
   isCorrect: boolean | null;
   points: number;
-  hasStar: boolean;
+  starTier: VoteStarTier | null;
   runningTotal: number;
 };
 
@@ -176,9 +177,12 @@ export function RecentPredictions({ items }: { items: LedgerItem[] }) {
                     <ResultCell item={item} />
                   </td>
                   <td className="px-3 py-2 text-center">
-                    {item.kind === "vote" && item.hasStar ? (
-                      <span className="inline-flex items-center text-amber-500 dark:text-amber-400">
-                        <StarIcon filled />
+                    {item.kind === "vote" && item.starTier ? (
+                      <span className="inline-flex items-center">
+                        <StarIcon
+                          filled
+                          color={item.starTier === "RED" ? "red" : "yellow"}
+                        />
                       </span>
                     ) : (
                       <span className="text-foreground/20">—</span>

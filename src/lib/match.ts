@@ -2,6 +2,7 @@ import {
   type ChampionStarTier,
   type MatchStatus,
   type VoteOutcome,
+  type VoteStarTier,
 } from "../../generated/prisma";
 
 export type MatchVoteCounts = {
@@ -10,7 +11,11 @@ export type MatchVoteCounts = {
   away: number;
 };
 
-export type MatchVoter = { id: string; name: string | null; hasStar: boolean };
+export type MatchVoter = {
+  id: string;
+  name: string | null;
+  starTier: VoteStarTier | null;
+};
 
 export const VOTE_LOCK_MINUTES = 5;
 
@@ -43,12 +48,36 @@ export function beerCostForChampionVote(
   return isCorrect ? -bonus : bonus;
 }
 
+export function voteStarMultiplier(tier: VoteStarTier | null): number {
+  switch (tier) {
+    case "RED":
+      return 4;
+    case "YELLOW":
+      return 2;
+    default:
+      return 1;
+  }
+}
+
 export function beerCostForStarVote(
   isCorrect: boolean,
   penalty: StagePenaltyValues,
+  tier: VoteStarTier | null,
 ): number {
-  const doubled = wrongPenaltyForStage(penalty) * 2;
-  return isCorrect ? -doubled : doubled;
+  const multiplied = wrongPenaltyForStage(penalty) * voteStarMultiplier(tier);
+  return isCorrect ? -multiplied : multiplied;
+}
+
+/** Red star is only allowed once the tournament reaches the Semi-final stage or later. */
+export function isRedStarEligibleStage(
+  matchSequenceOrder: number | null | undefined,
+  semiFinalSequenceOrder: number | null | undefined,
+): boolean {
+  return (
+    matchSequenceOrder != null &&
+    semiFinalSequenceOrder != null &&
+    matchSequenceOrder >= semiFinalSequenceOrder
+  );
 }
 
 export type StagePenaltyValues =

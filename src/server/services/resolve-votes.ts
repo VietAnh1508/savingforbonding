@@ -68,8 +68,8 @@ export async function resolveMatchVotes(
       match.homeRatio,
       match.awayRatio,
     );
-    const beers = vote.hasStar
-      ? beerCostForStarVote(isCorrect, stagePenalty)
+    const beers = vote.starTier
+      ? beerCostForStarVote(isCorrect, stagePenalty, vote.starTier)
       : beerCostForVote(isCorrect, stagePenalty);
 
     await db.vote.update({

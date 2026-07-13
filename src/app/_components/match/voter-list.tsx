@@ -9,7 +9,13 @@ function VoterColumn({ voters, grow }: { voters: MatchVoter[]; grow?: boolean })
       ) : (
         voters.map((v) => (
           <span key={v.id} className="flex items-center gap-0.5 text-xs text-foreground/60">
-            {v.hasStar && <StarIcon filled className="h-3 w-3" />}
+            {v.starTier && (
+              <StarIcon
+                filled
+                color={v.starTier === "RED" ? "red" : "yellow"}
+                className="h-3 w-3"
+              />
+            )}
             {v.name}
           </span>
         ))

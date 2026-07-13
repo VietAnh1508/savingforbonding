@@ -27,6 +27,11 @@ enum ChampionStarTier {
   RED
 }
 
+enum VoteStarTier {
+  YELLOW
+  RED
+}
+
 enum ChallengeStatus {
   OPEN
   ACCEPTED
@@ -94,17 +99,17 @@ model Match {
 }
 
 model Vote {
-  id        String      @id @default(cuid())
+  id        String        @id @default(cuid())
   userId    String
   matchId   String
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  match     Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match     Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
   outcome   VoteOutcome
   isCorrect Boolean?
-  hasStar   Boolean     @default(false)
-  points    Int         @default(0)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  starTier  VoteStarTier?
+  points    Int           @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   @@unique([userId, matchId])
   @@index([matchId])
