@@ -1,3 +1,4 @@
+import { ChampionVotingBanner } from "~/app/_components/champion-voting-banner";
 import { LeaderboardPicksBanner } from "~/app/_components/leaderboard-picks-banner";
 import { MatchTabs } from "~/app/_components/match/match-tabs";
 import { Nav } from "~/app/_components/nav";
@@ -5,18 +6,23 @@ import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
 export default async function Home() {
-  const [session] = await Promise.all([
-    auth(),
+  const session = await auth();
+  const isSignedIn = !!session?.user;
+
+  await Promise.all([
     api.match.listMatches.prefetch({}),
     api.leaderboard.bottomThreePicks.prefetch(),
+    api.championVote.getVotingStatus.prefetch(),
+    ...(isSignedIn ? [api.championVote.getMyVote.prefetch()] : []),
   ]);
 
   return (
     <HydrateClient>
       <Nav />
       <main className="container mx-auto px-4 pb-8">
+        <ChampionVotingBanner isSignedIn={isSignedIn} />
         <LeaderboardPicksBanner />
-        <MatchTabs isSignedIn={!!session?.user} />
+        <MatchTabs isSignedIn={isSignedIn} />
       </main>
     </HydrateClient>
   );
