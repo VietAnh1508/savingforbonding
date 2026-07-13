@@ -13,7 +13,6 @@ type FifaSyncResult = {
   teamsUpdated: number;
   resolved: number;
   championVotesResolved: number;
-  championEliminationsApplied: number;
 };
 
 export function FifaSyncBanner() {
@@ -90,9 +89,6 @@ export function FifaSyncBanner() {
             : ""}
           {syncResult.championVotesResolved > 0
             ? ", champion votes settled"
-            : ""}
-          {syncResult.championEliminationsApplied > 0
-            ? `, ${syncResult.championEliminationsApplied} champion picks eliminated`
             : ""}
           ).
         </p>
