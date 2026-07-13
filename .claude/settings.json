@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "EnterWorktree",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/setup-worktree.sh 2>&1 || echo \"⚠️ setup-worktree.sh failed — run npm run setup:worktree manually\"",
+            "timeout": 180,
+            "statusMessage": "Bootstrapping worktree (env files + npm install)..."
+          }
+        ]
+      }
+    ]
+  }
+}
