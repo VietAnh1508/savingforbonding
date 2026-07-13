@@ -95,6 +95,23 @@ function predictedTeamClass(isPredicted: boolean) {
     : "px-3 py-2";
 }
 
+function canToggleStar({
+  starTogglePossible,
+  isStarred,
+  starAllotmentsLoaded,
+  starsRemaining,
+}: {
+  starTogglePossible: boolean;
+  isStarred: boolean;
+  starAllotmentsLoaded: boolean;
+  starsRemaining: number | null;
+}) {
+  if (!starTogglePossible) return false;
+  if (isStarred) return true;
+  if (!starAllotmentsLoaded) return false;
+  return starsRemaining === null || starsRemaining > 0;
+}
+
 export function MatchCard({
   match,
   isSignedIn = false,
@@ -131,10 +148,13 @@ export function MatchCard({
   );
   const starsRemaining =
     starAllotments?.find((a) => a.stage === match.stage)?.remaining ?? null;
-  const canToggleStar =
-    starTogglePossible &&
-    (isStarred || starsRemaining === null || starsRemaining > 0);
-  const showStar = isStarred || canToggleStar;
+  const isStarToggleAllowed = canToggleStar({
+    starTogglePossible,
+    isStarred,
+    starAllotmentsLoaded: starAllotments !== undefined,
+    starsRemaining,
+  });
+  const showStar = isStarred || isStarToggleAllowed;
 
   const utils = api.useUtils();
   const toggleStar = useToggleStar({
@@ -161,7 +181,7 @@ export function MatchCard({
         <MatchStatusBadge status={match.status} />
         <span className="flex items-center gap-1.5 text-xs text-foreground/50">
           {showStar &&
-            (canToggleStar ? (
+            (isStarToggleAllowed ? (
               <StarTierButtons
                 tiers={STAR_TIERS.filter(
                   (tier) =>
