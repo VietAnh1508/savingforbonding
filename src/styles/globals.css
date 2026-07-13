@@ -6,11 +6,17 @@
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --animate-ball-slide: ball-slide 3s ease-in-out infinite;
+  --animate-ball-spin: ball-spin 3s ease-in-out infinite;
 }
 
 @keyframes ball-slide {
   0%, 100% { left: 0.25rem; }
   50% { left: calc(100% - 1.75rem); }
+}
+
+@keyframes ball-spin {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(360deg); }
 }
 
 /* Dark mode (default — avoids any class-on-load flash) */
