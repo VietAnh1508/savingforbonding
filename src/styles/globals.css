@@ -19,6 +19,8 @@
   --bg-from: #0a1f0a;
   --bg-to: #0d1117;
   --card-bg: #1a1a2e;
+  --toast-bg: #1a1a2e;
+  --toast-fg: #ffffff;
 }
 
 /* Light mode overrides */
@@ -27,11 +29,15 @@ html:not(.dark) {
   --bg-from: #f0fdf4;
   --bg-to: #ffffff;
   --card-bg: #ffffff;
+  /* Toast intentionally keeps the dark surface in light mode too —
+     it stays visible against any page background instead of blending in. */
 }
 
 @theme inline {
   --color-foreground: var(--fg);
   --color-card: var(--card-bg);
+  --color-toast: var(--toast-bg);
+  --color-toast-foreground: var(--toast-fg);
 }
 
 body {
