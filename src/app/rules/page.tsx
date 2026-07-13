@@ -27,26 +27,27 @@ export default async function RulesPage() {
             In knockout rounds, you can place a{" "}
             <strong className="text-foreground/90">Star of Hope</strong> on any
             match you&apos;ve voted on — but stars are scarce and the stakes are
-            doubled:
+            multiplied:
           </p>
           <ul className="mb-3 list-inside list-disc space-y-1">
             <li>
-              <span className="text-emerald-600 dark:text-emerald-300">
-                Correct + star
+              <span className="text-amber-600 dark:text-amber-300">
+                Yellow star
               </span>{" "}
-              — clears beers equal to double the stage wrong penalty (floored at
-              0)
+              — doubles the stakes (2x): clears double the stage wrong penalty
+              on a correct vote (floored at 0), or costs double on a wrong vote
             </li>
             <li>
-              <span className="text-red-600 dark:text-red-300">
-                Wrong + star
-              </span>{" "}
-              — double the stage wrong penalty
+              <span className="text-red-600 dark:text-red-300">Red star</span>{" "}
+              — quadruples the stakes (4x) instead of doubling them. Only
+              available from the Semi-final onward, since it&apos;s the boldest
+              (and most expensive) bet on the board
             </li>
           </ul>
           <p className="mb-2">
             Stars can only be placed or removed before the voting window closes
-            (5 minutes before kickoff). Each stage has a fixed star budget:
+            (5 minutes before kickoff). Each stage has a fixed star budget,
+            shared between yellow and red:
           </p>
           <table className="w-full">
             <thead>
@@ -55,11 +56,11 @@ export default async function RulesPage() {
                 <th className="pb-1 font-normal text-amber-500 dark:text-amber-400">
                   Stars
                 </th>
-                <th className="pb-1 font-normal text-emerald-600 dark:text-emerald-300">
-                  Right clears
+                <th className="pb-1 font-normal text-amber-600 dark:text-amber-300">
+                  Yellow (2x)
                 </th>
                 <th className="pb-1 font-normal text-red-600 dark:text-red-400">
-                  Wrong costs
+                  Red (4x)
                 </th>
               </tr>
             </thead>
@@ -73,11 +74,13 @@ export default async function RulesPage() {
                   <td className="py-0.5 text-amber-500 dark:text-amber-400">
                     {stage.starsAllocated}
                   </td>
-                  <td className="py-0.5 text-emerald-600 dark:text-emerald-300">
+                  <td className="py-0.5 text-amber-600 dark:text-amber-300">
                     {formatBeers(stage.wrongPenalty * 2)}
                   </td>
                   <td className="py-0.5 text-red-600 dark:text-red-300">
-                    {formatBeers(stage.wrongPenalty * 2)}
+                    {stage.redStarEligible
+                      ? formatBeers(stage.wrongPenalty * 4)
+                      : "—"}
                   </td>
                 </tr>
               ))}
