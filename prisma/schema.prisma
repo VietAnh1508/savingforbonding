@@ -22,11 +22,6 @@ enum VoteOutcome {
   AWAY_WIN
 }
 
-enum ChampionStarTier {
-  YELLOW
-  RED
-}
-
 enum VoteStarTier {
   YELLOW
   RED
@@ -166,7 +161,7 @@ model ChampionVote {
   user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   candidate   ChampionCandidate? @relation(fields: [candidateId], references: [id])
   isCorrect   Boolean?
-  starTier    ChampionStarTier?
+  starTier    VoteStarTier?
   points      Int                @default(0)
 
   createdAt DateTime @default(now())

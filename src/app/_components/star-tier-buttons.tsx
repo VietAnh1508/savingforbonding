@@ -4,8 +4,7 @@ import { StarIcon } from "~/app/_components/icons/star-icon";
 import { Tooltip } from "~/app/_components/tooltip";
 import { VoteStarTier } from "../../../generated/prisma";
 
-// Structurally identical to `ChampionStarTier` — this component is shared by
-// both the champion pick and the match vote star pickers.
+// Shared star tier for both the champion pick and the match vote star pickers.
 export type StarTier = VoteStarTier;
 
 export const STAR_TIERS: readonly StarTier[] = Object.values(VoteStarTier);

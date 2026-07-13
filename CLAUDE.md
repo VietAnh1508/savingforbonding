@@ -45,8 +45,6 @@ The `TURSO_API_KEY` must be a **database auth token** (not a platform API token)
 
 **Always push the schema before deploying code** that depends on new tables or columns.
 
-**⚠️ Pending prod migration (as of 2026-07-13): `Vote.hasStar` → `Vote.starTier`.** Dev has already been migrated and the `hasStar` column removed from `prisma/schema.prisma` — but **prod (`savingforbonding-prod`) still has `hasStar` and no `starTier`**. Do NOT run the standard one-shot `db:push:turso` command above against prod for this deploy: since the committed schema no longer declares `hasStar`, a single push would drop it and add `starTier` in the same diff, and `scripts/backfill-vote-star-tier.mjs` would then find `hasStar` already gone and silently no-op (exit 0) — permanently losing every historical starred vote with no error. Instead, follow the multi-step runbook in `~/.claude/plans/currently-players-can-place-toasty-pearl.md` (temporarily re-add `hasStar` → push → backfill → verify row counts match → drop `hasStar` → push again). Once that runbook has been run against prod, delete this note.
-
 There are no tests. `npm run typecheck` is the only automated check.
 
 ### Turso CLI

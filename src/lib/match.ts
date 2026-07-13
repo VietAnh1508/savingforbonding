@@ -1,5 +1,4 @@
 import {
-  type ChampionStarTier,
   type MatchStatus,
   type VoteOutcome,
   type VoteStarTier,
@@ -29,7 +28,7 @@ export const BEER_NO_VOTE = 2;
 /** Beer swing for a champion pick: correct picks subtract this many, wrong picks add it. */
 export const CHAMPION_VOTE_BONUS = 50;
 
-export function championStarMultiplier(tier: ChampionStarTier | null): number {
+export function starMultiplier(tier: VoteStarTier | null): number {
   switch (tier) {
     case "RED":
       return 4;
@@ -42,21 +41,10 @@ export function championStarMultiplier(tier: ChampionStarTier | null): number {
 
 export function beerCostForChampionVote(
   isCorrect: boolean,
-  starTier: ChampionStarTier | null,
+  starTier: VoteStarTier | null,
 ): number {
-  const bonus = CHAMPION_VOTE_BONUS * championStarMultiplier(starTier);
+  const bonus = CHAMPION_VOTE_BONUS * starMultiplier(starTier);
   return isCorrect ? -bonus : bonus;
-}
-
-export function voteStarMultiplier(tier: VoteStarTier | null): number {
-  switch (tier) {
-    case "RED":
-      return 4;
-    case "YELLOW":
-      return 2;
-    default:
-      return 1;
-  }
 }
 
 export function beerCostForStarVote(
@@ -64,7 +52,7 @@ export function beerCostForStarVote(
   penalty: StagePenaltyValues,
   tier: VoteStarTier | null,
 ): number {
-  const multiplied = wrongPenaltyForStage(penalty) * voteStarMultiplier(tier);
+  const multiplied = wrongPenaltyForStage(penalty) * starMultiplier(tier);
   return isCorrect ? -multiplied : multiplied;
 }
 
