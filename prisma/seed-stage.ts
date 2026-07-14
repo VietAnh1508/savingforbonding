@@ -1,6 +1,6 @@
 import { BEER_LOSE, BEER_NO_VOTE } from "../src/lib/match";
 import { createPrismaClient } from "../src/server/create-prisma-client";
-import stagesData from "../stages.json";
+import { fetchStages } from "../src/server/services/fifa-api";
 
 const db = createPrismaClient();
 
@@ -15,7 +15,9 @@ const STARS_BY_STAGE: Record<string, number> = {
 };
 
 async function main() {
-  for (const stage of stagesData.Results) {
+  const stages = await fetchStages();
+
+  for (const stage of stages) {
     const name = stage.Name.find((n) => n.Locale === "en-GB")?.Description ?? stage.Name[0]!.Description;
     await db.stage.upsert({
       where: { id: stage.IdStage },
@@ -53,7 +55,7 @@ async function main() {
 
     console.log(`Upserted stage: ${name} (knockout: ${isKnockout})`);
   }
-  console.log(`Done — ${stagesData.Results.length} stages processed.`);
+  console.log(`Done — ${stages.length} stages processed.`);
 }
 
 main()
