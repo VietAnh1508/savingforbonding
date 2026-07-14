@@ -138,6 +138,49 @@ function StageRow({ stage }: { stage: Stage }) {
   );
 }
 
+function RedStarThresholdControl({ stages }: { stages: Stage[] }) {
+  const utils = api.useUtils();
+  const toast = useToast();
+  const setThreshold = api.admin.setRedStarStartStage.useMutation({
+    onSuccess: async () => {
+      await utils.admin.listStagePenalties.invalidate();
+      toast.success("Red star threshold updated");
+    },
+  });
+
+  const knockoutStages = stages.filter((s) => s.isKnockout);
+  const current = knockoutStages.find((s) => s.isRedStarStartStage)?.id ?? "";
+
+  return (
+    <div className="rounded-xl border border-foreground/10 p-4">
+      <h3 className="text-sm font-semibold">Red star eligible from</h3>
+      <p className="mt-1 text-sm text-foreground/60">
+        Matches in this stage and every later stage allow a red star pick.
+      </p>
+      <select
+        value={current}
+        onChange={(e) =>
+          setThreshold.mutate({ stageId: e.target.value || null })
+        }
+        className="mt-2 rounded-lg border border-foreground/10 bg-foreground/10 px-2 py-1 text-sm"
+      >
+        <option value="">None (disabled)</option>
+        {knockoutStages.map((s) => (
+          <option key={s.id} value={s.id} disabled={s.hasCompletedMatch}>
+            {s.name}
+            {s.hasCompletedMatch ? " (locked)" : ""}
+          </option>
+        ))}
+      </select>
+      {setThreshold.error && (
+        <p className="mt-1 text-xs text-red-400">
+          {setThreshold.error.message}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function StagePenaltiesPanel() {
   const { data: stages = [], isLoading } = api.admin.listStagePenalties.useQuery();
 
@@ -155,6 +198,8 @@ export function StagePenaltiesPanel() {
           unaffected by this table.
         </p>
       </div>
+
+      {stages.length > 0 && <RedStarThresholdControl stages={stages} />}
 
       {stages.length === 0 ? (
         <p className="text-foreground/40">No stages found.</p>

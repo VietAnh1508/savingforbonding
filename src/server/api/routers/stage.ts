@@ -4,7 +4,7 @@ import {
   wrongPenaltyForStage,
 } from "~/lib/match";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { getSemiFinalSequenceOrder } from "~/server/services/vote-star";
+import { getRedStarStartSequenceOrder } from "~/server/services/vote-star";
 
 export const stageRouter = createTRPCRouter({
   list: publicProcedure.query(async ({ ctx }) => {
@@ -27,7 +27,7 @@ export const stageRouter = createTRPCRouter({
   }),
 
   listKnockout: publicProcedure.query(async ({ ctx }) => {
-    const [stages, semiFinalSequenceOrder] = await Promise.all([
+    const [stages, redStarStartSequenceOrder] = await Promise.all([
       ctx.db.stage.findMany({
         where: { isKnockout: true },
         orderBy: { sequenceOrder: "asc" },
@@ -39,7 +39,7 @@ export const stageRouter = createTRPCRouter({
           penalty: { select: { wrongPenalty: true, noVotePenalty: true } },
         },
       }),
-      getSemiFinalSequenceOrder(ctx.db),
+      getRedStarStartSequenceOrder(ctx.db),
     ]);
     return stages.map((stage) => ({
       ...stage,
@@ -47,7 +47,7 @@ export const stageRouter = createTRPCRouter({
       noVotePenalty: noVotePenaltyForStage(stage.penalty),
       redStarEligible: isRedStarEligibleStage(
         stage.sequenceOrder,
-        semiFinalSequenceOrder,
+        redStarStartSequenceOrder,
       ),
     }));
   }),

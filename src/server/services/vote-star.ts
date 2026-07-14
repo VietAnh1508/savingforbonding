@@ -1,12 +1,12 @@
 import { type PrismaClient } from "../../../generated/prisma";
 
-/** Sequence order of the Semi-final stage, or null if it isn't scheduled yet. */
-export async function getSemiFinalSequenceOrder(
+/** Sequence order of the stage from which red star becomes eligible, or null if none is configured. */
+export async function getRedStarStartSequenceOrder(
   db: PrismaClient,
 ): Promise<number | null> {
-  const semiFinalStage = await db.stage.findFirst({
-    where: { name: "Semi-final" },
+  const startStage = await db.stage.findFirst({
+    where: { isRedStarStartStage: true },
     select: { sequenceOrder: true },
   });
-  return semiFinalStage?.sequenceOrder ?? null;
+  return startStage?.sequenceOrder ?? null;
 }

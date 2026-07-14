@@ -56,15 +56,15 @@ export function beerCostForStarVote(
   return isCorrect ? -multiplied : multiplied;
 }
 
-/** Red star is only allowed once the tournament reaches the Semi-final stage or later. */
+/** Red star is only allowed from the admin-configured start stage onward. */
 export function isRedStarEligibleStage(
   matchSequenceOrder: number | null | undefined,
-  semiFinalSequenceOrder: number | null | undefined,
+  redStarStartSequenceOrder: number | null | undefined,
 ): boolean {
   return (
     matchSequenceOrder != null &&
-    semiFinalSequenceOrder != null &&
-    matchSequenceOrder >= semiFinalSequenceOrder
+    redStarStartSequenceOrder != null &&
+    matchSequenceOrder >= redStarStartSequenceOrder
   );
 }
 

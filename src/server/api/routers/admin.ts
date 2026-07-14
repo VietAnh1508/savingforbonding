@@ -356,4 +356,53 @@ export const adminRouter = createTRPCRouter({
         data: { starsAllocated },
       });
     }),
+
+  setRedStarStartStage: adminProcedure
+    .input(z.object({ stageId: z.string().nullable() }))
+    .mutation(async ({ ctx, input }) => {
+      if (input.stageId === null) {
+        await ctx.db.stage.updateMany({
+          where: { isRedStarStartStage: true },
+          data: { isRedStarStartStage: false },
+        });
+        return { success: true };
+      }
+
+      const stage = await ctx.db.stage.findUnique({
+        where: { id: input.stageId },
+        select: { id: true, isKnockout: true },
+      });
+      if (!stage) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Stage not found" });
+      }
+      if (!stage.isKnockout) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Red star threshold must be a knockout stage",
+        });
+      }
+
+      const completedMatch = await ctx.db.match.findFirst({
+        where: { stageId: input.stageId, status: "COMPLETED" },
+        select: { id: true },
+      });
+      if (completedMatch) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Cannot set red star threshold to a stage that already has completed matches",
+        });
+      }
+
+      return ctx.db.$transaction(async (tx) => {
+        await tx.stage.updateMany({
+          where: { isRedStarStartStage: true },
+          data: { isRedStarStartStage: false },
+        });
+        return tx.stage.update({
+          where: { id: input.stageId! },
+          data: { isRedStarStartStage: true },
+        });
+      });
+    }),
 });
