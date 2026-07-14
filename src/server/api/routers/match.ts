@@ -15,7 +15,7 @@ import {
   emptyMatchVoteCounts,
   getVoteCountsByMatchId,
 } from "~/server/services/match-vote-counts";
-import { getSemiFinalSequenceOrder } from "~/server/services/vote-star";
+import { getRedStarStartSequenceOrder } from "~/server/services/vote-star";
 
 export const matchRouter = createTRPCRouter({
   listMatches: publicProcedure
@@ -46,9 +46,9 @@ export const matchRouter = createTRPCRouter({
 
       const matchIds = matches.map((match) => match.id);
 
-      const [voteCountsByMatchId, semiFinalOrder] = await Promise.all([
+      const [voteCountsByMatchId, redStarStartOrder] = await Promise.all([
         getVoteCountsByMatchId(ctx.db, matchIds),
-        getSemiFinalSequenceOrder(ctx.db),
+        getRedStarStartSequenceOrder(ctx.db),
       ]);
 
       const userVotes = ctx.session?.user
@@ -79,7 +79,7 @@ export const matchRouter = createTRPCRouter({
         stageStarsAllocated: match.stage?.starsAllocated ?? 0,
         redStarEligible: isRedStarEligibleStage(
           match.stage?.sequenceOrder,
-          semiFinalOrder,
+          redStarStartOrder,
         ),
         userVoteOutcome: userVoteByMatchId.get(match.id)?.outcome ?? null,
         userVoteResult: userVoteByMatchId.get(match.id) ?? null,
@@ -91,7 +91,7 @@ export const matchRouter = createTRPCRouter({
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const [match, allVotes, userVote, semiFinalOrder] = await Promise.all([
+      const [match, allVotes, userVote, redStarStartOrder] = await Promise.all([
         ctx.db.match.findUnique({
           where: { id: input.id },
           include: { stage: { include: { penalty: true } } },
@@ -114,7 +114,7 @@ export const matchRouter = createTRPCRouter({
               },
             })
           : null,
-        getSemiFinalSequenceOrder(ctx.db),
+        getRedStarStartSequenceOrder(ctx.db),
       ]);
 
       if (!match) return null;
@@ -147,7 +147,7 @@ export const matchRouter = createTRPCRouter({
         stageStarsAllocated: match.stage?.starsAllocated ?? 0,
         redStarEligible: isRedStarEligibleStage(
           match.stage?.sequenceOrder,
-          semiFinalOrder,
+          redStarStartOrder,
         ),
         votingOpen: isVotingOpen(match.kickoffAt, match.status),
         userVote,

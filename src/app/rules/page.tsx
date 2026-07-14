@@ -6,6 +6,7 @@ import { api } from "~/trpc/server";
 
 export default async function RulesPage() {
   const knockoutStages = await api.stage.listKnockout();
+  const redStarStartStage = knockoutStages.find((s) => s.redStarEligible);
   return (
     <>
       <Nav />
@@ -38,10 +39,11 @@ export default async function RulesPage() {
               on a correct vote (floored at 0), or costs double on a wrong vote
             </li>
             <li>
-              <span className="text-red-600 dark:text-red-300">Red star</span>{" "}
-              — quadruples the stakes (4x) instead of doubling them. Only
-              available from the Semi-final onward, since it&apos;s the boldest
-              (and most expensive) bet on the board
+              <span className="text-red-600 dark:text-red-300">Red star</span> —
+              quadruples the stakes (4x) instead of doubling them.{" "}
+              {redStarStartStage
+                ? `Only available from the ${redStarStartStage.name} onward, since it's the boldest (and most expensive) bet on the board`
+                : "Not currently available"}
             </li>
           </ul>
           <p className="mb-2">
@@ -122,4 +124,3 @@ export default async function RulesPage() {
     </>
   );
 }
-
