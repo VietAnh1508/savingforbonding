@@ -46,4 +46,12 @@ export const userRouter = createTRPCRouter({
 
       return updated;
     }),
+
+  acceptTerms: protectedProcedure.mutation(async ({ ctx }) => {
+    return ctx.db.user.update({
+      where: { id: ctx.session.user.id },
+      data: { termsAcceptedAt: new Date() },
+      select: { id: true, termsAcceptedAt: true },
+    });
+  }),
 });

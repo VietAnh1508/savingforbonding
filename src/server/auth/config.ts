@@ -8,6 +8,7 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
+      termsAcceptedAt: Date | null;
     } & DefaultSession["user"];
   }
 }
@@ -65,6 +66,7 @@ export const authConfig = {
               name: true,
               email: true,
               image: true,
+              termsAcceptedAt: true,
             },
           })
         : null;
@@ -77,6 +79,7 @@ export const authConfig = {
           name: user?.name ?? session.user.name,
           email: user?.email ?? session.user.email,
           image: user?.image ?? session.user.image,
+          termsAcceptedAt: user?.termsAcceptedAt ?? null,
         },
       };
     },
