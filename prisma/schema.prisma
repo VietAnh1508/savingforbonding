@@ -126,6 +126,7 @@ model User {
   createdAt          DateTime      @default(now())
   nameUpdatedAt      DateTime?
   termsAcceptedAt    DateTime?
+  termsAcceptedVersion Int         @default(1)
   votes              Vote[]
   following          UserFollow[]  @relation("FollowerFollows")
   followers          UserFollow[]  @relation("FollowingFollows")
