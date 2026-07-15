@@ -7,6 +7,7 @@ import type { PropsWithChildren } from "react";
 import { ThemeProvider } from "~/app/_components/theme-provider";
 import { TermsGate } from "~/app/_components/terms-gate";
 import { ToastProvider } from "~/app/_components/toast";
+import { CURRENT_TERMS_VERSION } from "~/lib/terms-content";
 import { auth } from "~/server/auth";
 import { TRPCReactProvider } from "~/trpc/react";
 
@@ -23,7 +24,10 @@ const geist = Geist({
 
 export default async function RootLayout({ children }: PropsWithChildren) {
   const session = await auth();
-  const needsTermsAcceptance = !!session?.user && !session.user.termsAcceptedAt;
+  const user = session?.user;
+  const termsOutdated =
+    !!user?.termsAcceptedAt && user.termsAcceptedVersion < CURRENT_TERMS_VERSION;
+  const needsTermsAcceptance = !!user && (!user.termsAcceptedAt || termsOutdated);
 
   return (
     <html lang="en" className={`${geist.variable}`} suppressHydrationWarning>
@@ -32,7 +36,10 @@ export default async function RootLayout({ children }: PropsWithChildren) {
           <TRPCReactProvider>
             <ToastProvider>
               <div className="flex-1">{children}</div>
-              <TermsGate required={needsTermsAcceptance} />
+              <TermsGate
+                required={needsTermsAcceptance}
+                updated={termsOutdated}
+              />
             </ToastProvider>
           </TRPCReactProvider>
         </ThemeProvider>

@@ -11,7 +11,15 @@ import { useModalDismiss } from "~/app/hooks/use-modal-dismiss";
 import { termsClosing, termsIntro, termsRules, termsTitle } from "~/lib/terms-content";
 import { api } from "~/trpc/react";
 
-export function TermsGate({ required }: { required: boolean }) {
+const MIN_READ_SECONDS = 60;
+
+export function TermsGate({
+  required,
+  updated,
+}: {
+  required: boolean;
+  updated: boolean;
+}) {
   const pathname = usePathname();
   const excludedRoute =
     pathname.startsWith("/auth") || pathname.startsWith("/admin");
@@ -28,6 +36,7 @@ export function TermsGate({ required }: { required: boolean }) {
       {mounted && open && (
         <TermsModal
           dismissible={accepted}
+          updated={updated}
           onAccepted={() => setAccepted(true)}
           onClose={() => setOpen(false)}
         />
@@ -38,15 +47,32 @@ export function TermsGate({ required }: { required: boolean }) {
 
 function TermsModal({
   dismissible,
+  updated,
   onAccepted,
   onClose,
 }: {
   dismissible: boolean;
+  updated: boolean;
   onAccepted: () => void;
   onClose: () => void;
 }) {
   const toast = useToast();
   useModalDismiss(dismissible ? onClose : () => undefined);
+
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [readTooFastWarning, setReadTooFastWarning] = useState<string | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (dismissible) return;
+
+    const startedAt = Date.now();
+    const id = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [dismissible]);
 
   const acceptMut = api.user.acceptTerms.useMutation({
     onSuccess: () => {
@@ -55,6 +81,18 @@ function TermsModal({
     },
     onError: (err) => toast.error(err.message),
   });
+
+  const handleAccept = () => {
+    if (!dismissible && elapsedSeconds < MIN_READ_SECONDS) {
+      const remainingSeconds = MIN_READ_SECONDS - elapsedSeconds;
+      setReadTooFastWarning(
+        `You can't read all of these in ${elapsedSeconds} seconds, please wait ${remainingSeconds} more second${remainingSeconds === 1 ? "" : "s"} and read the terms carefully`,
+      );
+      return;
+    }
+    setReadTooFastWarning(null);
+    acceptMut.mutate();
+  };
 
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -68,6 +106,13 @@ function TermsModal({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="mb-4 text-lg font-semibold">{termsTitle}</h2>
+
+        {!dismissible && updated && (
+          <p className="mb-4 rounded-lg bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-600 dark:text-amber-400">
+            We&apos;ve updated our Terms &amp; Conditions since you last
+            accepted — please review and accept again.
+          </p>
+        )}
 
         <div className="mb-6 max-h-[65vh] space-y-4 overflow-y-auto text-sm text-foreground/70">
           <p>{termsIntro}</p>
@@ -95,6 +140,12 @@ function TermsModal({
           </p>
         </div>
 
+        {readTooFastWarning && (
+          <p className="mb-4 text-sm font-medium text-red-500">
+            {readTooFastWarning}
+          </p>
+        )}
+
         <div className="flex justify-end">
           {dismissible ? (
             <button
@@ -108,7 +159,7 @@ function TermsModal({
             <button
               type="button"
               disabled={acceptMut.isPending}
-              onClick={() => acceptMut.mutate()}
+              onClick={handleAccept}
               className="flex cursor-pointer items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {acceptMut.isPending && <SpinnerIcon className="h-3.5 w-3.5" />}

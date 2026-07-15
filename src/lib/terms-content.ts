@@ -4,24 +4,27 @@ export interface TermsRule {
   bullets?: string[];
 }
 
-export const termsTitle = "Terms & Conditions (T&C) 🍻";
+// Bump this whenever termsRules/termsIntro/termsClosing change so users who
+// already accepted an older version are prompted to re-accept.
+export const CURRENT_TERMS_VERSION = 2;
+
+export const termsTitle = "Terms & Conditions (T&C)";
 
 export const termsIntro =
-  "By continuing with the game, you confirm that you've read, understood, and agreed to the following terms:";
+  "By joining/continuing with the game, you confirm that you've read, understood, and agreed to the following terms:";
 
 export const termsRules: TermsRule[] = [
   {
-    heading: "The first, and most important, rule",
-    body: "Match outcomes are decided by the official result — the Organizers are always right. If the Organizers are wrong, please re-read rule 1. 😎",
+    heading: "The first, and most important rule",
+    body: "Match outcomes are decided by the official result — the Organizers are always right. If the Organizers are wrong, please re-read rule 1.",
+  },
+  {
+    heading: "Match result resolving rule",
+    body: "Match results are resolved based on the score after 120 minutes (extra time), not the 90' result or the final penalty shootout.",
   },
   {
     heading: "No requests to fix data after it's locked in",
     body: "Predictions and star picks lock 5 minutes before kickoff, and challenge stakes are final once sent — no take-backs after that.",
-    bullets: [
-      '"I clicked the wrong thing"',
-      '"My connection lagged"',
-      '"Just let me fix it one last time"',
-    ],
   },
   {
     heading: "This is savings, not gambling",
@@ -38,4 +41,4 @@ export const termsRules: TermsRule[] = [
 ];
 
 export const termsClosing =
-  "By joining, you confirm you agree to the terms above and are ready to fulfill your beer duty if luck isn't on your side. 🍻";
+  "Please keep in mind this is a fun app, not a professional platform. If you don't agree with the rules, you can always leave the game.";

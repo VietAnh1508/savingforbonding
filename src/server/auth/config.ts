@@ -9,6 +9,7 @@ declare module "next-auth" {
     user: {
       id: string;
       termsAcceptedAt: Date | null;
+      termsAcceptedVersion: number;
     } & DefaultSession["user"];
   }
 }
@@ -67,6 +68,7 @@ export const authConfig = {
               email: true,
               image: true,
               termsAcceptedAt: true,
+              termsAcceptedVersion: true,
             },
           })
         : null;
@@ -80,6 +82,7 @@ export const authConfig = {
           email: user?.email ?? session.user.email,
           image: user?.image ?? session.user.image,
           termsAcceptedAt: user?.termsAcceptedAt ?? null,
+          termsAcceptedVersion: user?.termsAcceptedVersion ?? 0,
         },
       };
     },

@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { CURRENT_TERMS_VERSION } from "~/lib/terms-content";
 import { nameChangeAvailableAt } from "~/lib/user";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
@@ -50,8 +51,11 @@ export const userRouter = createTRPCRouter({
   acceptTerms: protectedProcedure.mutation(async ({ ctx }) => {
     return ctx.db.user.update({
       where: { id: ctx.session.user.id },
-      data: { termsAcceptedAt: new Date() },
-      select: { id: true, termsAcceptedAt: true },
+      data: {
+        termsAcceptedAt: new Date(),
+        termsAcceptedVersion: CURRENT_TERMS_VERSION,
+      },
+      select: { id: true, termsAcceptedAt: true, termsAcceptedVersion: true },
     });
   }),
 });
