@@ -22,16 +22,20 @@ export default async function ChampionPage() {
       <main className="container mx-auto max-w-2xl px-4 py-8">
         <h1 className="mb-2 text-3xl font-bold">Pick the Champion</h1>
         <p className="mb-1 text-foreground/60">
-          Who do you think will win it all? Pick your champion below — you
-          can change your pick until{" "}
-          <span className="font-semibold text-amber-600 dark:text-amber-400">
-            the Semi-Final kicks off
-            {votingStatus.deadline &&
-              ` (${formatMatchDateTime(votingStatus.deadline)})`}
-          </span>
-          .
+          Who do you think will win it all? Pick your champion below.
         </p>
-        {votingStatus.deadline && (
+        {votingStatus.isOpen && (
+          <p className="mb-1 text-foreground/60">
+            You can change your pick until{" "}
+            <span className="font-semibold text-amber-600 dark:text-amber-400">
+              the Semi-Final kicks off
+              {votingStatus.deadline &&
+                ` (${formatMatchDateTime(votingStatus.deadline)})`}
+            </span>
+            .
+          </p>
+        )}
+        {votingStatus.isOpen && votingStatus.deadline && (
           <p className="mb-4 text-sm font-medium text-amber-600 dark:text-amber-400">
             <ChampionVotingCountdown deadline={votingStatus.deadline} />
           </p>

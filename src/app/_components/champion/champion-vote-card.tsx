@@ -136,6 +136,9 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
               ? "Your champion pick is locked in."
               : "You didn't pick a champion before the Semi-Finals kicked off."}
           </p>
+          <p className="mt-1 text-sm">
+            The result will be resolved after the final match.
+          </p>
         </div>
       )}
       <div className="flex items-center justify-end">
