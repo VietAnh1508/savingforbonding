@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { TeamFlag } from "~/app/_components/match/team-flag";
 import { UserAvatar } from "~/app/_components/user-avatar";
-import { formatKickoffTime, outcomeLabel } from "~/lib/match";
+import { formatKickoffTime, outcomeLabel, starColor } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Picks = RouterOutputs["leaderboard"]["bottomThreePicks"];
@@ -50,9 +50,7 @@ function PickCell({
       ) : (
         <span className="text-foreground/60 text-xs font-medium">Draw</span>
       )}
-      {vote.starTier && (
-        <StarIcon filled color={vote.starTier === "RED" ? "red" : "yellow"} />
-      )}
+      {vote.starTier && <StarIcon filled color={starColor(vote.starTier)} />}
     </span>
   );
 }

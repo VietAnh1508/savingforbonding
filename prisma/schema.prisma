@@ -25,6 +25,7 @@ enum VoteOutcome {
 enum VoteStarTier {
   YELLOW
   RED
+  PURPLE
 }
 
 enum ChallengeStatus {

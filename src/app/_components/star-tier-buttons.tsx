@@ -9,12 +9,18 @@ export type StarTier = VoteStarTier;
 
 export const STAR_TIERS: readonly StarTier[] = Object.values(VoteStarTier);
 
+// Champion vote only ever offers yellow/red — purple is match-vote only.
+export const CHAMPION_STAR_TIERS: readonly StarTier[] = STAR_TIERS.filter(
+  (tier) => tier !== "PURPLE",
+);
+
 const TIER_COPY: Record<
   StarTier,
-  { tooltip: string; aria: string; color: "yellow" | "red" }
+  { tooltip: string; aria: string; color: "yellow" | "red" | "purple" }
 > = {
   YELLOW: { tooltip: "yellow star (2x)", aria: "yellow (2x)", color: "yellow" },
   RED: { tooltip: "red star (4x)", aria: "red (4x)", color: "red" },
+  PURPLE: { tooltip: "purple star (8x)", aria: "purple (8x)", color: "purple" },
 };
 
 export function StarTierButtons({

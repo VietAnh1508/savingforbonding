@@ -3,7 +3,7 @@
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { TeamFlag } from "~/app/_components/match/team-flag";
-import { StarTierButtons, type StarTier } from "~/app/_components/star-tier-buttons";
+import { CHAMPION_STAR_TIERS, StarTierButtons, type StarTier } from "~/app/_components/star-tier-buttons";
 import { voterLabel } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
@@ -105,6 +105,7 @@ export function ChampionVoteItem({
         )}
         {isSignedIn && selected && (
           <StarTierButtons
+            tiers={CHAMPION_STAR_TIERS}
             activeTier={starTier}
             isTierDisabled={() => !votingOpen || isTogglingStar}
             onToggle={onToggleStar}

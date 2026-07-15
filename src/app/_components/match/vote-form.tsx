@@ -4,7 +4,14 @@ import { StarIcon } from "~/app/_components/icons/star-icon";
 import { OutcomePicker } from "~/app/_components/match/outcome-picker";
 import { STAR_TIERS, StarTierButtons } from "~/app/_components/star-tier-buttons";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
-import { BEER_LOSE, BEER_NO_VOTE, formatBeers, outcomeLabel } from "~/lib/match";
+import {
+  BEER_LOSE,
+  BEER_NO_VOTE,
+  formatBeers,
+  isGatedStarTier,
+  outcomeLabel,
+  starColor,
+} from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { type VoteStarTier } from "../../../../generated/prisma";
 import { useToast } from "../toast";
@@ -14,7 +21,12 @@ type MatchDetail = NonNullable<RouterOutputs["match"]["getById"]>;
 const STAR_TIER_DESCRIPTIONS: Record<VoteStarTier, string> = {
   YELLOW: "Double risk, double reward",
   RED: "Quadruple risk, quadruple reward",
+  PURPLE: "Octuple risk, octuple reward",
 };
+
+function capitalizeTier(tier: VoteStarTier): string {
+  return tier[0] + tier.slice(1).toLowerCase();
+}
 
 export function VoteForm({
   matchId,
@@ -120,9 +132,7 @@ export function VoteForm({
         | undefined;
       const removed = context?.previousTier === variables.tier;
       toast.success(
-        removed
-          ? "Star removed"
-          : `${variables.tier === "RED" ? "Red" : "Yellow"} star placed!`,
+        removed ? "Star removed" : `${capitalizeTier(variables.tier)} star placed!`,
       );
     },
     onError: (_error, _input, ctx) => {
@@ -157,9 +167,7 @@ export function VoteForm({
     }
 
     const starTier = userVote?.starTier ?? null;
-    const starIcon = starTier && (
-      <StarIcon filled color={starTier === "RED" ? "red" : "yellow"} />
-    );
+    const starIcon = starTier && <StarIcon filled color={starColor(starTier)} />;
 
     if (isCorrect === null) {
       return (
@@ -240,24 +248,19 @@ export function VoteForm({
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 text-sm font-medium">
-                {currentTier && (
-                  <StarIcon
-                    filled
-                    color={currentTier === "RED" ? "red" : "yellow"}
-                  />
-                )}
+                {currentTier && <StarIcon filled color={starColor(currentTier)} />}
                 {currentTier ? "Starred" : "Star of Hope"}
               </p>
               <p className="mt-0.5 text-xs text-foreground/50">
                 {currentTier
                   ? STAR_TIER_DESCRIPTIONS[currentTier]
-                  : `Yellow: clear ${formatBeers((match?.stageWrongPenalty ?? BEER_LOSE) * 2)}. Red: quadruple stakes${redStarEligible ? "" : " (Semi-final onward)"}`}
+                  : `Yellow: clear ${formatBeers((match?.stageWrongPenalty ?? BEER_LOSE) * 2)}. Red/Purple: quadruple/octuple stakes${redStarEligible ? "" : " (Semi-final onward)"}`}
               </p>
             </div>
             <div className="flex shrink-0 flex-col items-center gap-1">
               <StarTierButtons
                 tiers={STAR_TIERS.filter(
-                  (tier) => tier !== "RED" || redStarEligible || currentTier === "RED",
+                  (tier) => !isGatedStarTier(tier) || redStarEligible || currentTier === tier,
                 )}
                 activeTier={currentTier}
                 isTierDisabled={(tier) =>

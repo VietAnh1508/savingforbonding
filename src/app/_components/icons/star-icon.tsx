@@ -1,6 +1,7 @@
 const STAR_ICON_COLOR_CLASSES = {
   yellow: "text-amber-500 dark:text-amber-400",
   red: "text-red-500 dark:text-red-400",
+  purple: "text-purple-500 dark:text-purple-400",
   inherit: "",
 } as const;
 
