@@ -42,8 +42,15 @@ export default async function RulesPage() {
               <span className="text-red-600 dark:text-red-300">Red star</span> —
               quadruples the stakes (4x) instead of doubling them.{" "}
               {redStarStartStage
-                ? `Only available from the ${redStarStartStage.name} onward, since it's the boldest (and most expensive) bet on the board`
+                ? `Only available from the ${redStarStartStage.name} onward, since it's a bold (and expensive) bet on the board`
                 : "Not currently available"}
+            </li>
+            <li>
+              <span className="text-purple-600 dark:text-purple-300">
+                Purple star
+              </span>{" "}
+              — octuples the stakes (8x), the boldest bet on the board. Same
+              eligibility as the red star.
             </li>
           </ul>
           <p className="mb-2">
@@ -64,6 +71,9 @@ export default async function RulesPage() {
                 <th className="pb-1 font-normal text-red-600 dark:text-red-400">
                   Red (4x)
                 </th>
+                <th className="pb-1 font-normal text-purple-600 dark:text-purple-400">
+                  Purple (8x)
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -82,6 +92,11 @@ export default async function RulesPage() {
                   <td className="py-0.5 text-red-600 dark:text-red-300">
                     {stage.redStarEligible
                       ? formatBeers(stage.wrongPenalty * 4)
+                      : "—"}
+                  </td>
+                  <td className="py-0.5 text-purple-600 dark:text-purple-300">
+                    {stage.redStarEligible
+                      ? formatBeers(stage.wrongPenalty * 8)
                       : "—"}
                   </td>
                 </tr>

@@ -6,6 +6,7 @@ import {
   formatRatioValue,
   hasVotingHandicap,
   outcomeLabel,
+  starColor,
 } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 import { type VoteStarTier } from "../../../../generated/prisma";
@@ -179,10 +180,7 @@ export function RecentPredictions({ items }: { items: LedgerItem[] }) {
                   <td className="px-3 py-2 text-center">
                     {item.kind === "vote" && item.starTier ? (
                       <span className="inline-flex items-center">
-                        <StarIcon
-                          filled
-                          color={item.starTier === "RED" ? "red" : "yellow"}
-                        />
+                        <StarIcon filled color={starColor(item.starTier)} />
                       </span>
                     ) : (
                       <span className="text-foreground/20">—</span>

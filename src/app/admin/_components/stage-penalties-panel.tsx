@@ -155,7 +155,8 @@ function RedStarThresholdControl({ stages }: { stages: Stage[] }) {
     <div className="rounded-xl border border-foreground/10 p-4">
       <h3 className="text-sm font-semibold">Red star eligible from</h3>
       <p className="mt-1 text-sm text-foreground/60">
-        Matches in this stage and every later stage allow a red star pick.
+        Matches in this stage and every later stage allow a red or purple star
+        pick.
       </p>
       <select
         value={current}

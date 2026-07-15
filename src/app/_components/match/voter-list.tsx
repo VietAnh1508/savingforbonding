@@ -1,4 +1,4 @@
-import { type MatchVoter } from "~/lib/match";
+import { starColor, type MatchVoter } from "~/lib/match";
 import { StarIcon } from "~/app/_components/icons/star-icon";
 
 function VoterColumn({ voters, grow }: { voters: MatchVoter[]; grow?: boolean }) {
@@ -10,11 +10,7 @@ function VoterColumn({ voters, grow }: { voters: MatchVoter[]; grow?: boolean })
         voters.map((v) => (
           <span key={v.id} className="flex items-center gap-0.5 text-xs text-foreground/60">
             {v.starTier && (
-              <StarIcon
-                filled
-                color={v.starTier === "RED" ? "red" : "yellow"}
-                className="h-3 w-3"
-              />
+              <StarIcon filled color={starColor(v.starTier)} className="h-3 w-3" />
             )}
             {v.name}
           </span>

@@ -13,7 +13,13 @@ import {
   type StarTier,
 } from "~/app/_components/star-tier-buttons";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
-import { formatBeers, formatKickoffTime, hasVotingHandicap } from "~/lib/match";
+import {
+  formatBeers,
+  formatKickoffTime,
+  hasVotingHandicap,
+  isGatedStarTier,
+  starColor,
+} from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listMatches"][number];
@@ -41,7 +47,7 @@ function MatchCardFooter({
 }) {
   if (isSignedIn && isCompleted && voteResult) {
     const starIcon = voteResult.starTier ? (
-      <StarIcon filled color={voteResult.starTier === "RED" ? "red" : "yellow"} />
+      <StarIcon filled color={starColor(voteResult.starTier)} />
     ) : null;
 
     if (voteResult.isCorrect === null) {
@@ -185,7 +191,7 @@ export function MatchCard({
               <StarTierButtons
                 tiers={STAR_TIERS.filter(
                   (tier) =>
-                    tier !== "RED" || match.redStarEligible || activeTier === "RED",
+                    !isGatedStarTier(tier) || match.redStarEligible || activeTier === tier,
                 )}
                 activeTier={activeTier}
                 isTierDisabled={(tier) =>
@@ -201,7 +207,7 @@ export function MatchCard({
                 gapClassName="gap-0.5"
               />
             ) : (
-              <StarIcon filled color={activeTier === "RED" ? "red" : "yellow"} />
+              <StarIcon filled color={starColor(activeTier)} />
             ))}
           {formatKickoffTime(match.kickoffAt)}
         </span>

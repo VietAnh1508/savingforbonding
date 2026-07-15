@@ -30,12 +30,25 @@ export const CHAMPION_VOTE_BONUS = 50;
 
 export function starMultiplier(tier: VoteStarTier | null): number {
   switch (tier) {
+    case "PURPLE":
+      return 8;
     case "RED":
       return 4;
     case "YELLOW":
       return 2;
     default:
       return 1;
+  }
+}
+
+export function starColor(tier: VoteStarTier | null): "yellow" | "red" | "purple" {
+  switch (tier) {
+    case "RED":
+      return "red";
+    case "PURPLE":
+      return "purple";
+    default:
+      return "yellow";
   }
 }
 
@@ -56,7 +69,7 @@ export function beerCostForStarVote(
   return isCorrect ? -multiplied : multiplied;
 }
 
-/** Red star is only allowed from the admin-configured start stage onward. */
+/** Red and purple stars are gated the same way — both only allowed from the admin-configured start stage onward. */
 export function isRedStarEligibleStage(
   matchSequenceOrder: number | null | undefined,
   redStarStartSequenceOrder: number | null | undefined,
@@ -66,6 +79,11 @@ export function isRedStarEligibleStage(
     redStarStartSequenceOrder != null &&
     matchSequenceOrder >= redStarStartSequenceOrder
   );
+}
+
+/** Red and purple are the "premium" tiers gated by `isRedStarEligibleStage`; yellow is always available. */
+export function isGatedStarTier(tier: VoteStarTier | null): boolean {
+  return tier === "RED" || tier === "PURPLE";
 }
 
 export type StagePenaltyValues =

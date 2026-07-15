@@ -1,8 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { type PrismaClient } from "../../../../generated/prisma";
-import { isRedStarEligibleStage, isVotingOpen } from "~/lib/match";
+import { VoteStarTier, type PrismaClient } from "../../../../generated/prisma";
+import { isGatedStarTier, isRedStarEligibleStage, isVotingOpen } from "~/lib/match";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { getRedStarStartSequenceOrder } from "~/server/services/vote-star";
 
@@ -313,7 +313,7 @@ export const voteRouter = createTRPCRouter({
   }),
 
   toggleStar: protectedProcedure
-    .input(z.object({ matchId: z.string(), tier: z.enum(["YELLOW", "RED"]) }))
+    .input(z.object({ matchId: z.string(), tier: z.nativeEnum(VoteStarTier) }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
       const redStarStartOrder = await getRedStarStartSequenceOrder(ctx.db);
@@ -351,17 +351,18 @@ export const voteRouter = createTRPCRouter({
 
         const nextTier = vote.starTier === input.tier ? null : input.tier;
 
-        // Only gate *placing* red — removing an existing red star (or
+        // Only gate *placing* red or purple — removing an existing star (or
         // downgrading it to yellow) must always be allowed, even if the
         // eligibility lookup would now say no (e.g. the admin moved the
-        // red-star threshold after the star was placed).
+        // red-star threshold after the star was placed). Purple reuses the
+        // same threshold as red.
         if (
-          nextTier === "RED" &&
+          isGatedStarTier(nextTier) &&
           !isRedStarEligibleStage(match.stage?.sequenceOrder, redStarStartOrder)
         ) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "Red star is not available for this stage",
+            message: "Red and purple stars are not available for this stage",
           });
         }
 

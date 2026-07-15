@@ -10,7 +10,7 @@ import { STAR_TIERS, StarTierButtons } from "~/app/_components/star-tier-buttons
 import { useToast } from "~/app/_components/toast";
 import { useModalDismiss } from "~/app/hooks/use-modal-dismiss";
 import { useToggleStar } from "~/app/hooks/use-toggle-star";
-import { formatKickoffTime, voterLabel } from "~/lib/match";
+import { formatKickoffTime, isGatedStarTier, voterLabel } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { type VoteOutcome, type VoteStarTier } from "../../../../generated/prisma";
 
@@ -199,9 +199,9 @@ export function DayPredictModal({
                       <StarTierButtons
                         tiers={STAR_TIERS.filter(
                           (tier) =>
-                            tier !== "RED" ||
+                            !isGatedStarTier(tier) ||
                             match.redStarEligible ||
-                            currentTier === "RED",
+                            currentTier === tier,
                         )}
                         activeTier={currentTier}
                         isTierDisabled={(tier) =>

@@ -180,7 +180,13 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
               votingOpen={votingOpen}
               isCastPending={castVote.isPending}
               starTier={selected ? (myVote?.starTier ?? null) : null}
-              onToggleStar={(tier) => toggleStar.mutate({ tier })}
+              onToggleStar={(tier) => {
+                // CHAMPION_STAR_TIERS already keeps this unreachable via the UI;
+                // this narrows the shared StarTier type so it type-checks against
+                // toggleStar's YELLOW/RED-only input.
+                if (tier === "PURPLE") return;
+                toggleStar.mutate({ tier });
+              }}
               isTogglingStar={toggleStar.isPending}
             />
           );
