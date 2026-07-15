@@ -15,6 +15,13 @@ export default async function RulesPage() {
         <p className="mb-8 text-foreground/60">
           How the beer prediction system works.
         </p>
+        <p className="mb-8 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-sm text-foreground/70">
+          <strong className="text-amber-600 dark:text-amber-400">
+            Match results are resolved based on the score after 120 minutes
+            (extra time)
+          </strong>
+          , not the 90&apos; result or the final penalty shootout.
+        </p>
         <BeerStakes />
 
         <div className="mt-8 rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 text-sm text-foreground/70">
