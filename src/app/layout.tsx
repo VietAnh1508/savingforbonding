@@ -5,7 +5,9 @@ import { Geist } from "next/font/google";
 
 import type { PropsWithChildren } from "react";
 import { ThemeProvider } from "~/app/_components/theme-provider";
+import { TermsGate } from "~/app/_components/terms-gate";
 import { ToastProvider } from "~/app/_components/toast";
+import { auth } from "~/server/auth";
 import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
@@ -19,13 +21,19 @@ const geist = Geist({
   variable: "--font-geist-sans",
 });
 
-export default function RootLayout({ children }: PropsWithChildren) {
+export default async function RootLayout({ children }: PropsWithChildren) {
+  const session = await auth();
+  const needsTermsAcceptance = !!session?.user && !session.user.termsAcceptedAt;
+
   return (
     <html lang="en" className={`${geist.variable}`} suppressHydrationWarning>
-      <body className="font-sans antialiased">
+      <body className="flex min-h-screen flex-col font-sans antialiased">
         <ThemeProvider>
           <TRPCReactProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <ToastProvider>
+              <div className="flex-1">{children}</div>
+              <TermsGate required={needsTermsAcceptance} />
+            </ToastProvider>
           </TRPCReactProvider>
         </ThemeProvider>
       </body>
