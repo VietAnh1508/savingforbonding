@@ -1,14 +1,27 @@
 import { Nav } from "~/app/_components/nav";
+import {
+  TAB_IDS,
+  type TabId,
+} from "~/app/insight/_components/insight-tab-ids";
 import { InsightTabs } from "~/app/insight/_components/insight-tabs";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
-export default async function InsightPage() {
-  const [global, , session] = await Promise.all([
+export default async function InsightPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const [global, , session, { tab }] = await Promise.all([
     api.leaderboard.global(),
     api.leaderboard.rankByDay.prefetch(),
     auth(),
+    searchParams,
   ]);
+
+  const initialTab: TabId = (TAB_IDS as string[]).includes(tab ?? "")
+    ? (tab as TabId)
+    : "accuracy";
 
   return (
     <HydrateClient>
@@ -19,7 +32,11 @@ export default async function InsightPage() {
           Deeper stats: prediction accuracy, rank changes, and beer
           accumulation over time.
         </p>
-        <InsightTabs global={global} currentUserId={session?.user?.id} />
+        <InsightTabs
+          global={global}
+          currentUserId={session?.user?.id}
+          initialTab={initialTab}
+        />
       </main>
     </HydrateClient>
   );

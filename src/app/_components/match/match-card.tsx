@@ -1,24 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { StarIcon } from "~/app/_components/icons/star-icon";
 import { MatchStatusBadge } from "~/app/_components/match-status-badge";
 import { MatchScore } from "~/app/_components/match/match-score";
 import { MatchVoteCounts } from "~/app/_components/match/match-vote-counts";
 import { RatioDisplay } from "~/app/_components/match/ratio-display";
 import { TeamFlag } from "~/app/_components/match/team-flag";
-import {
-  STAR_TIERS,
-  StarTierButtons,
-  type StarTier,
-} from "~/app/_components/star-tier-buttons";
-import { useToggleStar } from "~/app/hooks/use-toggle-star";
+import { StarBadge, StarPicker } from "~/app/_components/star-picker";
+import { useSetStar } from "~/app/hooks/use-set-star";
 import {
   formatBeers,
   formatKickoffTime,
   hasVotingHandicap,
-  isGatedStarTier,
-  starColor,
+  MIN_STAR_MULTIPLIER,
 } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
@@ -46,8 +40,8 @@ function MatchCardFooter({
   stageNoVotePenalty: number;
 }) {
   if (isSignedIn && isCompleted && voteResult) {
-    const starIcon = voteResult.starTier ? (
-      <StarIcon filled color={starColor(voteResult.starTier)} />
+    const starIcon = voteResult.starMultiplier ? (
+      <StarBadge multiplier={voteResult.starMultiplier} />
     ) : null;
 
     if (voteResult.isCorrect === null) {
@@ -134,13 +128,14 @@ export function MatchCard({
   const isCompleted = match.status === "COMPLETED";
   const voteResult = match.userVoteResult;
 
-  // Star toggle — interactive when voting is open and user has a saved vote.
-  const currentTier = voteResult?.starTier ?? null;
-  const [tierOverride, setTierOverride] = useState<StarTier | null | undefined>(
-    undefined,
-  );
-  const activeTier = tierOverride !== undefined ? tierOverride : currentTier;
-  const isStarred = activeTier != null;
+  // Star — interactive when voting is open and user has a saved vote.
+  const currentMultiplier = voteResult?.starMultiplier ?? null;
+  const [multiplierOverride, setMultiplierOverride] = useState<
+    number | null | undefined
+  >(undefined);
+  const activeMultiplier =
+    multiplierOverride !== undefined ? multiplierOverride : currentMultiplier;
+  const isStarred = activeMultiplier != null;
   const starTogglePossible =
     isSignedIn &&
     match.votingOpen &&
@@ -163,10 +158,9 @@ export function MatchCard({
   const showStar = isStarred || isStarToggleAllowed;
 
   const utils = api.useUtils();
-  const toggleStar = useToggleStar({
-    onMutate: (variables) =>
-      setTierOverride(activeTier === variables.tier ? null : variables.tier),
-    onError: () => setTierOverride(undefined),
+  const setStar = useSetStar({
+    onMutate: (variables) => setMultiplierOverride(variables.multiplier),
+    onError: () => setMultiplierOverride(undefined),
     onSettled: () => void utils.match.listMatches.invalidate(),
   });
 
@@ -188,26 +182,33 @@ export function MatchCard({
         <span className="flex items-center gap-1.5 text-xs text-foreground/50">
           {showStar &&
             (isStarToggleAllowed ? (
-              <StarTierButtons
-                tiers={STAR_TIERS.filter(
-                  (tier) =>
-                    !isGatedStarTier(tier) || match.redStarEligible || activeTier === tier,
-                )}
-                activeTier={activeTier}
-                isTierDisabled={(tier) =>
-                  toggleStar.isPending ||
-                  (activeTier !== tier &&
-                    activeTier === null &&
+              <StarPicker
+                multiplier={activeMultiplier}
+                maxMultiplier={match.stageMaxStarMultiplier}
+                disabled={
+                  setStar.isPending ||
+                  (activeMultiplier === null &&
                     starsRemaining !== null &&
                     starsRemaining === 0)
                 }
-                onToggle={(tier) => {
-                  toggleStar.mutate({ matchId: match.id, tier });
-                }}
+                onPlace={() =>
+                  setStar.mutate({
+                    matchId: match.id,
+                    multiplier: MIN_STAR_MULTIPLIER,
+                  })
+                }
+                onRemove={() =>
+                  setStar.mutate({ matchId: match.id, multiplier: null })
+                }
+                onChangeMultiplier={(multiplier) =>
+                  setStar.mutate({ matchId: match.id, multiplier })
+                }
                 gapClassName="gap-0.5"
               />
             ) : (
-              <StarIcon filled color={starColor(activeTier)} />
+              activeMultiplier !== null && (
+                <StarBadge multiplier={activeMultiplier} />
+              )
             ))}
           {formatKickoffTime(match.kickoffAt)}
         </span>

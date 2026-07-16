@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import { isKnownCountry } from "~/lib/country-flag";
 import {
-  isRedStarEligibleStage,
   isVotingOpen,
   noVotePenaltyForStage,
   wrongPenaltyForStage,
@@ -15,7 +14,6 @@ import {
   emptyMatchVoteCounts,
   getVoteCountsByMatchId,
 } from "~/server/services/match-vote-counts";
-import { getRedStarStartSequenceOrder } from "~/server/services/vote-star";
 
 export const matchRouter = createTRPCRouter({
   listMatches: publicProcedure
@@ -46,10 +44,7 @@ export const matchRouter = createTRPCRouter({
 
       const matchIds = matches.map((match) => match.id);
 
-      const [voteCountsByMatchId, redStarStartOrder] = await Promise.all([
-        getVoteCountsByMatchId(ctx.db, matchIds),
-        getRedStarStartSequenceOrder(ctx.db),
-      ]);
+      const voteCountsByMatchId = await getVoteCountsByMatchId(ctx.db, matchIds);
 
       const userVotes = ctx.session?.user
         ? await ctx.db.vote.findMany({
@@ -62,7 +57,7 @@ export const matchRouter = createTRPCRouter({
               outcome: true,
               isCorrect: true,
               points: true,
-              starTier: true,
+              starMultiplier: true,
             },
           })
         : [];
@@ -77,10 +72,7 @@ export const matchRouter = createTRPCRouter({
         stageWrongPenalty: wrongPenaltyForStage(match.stage?.penalty),
         stageNoVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
         stageStarsAllocated: match.stage?.starsAllocated ?? 0,
-        redStarEligible: isRedStarEligibleStage(
-          match.stage?.sequenceOrder,
-          redStarStartOrder,
-        ),
+        stageMaxStarMultiplier: match.stage?.maxStarMultiplier ?? 0,
         userVoteOutcome: userVoteByMatchId.get(match.id)?.outcome ?? null,
         userVoteResult: userVoteByMatchId.get(match.id) ?? null,
         voteCounts: voteCountsByMatchId.get(match.id) ?? emptyMatchVoteCounts(),
@@ -91,7 +83,7 @@ export const matchRouter = createTRPCRouter({
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const [match, allVotes, userVote, redStarStartOrder] = await Promise.all([
+      const [match, allVotes, userVote] = await Promise.all([
         ctx.db.match.findUnique({
           where: { id: input.id },
           include: { stage: { include: { penalty: true } } },
@@ -100,7 +92,7 @@ export const matchRouter = createTRPCRouter({
           where: { matchId: input.id },
           select: {
             outcome: true,
-            starTier: true,
+            starMultiplier: true,
             user: { select: { id: true, name: true } },
           },
         }),
@@ -114,7 +106,6 @@ export const matchRouter = createTRPCRouter({
               },
             })
           : null,
-        getRedStarStartSequenceOrder(ctx.db),
       ]);
 
       if (!match) return null;
@@ -126,7 +117,7 @@ export const matchRouter = createTRPCRouter({
         away: MatchVoter[];
       } = { home: [], draw: [], away: [] };
       for (const v of allVotes) {
-        const entry = { ...v.user, starTier: v.starTier };
+        const entry = { ...v.user, starMultiplier: v.starMultiplier };
         if (v.outcome === "HOME_WIN") {
           voteCounts.home++;
           voters.home.push(entry);
@@ -145,10 +136,7 @@ export const matchRouter = createTRPCRouter({
         stageWrongPenalty: wrongPenaltyForStage(match.stage?.penalty),
         stageNoVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
         stageStarsAllocated: match.stage?.starsAllocated ?? 0,
-        redStarEligible: isRedStarEligibleStage(
-          match.stage?.sequenceOrder,
-          redStarStartOrder,
-        ),
+        stageMaxStarMultiplier: match.stage?.maxStarMultiplier ?? 0,
         votingOpen: isVotingOpen(match.kickoffAt, match.status),
         userVote,
         voteCounts,

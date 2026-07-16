@@ -38,7 +38,7 @@ export default async function ProfilePage() {
     outcome: v.outcome,
     isCorrect: v.isCorrect,
     points: v.points,
-    starTier: v.starTier,
+    starMultiplier: v.starMultiplier,
   }));
 
   const missedItems = missedMatches.map((m) => ({

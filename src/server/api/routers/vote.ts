@@ -1,10 +1,14 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { VoteStarTier, type PrismaClient } from "../../../../generated/prisma";
-import { isGatedStarTier, isRedStarEligibleStage, isVotingOpen } from "~/lib/match";
+import { type PrismaClient } from "../../../../generated/prisma";
+import {
+  clampStarMultiplier,
+  isStarEligibleStage,
+  isVotingOpen,
+  starMultiplierSchema,
+} from "~/lib/match";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { getRedStarStartSequenceOrder } from "~/server/services/vote-star";
 
 const voteOutcomeSchema = z.enum(["HOME_WIN", "DRAW", "AWAY_WIN"]);
 
@@ -312,11 +316,10 @@ export const voteRouter = createTRPCRouter({
     });
   }),
 
-  toggleStar: protectedProcedure
-    .input(z.object({ matchId: z.string(), tier: z.nativeEnum(VoteStarTier) }))
+  setStar: protectedProcedure
+    .input(z.object({ matchId: z.string(), multiplier: starMultiplierSchema }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
-      const redStarStartOrder = await getRedStarStartSequenceOrder(ctx.db);
 
       return ctx.db.$transaction(async (tx) => {
         const [vote, match] = await Promise.all([
@@ -327,7 +330,7 @@ export const voteRouter = createTRPCRouter({
             where: { id: input.matchId },
             select: {
               stageId: true,
-              stage: { select: { starsAllocated: true, sequenceOrder: true } },
+              stage: { select: { starsAllocated: true, maxStarMultiplier: true } },
               kickoffAt: true,
               status: true,
             },
@@ -349,26 +352,20 @@ export const voteRouter = createTRPCRouter({
           throw new TRPCError({ code: "BAD_REQUEST", message: "Stars are not available for this stage" });
         }
 
-        const nextTier = vote.starTier === input.tier ? null : input.tier;
+        // Only gate *placing* a star — updating or removing one that's
+        // already placed is always allowed, even if the stage's max was
+        // lowered afterward (e.g. by the admin). The value is just clamped
+        // to the current max instead of being rejected outright.
+        if (vote.starMultiplier === null && input.multiplier !== null) {
+          if (!isStarEligibleStage(match.stage?.maxStarMultiplier)) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Stars are not available for this stage",
+            });
+          }
 
-        // Only gate *placing* red or purple — removing an existing star (or
-        // downgrading it to yellow) must always be allowed, even if the
-        // eligibility lookup would now say no (e.g. the admin moved the
-        // red-star threshold after the star was placed). Purple reuses the
-        // same threshold as red.
-        if (
-          isGatedStarTier(nextTier) &&
-          !isRedStarEligibleStage(match.stage?.sequenceOrder, redStarStartOrder)
-        ) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Red and purple stars are not available for this stage",
-          });
-        }
-
-        if (vote.starTier === null && nextTier !== null) {
           const usedStars = await tx.vote.count({
-            where: { userId, starTier: { not: null }, match: { stageId: match.stageId } },
+            where: { userId, starMultiplier: { not: null }, match: { stageId: match.stageId } },
           });
           if (usedStars >= allocated) {
             throw new TRPCError({
@@ -378,9 +375,14 @@ export const voteRouter = createTRPCRouter({
           }
         }
 
+        const nextMultiplier =
+          input.multiplier === null
+            ? null
+            : clampStarMultiplier(input.multiplier, match.stage?.maxStarMultiplier ?? 0);
+
         return tx.vote.update({
           where: { id: vote.id },
-          data: { starTier: nextTier },
+          data: { starMultiplier: nextMultiplier },
         });
       });
     }),
@@ -391,10 +393,10 @@ export const voteRouter = createTRPCRouter({
     const [stages, starredVotes] = await Promise.all([
       ctx.db.stage.findMany({
         where: { starsAllocated: { gt: 0 } },
-        select: { name: true, starsAllocated: true },
+        select: { name: true, starsAllocated: true, maxStarMultiplier: true },
       }),
       ctx.db.vote.findMany({
-        where: { userId, starTier: { not: null } },
+        where: { userId, starMultiplier: { not: null } },
         select: { match: { select: { stage: { select: { name: true } } } } },
       }),
     ]);
@@ -406,11 +408,12 @@ export const voteRouter = createTRPCRouter({
       usedByStage.set(stage, (usedByStage.get(stage) ?? 0) + 1);
     }
 
-    return stages.map(({ name, starsAllocated }) => ({
+    return stages.map(({ name, starsAllocated, maxStarMultiplier }) => ({
       stage: name,
       allocated: starsAllocated,
       used: usedByStage.get(name) ?? 0,
       remaining: starsAllocated - (usedByStage.get(name) ?? 0),
+      maxStarMultiplier,
     }));
   }),
 

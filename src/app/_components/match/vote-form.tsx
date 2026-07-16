@@ -1,32 +1,18 @@
 "use client";
 
-import { StarIcon } from "~/app/_components/icons/star-icon";
 import { OutcomePicker } from "~/app/_components/match/outcome-picker";
-import { STAR_TIERS, StarTierButtons } from "~/app/_components/star-tier-buttons";
-import { useToggleStar } from "~/app/hooks/use-toggle-star";
+import { StarBadge, StarPicker } from "~/app/_components/star-picker";
+import { useSetStar } from "~/app/hooks/use-set-star";
 import {
-  BEER_LOSE,
   BEER_NO_VOTE,
   formatBeers,
-  isGatedStarTier,
+  MIN_STAR_MULTIPLIER,
   outcomeLabel,
-  starColor,
 } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
-import { type VoteStarTier } from "../../../../generated/prisma";
 import { useToast } from "../toast";
 
 type MatchDetail = NonNullable<RouterOutputs["match"]["getById"]>;
-
-const STAR_TIER_DESCRIPTIONS: Record<VoteStarTier, string> = {
-  YELLOW: "Double risk, double reward",
-  RED: "Quadruple risk, quadruple reward",
-  PURPLE: "Octuple risk, octuple reward",
-};
-
-function capitalizeTier(tier: VoteStarTier): string {
-  return tier[0] + tier.slice(1).toLowerCase();
-}
 
 export function VoteForm({
   matchId,
@@ -50,9 +36,9 @@ export function VoteForm({
   const currentVote = match?.userVote?.outcome;
   const votingOpen = match?.votingOpen ?? false;
   const matchStage = match?.stage ?? null;
-  const currentTier = match?.userVote?.starTier ?? null;
+  const currentMultiplier = match?.userVote?.starMultiplier ?? null;
   const starsAllocated = match?.stageStarsAllocated ?? 0;
-  const redStarEligible = match?.redStarEligible ?? false;
+  const stageMaxStarMultiplier = match?.stageMaxStarMultiplier ?? 0;
 
   const { data: starAllotments } = api.vote.getStarAllotments.useQuery(
     undefined,
@@ -88,6 +74,7 @@ export function VoteForm({
                 outcome,
                 isCorrect: null,
                 starTier: null,
+                starMultiplier: null,
                 points: 0,
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -111,34 +98,28 @@ export function VoteForm({
     },
   });
 
-  const toggleStar = useToggleStar({
-    onMutate: async ({ tier }) => {
-      const previousTier = currentTier; // capture before optimistic flip changes the cache
+  const setStar = useSetStar({
+    onMutate: async ({ multiplier }) => {
       await utils.match.getById.cancel({ id: matchId });
       const previous = utils.match.getById.getData({ id: matchId });
       utils.match.getById.setData({ id: matchId }, (old) => {
         if (!old?.userVote) return old;
-        const nextTier = old.userVote.starTier === tier ? null : tier;
         return {
           ...old,
-          userVote: { ...old.userVote, starTier: nextTier },
+          userVote: { ...old.userVote, starMultiplier: multiplier },
         };
       });
-      return { previous, previousTier };
+      return { previous };
     },
-    onSuccess: (_result, variables, ctx) => {
-      const context = ctx as
-        | { previousTier: VoteStarTier | null; previous: MatchDetail | undefined }
-        | undefined;
-      const removed = context?.previousTier === variables.tier;
+    onSuccess: (_result, variables) => {
       toast.success(
-        removed ? "Star removed" : `${capitalizeTier(variables.tier)} star placed!`,
+        variables.multiplier === null
+          ? "Star removed"
+          : `Star placed at ×${variables.multiplier}!`,
       );
     },
     onError: (_error, _input, ctx) => {
-      const context = ctx as
-        | { previousTier: VoteStarTier | null; previous: MatchDetail | undefined }
-        | undefined;
+      const context = ctx as { previous: MatchDetail | undefined } | undefined;
       if (context?.previous) {
         utils.match.getById.setData({ id: matchId }, context.previous);
       }
@@ -166,8 +147,8 @@ export function VoteForm({
       );
     }
 
-    const starTier = userVote?.starTier ?? null;
-    const starIcon = starTier && <StarIcon filled color={starColor(starTier)} />;
+    const starMultiplier = userVote?.starMultiplier ?? null;
+    const starIcon = starMultiplier && <StarBadge multiplier={starMultiplier} />;
 
     if (isCorrect === null) {
       return (
@@ -248,29 +229,32 @@ export function VoteForm({
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 text-sm font-medium">
-                {currentTier && <StarIcon filled color={starColor(currentTier)} />}
-                {currentTier ? "Starred" : "Star of Hope"}
+                {currentMultiplier && <StarBadge multiplier={currentMultiplier} />}
+                {currentMultiplier ? "Starred" : "Star of Hope"}
               </p>
               <p className="mt-0.5 text-xs text-foreground/50">
-                {currentTier
-                  ? STAR_TIER_DESCRIPTIONS[currentTier]
-                  : `Yellow: clear ${formatBeers((match?.stageWrongPenalty ?? BEER_LOSE) * 2)}. Red/Purple: quadruple/octuple stakes${redStarEligible ? "" : " (Semi-final onward)"}`}
+                {currentMultiplier
+                  ? `Clear ${formatBeers((match?.stageWrongPenalty ?? 0) * currentMultiplier)} at ×${currentMultiplier} stakes`
+                  : `Place a star, then choose your stakes from ×${MIN_STAR_MULTIPLIER} up to ×${stageMaxStarMultiplier}`}
               </p>
             </div>
             <div className="flex shrink-0 flex-col items-center gap-1">
-              <StarTierButtons
-                tiers={STAR_TIERS.filter(
-                  (tier) => !isGatedStarTier(tier) || redStarEligible || currentTier === tier,
-                )}
-                activeTier={currentTier}
-                isTierDisabled={(tier) =>
-                  toggleStar.isPending ||
-                  (currentTier !== tier &&
-                    currentTier === null &&
+              <StarPicker
+                multiplier={currentMultiplier}
+                maxMultiplier={stageMaxStarMultiplier}
+                disabled={
+                  setStar.isPending ||
+                  (currentMultiplier === null &&
                     starsRemaining !== null &&
                     starsRemaining === 0)
                 }
-                onToggle={(tier) => toggleStar.mutate({ matchId, tier })}
+                onPlace={() =>
+                  setStar.mutate({ matchId, multiplier: MIN_STAR_MULTIPLIER })
+                }
+                onRemove={() => setStar.mutate({ matchId, multiplier: null })}
+                onChangeMultiplier={(multiplier) =>
+                  setStar.mutate({ matchId, multiplier })
+                }
               />
               <span className="text-xs text-foreground/40">
                 {starsRemaining === null
@@ -281,9 +265,9 @@ export function VoteForm({
           </div>
         </div>
       )}
-      {toggleStar.error && (
+      {setStar.error && (
         <p className="text-sm text-red-600 dark:text-red-400">
-          {toggleStar.error.message}
+          {setStar.error.message}
         </p>
       )}
       {currentVote && (

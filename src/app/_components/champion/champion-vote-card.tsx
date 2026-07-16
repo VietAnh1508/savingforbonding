@@ -4,12 +4,12 @@ import { useState } from "react";
 
 import { SignInPrompt } from "~/app/_components/sign-in-prompt";
 import { StarIcon } from "~/app/_components/icons/star-icon";
-import { CHAMPION_VOTE_BONUS, formatBeers } from "~/lib/match";
+import { CHAMPION_VOTE_BONUS, formatBeers, MIN_STAR_MULTIPLIER } from "~/lib/match";
 import { api } from "~/trpc/react";
 import { useToast } from "../toast";
 import { ChampionVoteItem } from "./champion-vote-item";
 
-function ChampionStakesBanner() {
+function ChampionStakesBanner({ maxStarMultiplier }: { maxStarMultiplier: number }) {
   return (
     <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 text-sm text-foreground/70">
       <h3 className="mb-2 font-semibold text-violet-700 dark:text-violet-300">
@@ -39,22 +39,18 @@ function ChampionStakesBanner() {
           — pick again from the teams still standing.
         </li>
       </ul>
-      <hr className="my-2.5 border-violet-500/20" />
-      <ul className="space-y-1.5">
-        <li className="flex items-center gap-1.5">
-          <span className="inline-flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
-            <StarIcon filled /> Yellow star
-          </span>
-          — doubles the stakes ({formatBeers(CHAMPION_VOTE_BONUS * 2)} swing).
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span className="inline-flex items-center gap-1 font-medium text-red-600 dark:text-red-400">
-            <StarIcon filled color="red" /> Red star
-          </span>
-          — quadruples the stakes ({formatBeers(CHAMPION_VOTE_BONUS * 4)}{" "}
-          swing).
-        </li>
-      </ul>
+      {maxStarMultiplier >= MIN_STAR_MULTIPLIER && (
+        <>
+          <hr className="my-2.5 border-violet-500/20" />
+          <p className="flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
+              <StarIcon filled /> Place a star
+            </span>
+            — choose ×{MIN_STAR_MULTIPLIER} up to ×{maxStarMultiplier} stakes (
+            {formatBeers(CHAMPION_VOTE_BONUS * maxStarMultiplier)} max swing).
+          </p>
+        </>
+      )}
     </div>
   );
 }
@@ -81,11 +77,11 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
     },
   });
 
-  const toggleStar = api.championVote.toggleStar.useMutation({
+  const setStar = api.championVote.setStar.useMutation({
     onSuccess: (data) => {
       toast.success(
-        data.starTier
-          ? `${data.starTier === "RED" ? "Red" : "Yellow"} star applied!`
+        data.starMultiplier
+          ? `Star placed at ×${data.starMultiplier}!`
           : "Star removed",
       );
     },
@@ -98,13 +94,14 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
   });
 
   const votingOpen = votingStatus?.isOpen ?? true;
+  const maxStarMultiplier = votingStatus?.maxStarMultiplier ?? 0;
   const selectedCandidateId = myVote?.candidateId;
   const pickWasEliminated = !!myVote && !myVote.candidateId;
 
   if (!voteCounts?.length) {
     return (
       <div className="space-y-4">
-        <ChampionStakesBanner />
+        <ChampionStakesBanner maxStarMultiplier={maxStarMultiplier} />
         <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4 text-center text-sm text-foreground/50">
           Semi-Final teams haven&apos;t been confirmed yet — check back once
           the Quarter-Finals wrap up.
@@ -119,7 +116,7 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
 
   return (
     <div className="space-y-4">
-      <ChampionStakesBanner />
+      <ChampionStakesBanner maxStarMultiplier={maxStarMultiplier} />
       {votingOpen && pickWasEliminated && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-center text-red-700 dark:text-red-300">
           <p className="font-medium">Your pick was eliminated</p>
@@ -179,15 +176,12 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
               isSignedIn={isSignedIn}
               votingOpen={votingOpen}
               isCastPending={castVote.isPending}
-              starTier={selected ? (myVote?.starTier ?? null) : null}
-              onToggleStar={(tier) => {
-                // CHAMPION_STAR_TIERS already keeps this unreachable via the UI;
-                // this narrows the shared StarTier type so it type-checks against
-                // toggleStar's YELLOW/RED-only input.
-                if (tier === "PURPLE") return;
-                toggleStar.mutate({ tier });
-              }}
-              isTogglingStar={toggleStar.isPending}
+              starMultiplier={selected ? (myVote?.starMultiplier ?? null) : null}
+              maxStarMultiplier={maxStarMultiplier}
+              onPlaceStar={() => setStar.mutate({ multiplier: MIN_STAR_MULTIPLIER })}
+              onRemoveStar={() => setStar.mutate({ multiplier: null })}
+              onChangeStarMultiplier={(multiplier) => setStar.mutate({ multiplier })}
+              isSettingStar={setStar.isPending}
             />
           );
         })}
@@ -197,9 +191,9 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
           {castVote.error.message}
         </p>
       )}
-      {toggleStar.error && (
+      {setStar.error && (
         <p className="text-sm text-red-600 dark:text-red-400">
-          {toggleStar.error.message}
+          {setStar.error.message}
         </p>
       )}
       {!isSignedIn && <SignInPrompt action="to vote for the champion" />}

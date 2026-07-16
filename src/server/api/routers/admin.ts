@@ -7,6 +7,7 @@ import {
   validateVotingRatios,
   validateStagePenalty,
   validateStageStars,
+  validateMaxStarMultiplier,
 } from "~/lib/match";
 import { hashPassword } from "~/lib/password";
 import { computeRankHistory } from "~/lib/rank-history";
@@ -357,52 +358,68 @@ export const adminRouter = createTRPCRouter({
       });
     }),
 
-  setRedStarStartStage: adminProcedure
-    .input(z.object({ stageId: z.string().nullable() }))
+  updateStageMaxMultiplier: adminProcedure
+    .input(
+      z
+        .object({ stageId: z.string(), maxStarMultiplier: z.number().int() })
+        .superRefine((data, ctx) => {
+          const error = validateMaxStarMultiplier(data.maxStarMultiplier);
+          if (error) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: error,
+              path: ["maxStarMultiplier"],
+            });
+          }
+        }),
+    )
     .mutation(async ({ ctx, input }) => {
-      if (input.stageId === null) {
-        await ctx.db.stage.updateMany({
-          where: { isRedStarStartStage: true },
-          data: { isRedStarStartStage: false },
-        });
-        return { success: true };
-      }
-
-      const stage = await ctx.db.stage.findUnique({
-        where: { id: input.stageId },
-        select: { id: true, isKnockout: true },
-      });
-      if (!stage) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Stage not found" });
-      }
-      if (!stage.isKnockout) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Red star threshold must be a knockout stage",
-        });
-      }
+      const { stageId, maxStarMultiplier } = input;
 
       const completedMatch = await ctx.db.match.findFirst({
-        where: { stageId: input.stageId, status: "COMPLETED" },
+        where: { stageId, status: "COMPLETED" },
         select: { id: true },
       });
       if (completedMatch) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message:
-            "Cannot set red star threshold to a stage that already has completed matches",
+            "Cannot edit max multiplier for a stage that already has completed matches",
         });
       }
 
-      return ctx.db.$transaction(async (tx) => {
-        await tx.stage.updateMany({
-          where: { isRedStarStartStage: true },
-          data: { isRedStarStartStage: false },
-        });
-        return tx.stage.update({
-          where: { id: input.stageId! },
-          data: { isRedStarStartStage: true },
-        });
+      return ctx.db.stage.update({
+        where: { id: stageId },
+        data: { maxStarMultiplier },
+      });
+    }),
+
+  getGameSettings: adminProcedure.query(async ({ ctx }) => {
+    const settings = await ctx.db.gameSettings.findUnique({ where: { id: 1 } });
+    return settings ?? { id: 1, championMaxStarMultiplier: 4 };
+  }),
+
+  updateChampionMaxMultiplier: adminProcedure
+    .input(
+      z
+        .object({ championMaxStarMultiplier: z.number().int() })
+        .superRefine((data, ctx) => {
+          const error = validateMaxStarMultiplier(data.championMaxStarMultiplier);
+          if (error) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: error,
+              path: ["championMaxStarMultiplier"],
+            });
+          }
+        }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { championMaxStarMultiplier } = input;
+      return ctx.db.gameSettings.upsert({
+        where: { id: 1 },
+        create: { id: 1, championMaxStarMultiplier },
+        update: { championMaxStarMultiplier },
       });
     }),
 });

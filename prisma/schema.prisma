@@ -49,11 +49,20 @@ model Stage {
   isKnockout          Boolean       @default(false)
   starsAllocated      Int           @default(0)
   isRedStarStartStage Boolean       @default(false)
+  maxStarMultiplier   Int           @default(0)
   matches             Match[]
   penalty             StagePenalty?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/**
+ * Singleton settings row (id fixed at 1) for game config that isn't stage-scoped.
+ */
+model GameSettings {
+  id                        Int @id @default(1)
+  championMaxStarMultiplier Int @default(4)
 }
 
 model StagePenalty {
@@ -96,17 +105,18 @@ model Match {
 }
 
 model Vote {
-  id        String        @id @default(cuid())
-  userId    String
-  matchId   String
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  match     Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  outcome   VoteOutcome
-  isCorrect Boolean?
-  starTier  VoteStarTier?
-  points    Int           @default(0)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id             String        @id @default(cuid())
+  userId         String
+  matchId        String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match          Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  outcome        VoteOutcome
+  isCorrect      Boolean?
+  starTier       VoteStarTier?
+  starMultiplier Int?
+  points         Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   @@unique([userId, matchId])
   @@index([matchId])
@@ -114,25 +124,25 @@ model Vote {
 }
 
 model User {
-  id                 String        @id @default(cuid())
-  name               String?
-  email              String        @unique
-  passwordHash       String?
-  emailVerified      DateTime?
-  image              String?
-  totalPoints        Int           @default(0)
-  weeklyPoints       Int           @default(0)
-  mustChangePassword Boolean       @default(false)
-  createdAt          DateTime      @default(now())
-  nameUpdatedAt      DateTime?
-  termsAcceptedAt    DateTime?
-  termsAcceptedVersion Int         @default(1)
-  votes              Vote[]
-  following          UserFollow[]  @relation("FollowerFollows")
-  followers          UserFollow[]  @relation("FollowingFollows")
-  championVote       ChampionVote?
-  challengesSent     Challenge[]   @relation("ChallengeChallenger")
-  challengesReceived Challenge[]   @relation("ChallengeOpponent")
+  id                   String        @id @default(cuid())
+  name                 String?
+  email                String        @unique
+  passwordHash         String?
+  emailVerified        DateTime?
+  image                String?
+  totalPoints          Int           @default(0)
+  weeklyPoints         Int           @default(0)
+  mustChangePassword   Boolean       @default(false)
+  createdAt            DateTime      @default(now())
+  nameUpdatedAt        DateTime?
+  termsAcceptedAt      DateTime?
+  termsAcceptedVersion Int           @default(1)
+  votes                Vote[]
+  following            UserFollow[]  @relation("FollowerFollows")
+  followers            UserFollow[]  @relation("FollowingFollows")
+  championVote         ChampionVote?
+  challengesSent       Challenge[]   @relation("ChallengeChallenger")
+  challengesReceived   Challenge[]   @relation("ChallengeOpponent")
 }
 
 model UserFollow {
@@ -159,14 +169,15 @@ model ChampionCandidate {
 }
 
 model ChampionVote {
-  id          String             @id @default(cuid())
-  userId      String             @unique
-  candidateId String?
-  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  candidate   ChampionCandidate? @relation(fields: [candidateId], references: [id])
-  isCorrect   Boolean?
-  starTier    VoteStarTier?
-  points      Int                @default(0)
+  id             String             @id @default(cuid())
+  userId         String             @unique
+  candidateId    String?
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  candidate      ChampionCandidate? @relation(fields: [candidateId], references: [id])
+  isCorrect      Boolean?
+  starTier       VoteStarTier?
+  starMultiplier Int?
+  points         Int                @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

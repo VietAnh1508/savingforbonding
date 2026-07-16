@@ -1,8 +1,6 @@
-import {
-  type MatchStatus,
-  type VoteOutcome,
-  type VoteStarTier,
-} from "../../generated/prisma";
+import { z } from "zod";
+
+import { type MatchStatus, type VoteOutcome } from "../../generated/prisma";
 
 export type MatchVoteCounts = {
   home: number;
@@ -13,7 +11,7 @@ export type MatchVoteCounts = {
 export type MatchVoter = {
   id: string;
   name: string | null;
-  starTier: VoteStarTier | null;
+  starMultiplier: number | null;
 };
 
 export const VOTE_LOCK_MINUTES = 5;
@@ -28,62 +26,71 @@ export const BEER_NO_VOTE = 2;
 /** Beer swing for a champion pick: correct picks subtract this many, wrong picks add it. */
 export const CHAMPION_VOTE_BONUS = 50;
 
-export function starMultiplier(tier: VoteStarTier | null): number {
-  switch (tier) {
-    case "PURPLE":
-      return 8;
-    case "RED":
-      return 4;
-    case "YELLOW":
-      return 2;
-    default:
-      return 1;
-  }
+/** Minimum (and default) multiplier a player can pick when placing a star. */
+export const MIN_STAR_MULTIPLIER = 2;
+/** The slider only ever lands on multiples of this step. */
+export const STAR_MULTIPLIER_STEP = 2;
+
+/** Whether a stage allows placing a star at all (0/unset means disabled). */
+export function isStarEligibleStage(
+  maxStarMultiplier: number | null | undefined,
+): boolean {
+  return (maxStarMultiplier ?? 0) >= MIN_STAR_MULTIPLIER;
 }
 
-export function starColor(tier: VoteStarTier | null): "yellow" | "red" | "purple" {
-  switch (tier) {
-    case "RED":
-      return "red";
-    case "PURPLE":
-      return "purple";
-    default:
-      return "yellow";
+export function isValidStarMultiplier(n: number): boolean {
+  return (
+    Number.isInteger(n) &&
+    n >= MIN_STAR_MULTIPLIER &&
+    n % STAR_MULTIPLIER_STEP === 0
+  );
+}
+
+/** Validates a star multiplier input: `null` (no star) or a valid even multiplier. */
+export const starMultiplierSchema = z.union([
+  z.number().refine(isValidStarMultiplier, {
+    message: "Multiplier must be an even number, 2 or higher",
+  }),
+  z.null(),
+]);
+
+/** Bounds `multiplier` to `[MIN_STAR_MULTIPLIER, maxStarMultiplier]`, rounded down to a valid step. Returns `null` if `maxStarMultiplier` disables stars for the stage. */
+export function clampStarMultiplier(
+  multiplier: number,
+  maxStarMultiplier: number,
+): number | null {
+  if (!isStarEligibleStage(maxStarMultiplier)) return null;
+  const bounded = Math.min(
+    Math.max(multiplier, MIN_STAR_MULTIPLIER),
+    maxStarMultiplier,
+  );
+  return bounded - (bounded % STAR_MULTIPLIER_STEP);
+}
+
+export function validateMaxStarMultiplier(n: number): string | null {
+  const isDisabled = n === 0;
+  const isValidStep = n >= MIN_STAR_MULTIPLIER && n % STAR_MULTIPLIER_STEP === 0;
+  if (!Number.isInteger(n) || (!isDisabled && !isValidStep) || n > 100) {
+    return `Max multiplier must be 0 (disabled) or a multiple of ${STAR_MULTIPLIER_STEP} from ${MIN_STAR_MULTIPLIER} to 100`;
   }
+  return null;
 }
 
 export function beerCostForChampionVote(
   isCorrect: boolean,
-  starTier: VoteStarTier | null,
+  starMultiplier: number | null,
 ): number {
-  const bonus = CHAMPION_VOTE_BONUS * starMultiplier(starTier);
+  const bonus = CHAMPION_VOTE_BONUS * (starMultiplier ?? 1);
   return isCorrect ? -bonus : bonus;
 }
 
 export function beerCostForStarVote(
   isCorrect: boolean,
   penalty: StagePenaltyValues,
-  tier: VoteStarTier | null,
+  starMultiplier: number | null,
 ): number {
-  const multiplied = wrongPenaltyForStage(penalty) * starMultiplier(tier);
+  const multiplied = wrongPenaltyForStage(penalty) * (starMultiplier ?? 1);
   return isCorrect ? -multiplied : multiplied;
-}
-
-/** Red and purple stars are gated the same way — both only allowed from the admin-configured start stage onward. */
-export function isRedStarEligibleStage(
-  matchSequenceOrder: number | null | undefined,
-  redStarStartSequenceOrder: number | null | undefined,
-): boolean {
-  return (
-    matchSequenceOrder != null &&
-    redStarStartSequenceOrder != null &&
-    matchSequenceOrder >= redStarStartSequenceOrder
-  );
-}
-
-/** Red and purple are the "premium" tiers gated by `isRedStarEligibleStage`; yellow is always available. */
-export function isGatedStarTier(tier: VoteStarTier | null): boolean {
-  return tier === "RED" || tier === "PURPLE";
 }
 
 export type StagePenaltyValues =
