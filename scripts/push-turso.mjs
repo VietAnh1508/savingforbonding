@@ -47,3 +47,9 @@ execSync("npx prisma db push", {
 execSync("node --env-file=.env scripts/backfill-user-joining-dates.mjs", {
   stdio: "inherit",
 });
+
+// TODO: remove this call (and scripts/backfill-star-multiplier.mjs) once the
+// starTier/isRedStarStartStage cleanup push has run and been verified.
+execSync("node --env-file=.env scripts/backfill-star-multiplier.mjs", {
+  stdio: "inherit",
+});

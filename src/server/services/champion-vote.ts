@@ -19,7 +19,7 @@ export async function resolveChampionVotes(
   for (const vote of votes) {
     const isCorrect = vote.candidateId === winningCandidateId;
     const newPoints = vote.candidateId
-      ? beerCostForChampionVote(isCorrect, vote.starTier)
+      ? beerCostForChampionVote(isCorrect, vote.starMultiplier)
       : 0;
     const delta = newPoints - vote.points;
 
@@ -47,6 +47,14 @@ export async function resolveChampionVotes(
   }
 
   return { votesResolved: votes.length, usersUpdated };
+}
+
+/** Champion vote has no stage, so its max multiplier lives in the GameSettings singleton. */
+export async function getChampionMaxStarMultiplier(
+  db: PrismaClient,
+): Promise<number> {
+  const settings = await db.gameSettings.findUnique({ where: { id: 1 } });
+  return settings?.championMaxStarMultiplier ?? 4;
 }
 
 /** Kickoff of the Semi-final stage, or null if it isn't scheduled yet. */

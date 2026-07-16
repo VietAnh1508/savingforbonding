@@ -7,6 +7,7 @@ import { useToast } from "~/app/_components/toast";
 import {
   BEER_WIN,
   noVotePenaltyForStage,
+  validateMaxStarMultiplier,
   validateStagePenalty,
   validateStageStars,
   wrongPenaltyForStage,
@@ -26,16 +27,21 @@ function StageRow({ stage }: { stage: Stage }) {
     noVotePenaltyForStage(stage.penalty),
   );
   const [starsAllocated, setStarsAllocated] = useState(stage.starsAllocated);
+  const [maxStarMultiplier, setMaxStarMultiplier] = useState(
+    stage.maxStarMultiplier,
+  );
   const [formError, setFormError] = useState<string | null>(null);
 
   const updatePenalty = api.admin.updateStagePenalty.useMutation();
   const updateStars = api.admin.updateStageStars.useMutation();
+  const updateMaxMultiplier = api.admin.updateStageMaxMultiplier.useMutation();
 
   async function handleSave() {
     if (
       Number.isNaN(wrongPenalty) ||
       Number.isNaN(noVotePenalty) ||
-      Number.isNaN(starsAllocated)
+      Number.isNaN(starsAllocated) ||
+      Number.isNaN(maxStarMultiplier)
     ) {
       setFormError("Values must be valid numbers");
       return;
@@ -43,7 +49,8 @@ function StageRow({ stage }: { stage: Stage }) {
 
     const penaltyError = validateStagePenalty(wrongPenalty, noVotePenalty);
     const starsError = validateStageStars(starsAllocated);
-    const error = penaltyError ?? starsError;
+    const maxMultiplierError = validateMaxStarMultiplier(maxStarMultiplier);
+    const error = penaltyError ?? starsError ?? maxMultiplierError;
     if (error) {
       setFormError(error);
       return;
@@ -61,11 +68,15 @@ function StageRow({ stage }: { stage: Stage }) {
           stageId: stage.id,
           starsAllocated,
         }),
+        updateMaxMultiplier.mutateAsync({
+          stageId: stage.id,
+          maxStarMultiplier,
+        }),
       ]);
       await utils.admin.listStagePenalties.invalidate();
       toast.success(`${stage.name} settings saved`);
     } catch {
-      // surfaced via updatePenalty.error/updateStars.error below
+      // surfaced via updatePenalty.error/updateStars.error/updateMaxMultiplier.error below
     }
   }
 
@@ -116,6 +127,17 @@ function StageRow({ stage }: { stage: Stage }) {
           className={inputClass}
         />
       </td>
+      <td className="py-2 pr-4">
+        <input
+          type="number"
+          min="0"
+          step="2"
+          value={Number.isNaN(maxStarMultiplier) ? "" : maxStarMultiplier}
+          onChange={(e) => setMaxStarMultiplier(e.target.valueAsNumber)}
+          disabled={locked}
+          className={inputClass}
+        />
+      </td>
       <td className="py-2">
         {locked ? (
           <p className="text-xs text-foreground/40">
@@ -124,11 +146,15 @@ function StageRow({ stage }: { stage: Stage }) {
         ) : (
           <form action={handleSave} className="w-20">
             <SubmitButton size="sm">Save</SubmitButton>
-            {(formError ?? updatePenalty.error ?? updateStars.error) && (
+            {(formError ??
+              updatePenalty.error ??
+              updateStars.error ??
+              updateMaxMultiplier.error) && (
               <p className="mt-1 text-xs text-red-400">
                 {formError ??
                   updatePenalty.error?.message ??
-                  updateStars.error?.message}
+                  updateStars.error?.message ??
+                  updateMaxMultiplier.error?.message}
               </p>
             )}
           </form>
@@ -138,44 +164,65 @@ function StageRow({ stage }: { stage: Stage }) {
   );
 }
 
-function RedStarThresholdControl({ stages }: { stages: Stage[] }) {
+function ChampionMaxMultiplierControl() {
   const utils = api.useUtils();
   const toast = useToast();
-  const setThreshold = api.admin.setRedStarStartStage.useMutation({
+  const { data: settings } = api.admin.getGameSettings.useQuery();
+  const [value, setValue] = useState<number | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const updateChampionMax = api.admin.updateChampionMaxMultiplier.useMutation({
     onSuccess: async () => {
-      await utils.admin.listStagePenalties.invalidate();
-      toast.success("Red star threshold updated");
+      await utils.admin.getGameSettings.invalidate();
+      toast.success("Champion max multiplier updated");
     },
   });
 
-  const knockoutStages = stages.filter((s) => s.isKnockout);
-  const current = knockoutStages.find((s) => s.isRedStarStartStage)?.id ?? "";
+  const displayValue = value ?? settings?.championMaxStarMultiplier ?? 0;
+
+  async function handleSave() {
+    if (Number.isNaN(displayValue)) {
+      setFormError("Value must be a valid number");
+      return;
+    }
+    const error = validateMaxStarMultiplier(displayValue);
+    if (error) {
+      setFormError(error);
+      return;
+    }
+    setFormError(null);
+    try {
+      await updateChampionMax.mutateAsync({
+        championMaxStarMultiplier: displayValue,
+      });
+    } catch {
+      // surfaced via updateChampionMax.error below
+    }
+  }
 
   return (
     <div className="rounded-xl border border-foreground/10 p-4">
-      <h3 className="text-sm font-semibold">Red star eligible from</h3>
+      <h3 className="text-sm font-semibold">Champion vote max multiplier</h3>
       <p className="mt-1 text-sm text-foreground/60">
-        Matches in this stage and every later stage allow a red or purple star
-        pick.
+        Highest stake a player can choose when starring their champion pick.
       </p>
-      <select
-        value={current}
-        onChange={(e) =>
-          setThreshold.mutate({ stageId: e.target.value || null })
-        }
-        className="mt-2 rounded-lg border border-foreground/10 bg-foreground/10 px-2 py-1 text-sm"
+      <form
+        action={handleSave}
+        className="mt-2 flex items-center gap-2"
       >
-        <option value="">None (disabled)</option>
-        {knockoutStages.map((s) => (
-          <option key={s.id} value={s.id} disabled={s.hasCompletedMatch}>
-            {s.name}
-            {s.hasCompletedMatch ? " (locked)" : ""}
-          </option>
-        ))}
-      </select>
-      {setThreshold.error && (
+        <input
+          type="number"
+          min="0"
+          step="2"
+          value={Number.isNaN(displayValue) ? "" : displayValue}
+          onChange={(e) => setValue(e.target.valueAsNumber)}
+          className="w-20 rounded-lg border border-foreground/10 bg-foreground/10 px-2 py-1 text-sm"
+        />
+        <SubmitButton size="sm">Save</SubmitButton>
+      </form>
+      {(formError ?? updateChampionMax.error) && (
         <p className="mt-1 text-xs text-red-400">
-          {setThreshold.error.message}
+          {formError ?? updateChampionMax.error?.message}
         </p>
       )}
     </div>
@@ -194,13 +241,14 @@ export function StagePenaltiesPanel() {
       <div>
         <h2 className="text-lg font-semibold">Stage Penalties</h2>
         <p className="mt-1 text-sm text-foreground/60">
-          Wrong-prediction and no-pick beer penalties, and the Star of Hope
-          budget, per stage. Correct predictions always cost {BEER_WIN} beer,
-          unaffected by this table.
+          Wrong-prediction and no-pick beer penalties, the Star of Hope
+          budget, and the highest multiplier a player can choose, per stage.
+          Correct predictions always cost {BEER_WIN} beer, unaffected by this
+          table.
         </p>
       </div>
 
-      {stages.length > 0 && <RedStarThresholdControl stages={stages} />}
+      <ChampionMaxMultiplierControl />
 
       {stages.length === 0 ? (
         <p className="text-foreground/40">No stages found.</p>
@@ -212,6 +260,7 @@ export function StagePenaltiesPanel() {
               <th className="pb-2 pr-4 font-normal">Wrong</th>
               <th className="pb-2 pr-4 font-normal">No pick</th>
               <th className="pb-2 pr-4 font-normal">Stars</th>
+              <th className="pb-2 pr-4 font-normal">Max ×</th>
               <th className="pb-2 font-normal"></th>
             </tr>
           </thead>

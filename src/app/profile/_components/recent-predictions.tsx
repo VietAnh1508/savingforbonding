@@ -1,4 +1,4 @@
-import { StarIcon } from "~/app/_components/icons/star-icon";
+import { StarBadge } from "~/app/_components/star-picker";
 import { MatchScore } from "~/app/_components/match/match-score";
 import {
   deriveEffectiveResult,
@@ -6,10 +6,8 @@ import {
   formatRatioValue,
   hasVotingHandicap,
   outcomeLabel,
-  starColor,
 } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
-import { type VoteStarTier } from "../../../../generated/prisma";
 
 type VoteItem = {
   kind: "vote";
@@ -26,7 +24,7 @@ type VoteItem = {
   outcome: RouterOutputs["vote"]["getMyVotes"][number]["outcome"];
   isCorrect: boolean | null;
   points: number;
-  starTier: VoteStarTier | null;
+  starMultiplier: number | null;
   runningTotal: number;
 };
 
@@ -178,10 +176,8 @@ export function RecentPredictions({ items }: { items: LedgerItem[] }) {
                     <ResultCell item={item} />
                   </td>
                   <td className="px-3 py-2 text-center">
-                    {item.kind === "vote" && item.starTier ? (
-                      <span className="inline-flex items-center">
-                        <StarIcon filled color={starColor(item.starTier)} />
-                      </span>
+                    {item.kind === "vote" && item.starMultiplier ? (
+                      <StarBadge multiplier={item.starMultiplier} />
                     ) : (
                       <span className="text-foreground/20">—</span>
                     )}

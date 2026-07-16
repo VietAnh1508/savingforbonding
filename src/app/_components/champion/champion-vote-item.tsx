@@ -1,9 +1,8 @@
 "use client";
 
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
-import { StarIcon } from "~/app/_components/icons/star-icon";
 import { TeamFlag } from "~/app/_components/match/team-flag";
-import { CHAMPION_STAR_TIERS, StarTierButtons, type StarTier } from "~/app/_components/star-tier-buttons";
+import { StarBadge, StarPicker } from "~/app/_components/star-picker";
 import { voterLabel } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
@@ -21,9 +20,12 @@ export function ChampionVoteItem({
   isSignedIn,
   votingOpen,
   isCastPending,
-  starTier,
-  onToggleStar,
-  isTogglingStar,
+  starMultiplier,
+  maxStarMultiplier,
+  onPlaceStar,
+  onRemoveStar,
+  onChangeStarMultiplier,
+  isSettingStar,
 }: {
   candidate: VoteCount["candidate"];
   count: VoteCount["count"];
@@ -36,9 +38,12 @@ export function ChampionVoteItem({
   isSignedIn: boolean;
   votingOpen: boolean;
   isCastPending: boolean;
-  starTier: StarTier | null;
-  onToggleStar: (tier: StarTier) => void;
-  isTogglingStar: boolean;
+  starMultiplier: number | null;
+  maxStarMultiplier: number;
+  onPlaceStar: () => void;
+  onRemoveStar: () => void;
+  onChangeStarMultiplier: (multiplier: number) => void;
+  isSettingStar: boolean;
 }) {
   const eliminated = !!candidate.eliminatedAt;
 
@@ -104,11 +109,13 @@ export function ChampionVoteItem({
           </button>
         )}
         {isSignedIn && selected && (
-          <StarTierButtons
-            tiers={CHAMPION_STAR_TIERS}
-            activeTier={starTier}
-            isTierDisabled={() => !votingOpen || isTogglingStar}
-            onToggle={onToggleStar}
+          <StarPicker
+            multiplier={starMultiplier}
+            maxMultiplier={maxStarMultiplier}
+            disabled={!votingOpen || isSettingStar}
+            onPlace={onPlaceStar}
+            onRemove={onRemoveStar}
+            onChangeMultiplier={onChangeStarMultiplier}
           />
         )}
       </div>
@@ -123,12 +130,8 @@ export function ChampionVoteItem({
                   key={voter.id}
                   className="flex items-center gap-1 text-xs text-foreground/60"
                 >
-                  {voter.starTier && (
-                    <StarIcon
-                      filled
-                      color={voter.starTier === "YELLOW" ? "yellow" : "red"}
-                      className="h-3 w-3"
-                    />
+                  {voter.starMultiplier && (
+                    <StarBadge multiplier={voter.starMultiplier} />
                   )}
                   {voter.name}
                 </li>

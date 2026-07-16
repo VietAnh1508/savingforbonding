@@ -2,6 +2,12 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import {
+  clampStarMultiplier,
+  isStarEligibleStage,
+  starMultiplierSchema,
+} from "~/lib/match";
+import {
+  getChampionMaxStarMultiplier,
   getChampionVotingDeadline,
   isChampionVotingOpen,
 } from "~/server/services/champion-vote";
@@ -13,10 +19,14 @@ import {
 
 export const championVoteRouter = createTRPCRouter({
   getVotingStatus: publicProcedure.query(async ({ ctx }) => {
-    const deadline = await getChampionVotingDeadline(ctx.db);
+    const [deadline, maxStarMultiplier] = await Promise.all([
+      getChampionVotingDeadline(ctx.db),
+      getChampionMaxStarMultiplier(ctx.db),
+    ]);
     return {
       isOpen: !deadline || new Date() < deadline,
       deadline,
+      maxStarMultiplier,
     };
   }),
 
@@ -35,7 +45,7 @@ export const championVoteRouter = createTRPCRouter({
       ctx.db.championVote.findMany({
         select: {
           candidateId: true,
-          starTier: true,
+          starMultiplier: true,
           user: { select: { id: true, name: true } },
         },
       }),
@@ -44,7 +54,7 @@ export const championVoteRouter = createTRPCRouter({
     return candidates.map((candidate) => {
       const voters = votes
         .filter((v) => v.candidateId === candidate.id)
-        .map((v) => ({ ...v.user, starTier: v.starTier }));
+        .map((v) => ({ ...v.user, starMultiplier: v.starMultiplier }));
       return { candidate, count: voters.length, voters };
     });
   }),
@@ -86,13 +96,13 @@ export const championVoteRouter = createTRPCRouter({
         },
         update: {
           candidateId: input.candidateId,
-          ...(changingCandidate && { starTier: null }),
+          ...(changingCandidate && { starMultiplier: null }),
         },
       });
     }),
 
-  toggleStar: protectedProcedure
-    .input(z.object({ tier: z.enum(["YELLOW", "RED"]) }))
+  setStar: protectedProcedure
+    .input(z.object({ multiplier: starMultiplierSchema }))
     .mutation(async ({ ctx, input }) => {
       const vote = await ctx.db.championVote.findUnique({
         where: { userId: ctx.session.user.id },
@@ -111,11 +121,25 @@ export const championVoteRouter = createTRPCRouter({
         });
       }
 
-      const nextTier = vote.starTier === input.tier ? null : input.tier;
+      const maxMultiplier = await getChampionMaxStarMultiplier(ctx.db);
+
+      if (vote.starMultiplier === null && input.multiplier !== null) {
+        if (!isStarEligibleStage(maxMultiplier)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Stars are not available for champion voting",
+          });
+        }
+      }
+
+      const nextMultiplier =
+        input.multiplier === null
+          ? null
+          : clampStarMultiplier(input.multiplier, maxMultiplier);
 
       return ctx.db.championVote.update({
         where: { userId: ctx.session.user.id },
-        data: { starTier: nextTier },
+        data: { starMultiplier: nextMultiplier },
       });
     }),
 });

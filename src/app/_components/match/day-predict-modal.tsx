@@ -6,13 +6,13 @@ import { CloseIcon } from "~/app/_components/icons/close-icon";
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
 import { OutcomePicker } from "~/app/_components/match/outcome-picker";
 import { RatioDisplay } from "~/app/_components/match/ratio-display";
-import { STAR_TIERS, StarTierButtons } from "~/app/_components/star-tier-buttons";
+import { StarPicker } from "~/app/_components/star-picker";
 import { useToast } from "~/app/_components/toast";
 import { useModalDismiss } from "~/app/hooks/use-modal-dismiss";
-import { useToggleStar } from "~/app/hooks/use-toggle-star";
-import { formatKickoffTime, isGatedStarTier, voterLabel } from "~/lib/match";
+import { useSetStar } from "~/app/hooks/use-set-star";
+import { formatKickoffTime, MIN_STAR_MULTIPLIER, voterLabel } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
-import { type VoteOutcome, type VoteStarTier } from "../../../../generated/prisma";
+import { type VoteOutcome } from "../../../../generated/prisma";
 
 type Match = RouterOutputs["match"]["listMatches"][number];
 
@@ -36,9 +36,9 @@ export function DayPredictModal({
   const [selections, setSelections] = useState<Selections>(() =>
     initSelections(matches),
   );
-  // Optimistic local star state: matchId → starTier (overrides server data until invalidated)
+  // Optimistic local star state: matchId → starMultiplier (overrides server data until invalidated)
   const [starOverrides, setStarOverrides] = useState<
-    Record<string, VoteStarTier | null>
+    Record<string, number | null>
   >({});
   const utils = api.useUtils();
   const toast = useToast();
@@ -51,17 +51,9 @@ export function DayPredictModal({
     },
   );
 
-  const toggleStar = useToggleStar({
-    onMutate: ({ matchId, tier }) => {
-      const current =
-        matchId in starOverrides
-          ? starOverrides[matchId]
-          : (matches.find((m) => m.id === matchId)?.userVoteResult?.starTier ??
-            null);
-      setStarOverrides((prev) => ({
-        ...prev,
-        [matchId]: current === tier ? null : tier,
-      }));
+  const setStar = useSetStar({
+    onMutate: ({ matchId, multiplier }) => {
+      setStarOverrides((prev) => ({ ...prev, [matchId]: multiplier }));
     },
     onError: (_err, { matchId }) => {
       setStarOverrides((prev) => {
@@ -150,22 +142,22 @@ export function DayPredictModal({
 
             const starsAllocated = match.stageStarsAllocated;
             const hasExistingVote = match.userVoteOutcome !== null;
-            const currentTier =
+            const currentMultiplier =
               match.id in starOverrides
                 ? (starOverrides[match.id] ?? null)
-                : (match.userVoteResult?.starTier ?? null);
-            const isStarred = currentTier != null;
+                : (match.userVoteResult?.starMultiplier ?? null);
+            const isStarred = currentMultiplier != null;
             const stageAllotment = starAllotments?.find(
               (a) => a.stage === match.stage,
             );
             // Adjust the server's remaining count for this session's pending
-            // overrides — only a null→tier change spends a star and only a
-            // tier→null change frees one; switching between YELLOW and RED on
+            // overrides — only a null→multiplier change spends a star and only
+            // a multiplier→null change frees one; changing the multiplier on
             // an already-starred vote is net zero.
             const stageDelta = matches
               .filter((m) => m.stage === match.stage && m.id in starOverrides)
               .reduce((sum, m) => {
-                const original = m.userVoteResult?.starTier ?? null;
+                const original = m.userVoteResult?.starMultiplier ?? null;
                 const effective = starOverrides[m.id] ?? null;
                 if (original == null && effective != null) return sum + 1;
                 if (original != null && effective == null) return sum - 1;
@@ -196,21 +188,21 @@ export function DayPredictModal({
                   </span>
                   <div className="flex items-center gap-2">
                     {starsAllocated > 0 && hasExistingVote && (
-                      <StarTierButtons
-                        tiers={STAR_TIERS.filter(
-                          (tier) =>
-                            !isGatedStarTier(tier) ||
-                            match.redStarEligible ||
-                            currentTier === tier,
-                        )}
-                        activeTier={currentTier}
-                        isTierDisabled={(tier) =>
-                          toggleStar.isPending ||
-                          locked ||
-                          (currentTier !== tier && !canStar)
+                      <StarPicker
+                        multiplier={currentMultiplier}
+                        maxMultiplier={match.stageMaxStarMultiplier}
+                        disabled={setStar.isPending || locked || (!isStarred && !canStar)}
+                        onPlace={() =>
+                          setStar.mutate({
+                            matchId: match.id,
+                            multiplier: MIN_STAR_MULTIPLIER,
+                          })
                         }
-                        onToggle={(tier) =>
-                          toggleStar.mutate({ matchId: match.id, tier })
+                        onRemove={() =>
+                          setStar.mutate({ matchId: match.id, multiplier: null })
+                        }
+                        onChangeMultiplier={(multiplier) =>
+                          setStar.mutate({ matchId: match.id, multiplier })
                         }
                         gapClassName="gap-0.5"
                       />

@@ -3,14 +3,8 @@
 import Link from "next/link";
 
 import { ChampionVotingCountdown } from "~/app/_components/champion/champion-voting-countdown";
-import {
-  CHAMPION_VOTE_BONUS,
-  formatMatchDateTime,
-  starMultiplier,
-} from "~/lib/match";
+import { CHAMPION_VOTE_BONUS, formatMatchDateTime } from "~/lib/match";
 import { api } from "~/trpc/react";
-
-const MAX_CHAMPION_VOTE_BONUS = CHAMPION_VOTE_BONUS * starMultiplier("RED");
 
 export function ChampionVotingBanner({
   isSignedIn,
@@ -25,6 +19,9 @@ export function ChampionVotingBanner({
   if (!votingStatus?.isOpen || !votingStatus.deadline) return null;
   if (isSignedIn && myVote?.candidateId) return null;
 
+  const maxChampionVoteBonus =
+    CHAMPION_VOTE_BONUS * Math.max(votingStatus.maxStarMultiplier, 1);
+
   return (
     <div className="mt-6 mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-700 dark:text-amber-300">
       <p className="font-semibold">
@@ -33,7 +30,7 @@ export function ChampionVotingBanner({
         <ChampionVotingCountdown deadline={votingStatus.deadline} />
       </p>
       <p className="mt-1 text-amber-700/80 dark:text-amber-300/80">
-        A chance to clear {CHAMPION_VOTE_BONUS}-{MAX_CHAMPION_VOTE_BONUS}{" "}
+        A chance to clear {CHAMPION_VOTE_BONUS}-{maxChampionVoteBonus}{" "}
         beers —{" "}
         <Link href="/champion" className="font-medium underline">
           cast your vote

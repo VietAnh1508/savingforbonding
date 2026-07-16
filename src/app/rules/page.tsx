@@ -1,12 +1,11 @@
 import { BeerStakes } from "~/app/_components/beer-stakes";
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { Nav } from "~/app/_components/nav";
-import { formatBeers } from "~/lib/match";
+import { formatBeers, isStarEligibleStage, MIN_STAR_MULTIPLIER } from "~/lib/match";
 import { api } from "~/trpc/server";
 
 export default async function RulesPage() {
   const knockoutStages = await api.stage.listKnockout();
-  const redStarStartStage = knockoutStages.find((s) => s.redStarEligible);
   return (
     <>
       <Nav />
@@ -34,36 +33,16 @@ export default async function RulesPage() {
           <p className="mb-3">
             In knockout rounds, you can place a{" "}
             <strong className="text-foreground/90">Star of Hope</strong> on any
-            match you&apos;ve voted on — but stars are scarce and the stakes are
-            multiplied:
+            match you&apos;ve voted on — but stars are scarce, and once placed
+            you choose your own stakes on a slider, from ×{MIN_STAR_MULTIPLIER}{" "}
+            up to that stage&apos;s max: clears that many times the stage wrong
+            penalty on a correct vote (floored at 0), or costs that many times
+            on a wrong vote.
           </p>
-          <ul className="mb-3 list-inside list-disc space-y-1">
-            <li>
-              <span className="text-amber-600 dark:text-amber-300">
-                Yellow star
-              </span>{" "}
-              — doubles the stakes (2x): clears double the stage wrong penalty
-              on a correct vote (floored at 0), or costs double on a wrong vote
-            </li>
-            <li>
-              <span className="text-red-600 dark:text-red-300">Red star</span> —
-              quadruples the stakes (4x) instead of doubling them.{" "}
-              {redStarStartStage
-                ? `Only available from the ${redStarStartStage.name} onward, since it's a bold (and expensive) bet on the board`
-                : "Not currently available"}
-            </li>
-            <li>
-              <span className="text-purple-600 dark:text-purple-300">
-                Purple star
-              </span>{" "}
-              — octuples the stakes (8x), the boldest bet on the board. Same
-              eligibility as the red star.
-            </li>
-          </ul>
           <p className="mb-2">
-            Stars can only be placed or removed before the voting window closes
-            (5 minutes before kickoff). Each stage has a fixed star budget,
-            shared between yellow and red:
+            Stars can only be placed, removed, or re-adjusted before the voting
+            window closes (5 minutes before kickoff). Each stage has a fixed
+            star budget and its own max multiplier:
           </p>
           <table className="w-full">
             <thead>
@@ -73,13 +52,10 @@ export default async function RulesPage() {
                   Stars
                 </th>
                 <th className="pb-1 font-normal text-amber-600 dark:text-amber-300">
-                  Yellow (2x)
+                  Max stakes
                 </th>
                 <th className="pb-1 font-normal text-red-600 dark:text-red-400">
-                  Red (4x)
-                </th>
-                <th className="pb-1 font-normal text-purple-600 dark:text-purple-400">
-                  Purple (8x)
+                  At max
                 </th>
               </tr>
             </thead>
@@ -94,16 +70,13 @@ export default async function RulesPage() {
                     {stage.starsAllocated}
                   </td>
                   <td className="py-0.5 text-amber-600 dark:text-amber-300">
-                    {formatBeers(stage.wrongPenalty * 2)}
-                  </td>
-                  <td className="py-0.5 text-red-600 dark:text-red-300">
-                    {stage.redStarEligible
-                      ? formatBeers(stage.wrongPenalty * 4)
+                    {isStarEligibleStage(stage.maxStarMultiplier)
+                      ? `×${MIN_STAR_MULTIPLIER}–×${stage.maxStarMultiplier}`
                       : "—"}
                   </td>
-                  <td className="py-0.5 text-purple-600 dark:text-purple-300">
-                    {stage.redStarEligible
-                      ? formatBeers(stage.wrongPenalty * 8)
+                  <td className="py-0.5 text-red-600 dark:text-red-300">
+                    {isStarEligibleStage(stage.maxStarMultiplier)
+                      ? formatBeers(stage.wrongPenalty * stage.maxStarMultiplier)
                       : "—"}
                   </td>
                 </tr>
