@@ -26,10 +26,10 @@ cp .env.example .env
 
 Fill in `TURSO_DATABASE_URL` and `TURSO_API_KEY` for the dev database (ask a teammate for these, or mint your own token — see "Turso CLI" below).
 
-**3. Push the schema and seed data**
+**3. Apply migrations and seed data**
 
 ```bash
-npm run db:push:turso
+npm run db:migrate:turso
 npm run db:seed
 ```
 
@@ -47,7 +47,8 @@ The app runs at `http://localhost:3000`.
 |---|---|
 | `npm run db:studio` | Open Prisma Studio (visual DB browser) |
 | `npm run db:seed` | Re-seed the database |
-| `npm run db:push:turso` | Push schema changes to the Turso DB (dev by default; see `CLAUDE.md` for pushing to prod) |
+| `npm run db:migrate:new` | Author + review a new migration locally |
+| `npm run db:migrate:turso` | Apply committed migrations to the Turso DB (dev by default; see `CLAUDE.md` for prod) |
 | `npm run typecheck` | TypeScript type check |
 | `npm run sync:fifa` | Manually pull latest FIFA fixture data |
 

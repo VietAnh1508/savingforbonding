@@ -21,9 +21,10 @@ npm run dev          # Start dev server (Turbo mode)
 npm run build        # Production build
 npm run typecheck    # Type-check (only quality gate — no test suite)
 
-npm run db:push:turso   # Apply schema to the Turso DB (dev or prod — see below)
-npm run db:seed         # Re-seed the database
-npm run db:studio       # Open Prisma Studio
+npm run db:migrate:new       # Author + review a migration locally (classic engine, local db.sqlite)
+npm run db:migrate:turso     # Apply committed migrations to the Turso DB (dev or prod — see below)
+npm run db:seed               # Re-seed the database
+npm run db:studio             # Open Prisma Studio
 
 npm run sync:fifa    # Manually pull latest FIFA fixture data
 ```
@@ -42,18 +43,27 @@ If you spin up a second dev server to test a worktree's changes without disturbi
 
 ### Database setup
 
-**Both local dev and production use Turso** (there is no local SQLite workflow). Dev and prod are separate Turso databases under the `givemeakiss` org: `savingforbonding` (dev) and `savingforbonding-prod` (production). The only difference between pushing to dev vs. prod is which credentials are loaded:
+**Both local dev and production use Turso** (there is no local SQLite workflow for the app itself — see below for the local file used only to author migrations). Dev and prod are separate Turso databases under the `givemeakiss` org: `savingforbonding` (dev) and `savingforbonding-prod` (production).
 
-| Environment | Credentials file  | Command |
-|-------------|--------------------|---------|
-| Dev         | `.env`             | `npm run db:push:turso` |
-| Production  | `.env.production`  | `TURSO_DATABASE_URL="..." TURSO_API_KEY="<db-token>" npm run db:push:turso` |
+Schema changes go through **reviewed Prisma migrations**, not `prisma db push` — a `db push` of a `NOT NULL` column addition to `User` previously forced SQLite's table-rebuild path and silently cascade-deleted every row in `Vote`, `ChampionVote`, `Challenge`, and `UserFollow` (see `docs/POST-MORTEM.md`). Migrations generate reviewable SQL before anything touches Turso.
 
-`db:push:turso` loads `.env` automatically via `--env-file=.env`. For production, pass the `.env.production` values explicitly as shown above — inline env vars take priority over `--env-file` (Node doesn't overwrite already-set vars), so this correctly targets the prod DB instead. `db:push:turso` also runs `scripts/backfill-user-joining-dates.mjs` afterward (idempotent, safe to ignore).
+Workflow for any schema change:
 
-The `TURSO_API_KEY` must be a **database auth token** (not a platform API token) — run `npm run turso:db-token` to mint one from a `TURSO_PLATFORM_TOKEN`, or use the Turso CLI directly (see below).
+1. `npm run db:migrate:new` — edit `prisma/schema.prisma`, then generate + apply the migration locally (classic engine, local `prisma/db.sqlite`, prompts for a migration name). **Review the generated SQL in `prisma/migrations/<ts>_<name>/migration.sql`** before committing — this is the step that would have caught the incident's rebuild-and-cascade.
+2. Commit the new `prisma/migrations/` folder.
+3. `npm run db:migrate:turso` — applies committed, unapplied migrations to the **dev** Turso DB (loads `.env`), then re-runs `scripts/backfill-user-joining-dates.mjs` (idempotent, safe to ignore).
+4. Smoke-test against dev (`npm run dev`).
+5. `npm run db:migrate:turso:prod` — same, against **production** (loads `.env.production`).
 
-**Always push the schema before deploying code** that depends on new tables or columns.
+**Mandatory fork-test before any prod migration that forces a table rebuild** (`migration.sql` contains `CREATE TABLE "new_*"` / `DROP TABLE`) **on a table with `onDelete: Cascade` children** (currently `User`, whose children are `Vote`, `ChampionVote`, `Challenge`, `UserFollow`): fork prod with `turso db create <name> --from-db savingforbonding-prod`, apply the same migration to the fork, diff row counts on all cascading-child tables, and only proceed against real prod if nothing was lost. Prisma Migrate has been verified (see the plan this was implemented from) to not reproduce the original bug for one change shape on one Prisma version — it is not proof the underlying SQLite/driver-adapter behavior is fixed for every case, so this fork-test is the actual safety net, not a formality. Re-run it before any Prisma major-version upgrade too, since driver-adapter internals can change.
+
+Both Turso databases were bootstrapped onto this migration history via a one-time baseline (`_prisma_migrations` table created manually, then `prisma migrate resolve --applied <init-migration>` — no SQL executed against the live schema). This is already done; you shouldn't need to repeat it unless a database is rebuilt from scratch.
+
+`db:migrate:turso*` require `PRISMA_USE_TURSO=1` (set automatically by the script) plus valid `TURSO_DATABASE_URL` + `TURSO_API_KEY` — the `TURSO_API_KEY` must be a **database auth token** (not a platform API token); run `npm run turso:db-token` to mint one from a `TURSO_PLATFORM_TOKEN`, or use the Turso CLI directly (see below).
+
+`npm run db:push` still exists for fast local prototyping (classic engine, local `db.sqlite` only) before finalizing a change into a migration — it never touches Turso, so it carries none of the incident's risk.
+
+**Always apply migrations to Turso before deploying code** that depends on new tables or columns.
 
 There are no tests. `npm run typecheck` is the only automated check.
 
@@ -69,6 +79,7 @@ turso db tokens create savingforbonding   # mint a new database auth token
 ## Environment Variables
 
 Required in `.env` (dev) and `.env.production` (production, used only for local scripts targeting the prod DB — the deployed app's env vars live in the Vercel dashboard, not this file):
+
 - `TURSO_DATABASE_URL` — Turso `libsql://` URL
 - `TURSO_API_KEY` — Turso database auth token (not a platform API token)
 - `AUTH_SECRET` — NextAuth secret (required in production)
@@ -81,7 +92,7 @@ Note: `DATABASE_URL` in `.env` is a legacy field kept for schema validation; the
 
 ### Data layer
 
-`prisma/schema.prisma` defines the data models: `User`, `Match`, `Vote`, `Prediction`, `BettingRatio`, `UserFollow`. Both dev and production use Turso (libSQL). `prisma.config.ts` loads the Turso adapter when `PRISMA_USE_TURSO=1` is set alongside valid `TURSO_DATABASE_URL` + `TURSO_API_KEY` — the `db:push:turso` script sets this automatically.
+`prisma/schema.prisma` defines the data models: `User`, `Match`, `Vote`, `Prediction`, `BettingRatio`, `UserFollow`. Both dev and production use Turso (libSQL). `prisma.config.ts` loads the Turso adapter when `PRISMA_USE_TURSO=1` is set alongside valid `TURSO_DATABASE_URL` + `TURSO_API_KEY` — the `db:migrate:turso*` scripts set this automatically. Schema changes are authored as Prisma migrations, not `db push` — see "Database setup" above.
 
 ### API layer (tRPC)
 
@@ -89,14 +100,15 @@ All client–server communication goes through tRPC, except for file uploads —
 
 Routers live in `src/server/api/routers/`:
 
-| Router | Key procedures |
-|--------|---------------|
-| `match` | `listUpcoming`, `getById`, `getVoteDistribution` |
-| `vote` | `cast` (mutation), `getMyVotes`, `getMyStats`, `getMyMissedMatches` |
-| `leaderboard` | `global`, `weekly`, `totalBeerPool` |
-| `admin` | `createMatch`, `updateMatch`, `deleteMatch`, `setBettingRatios` |
+| Router        | Key procedures                                                      |
+| ------------- | ------------------------------------------------------------------- |
+| `match`       | `listUpcoming`, `getById`, `getVoteDistribution`                    |
+| `vote`        | `cast` (mutation), `getMyVotes`, `getMyStats`, `getMyMissedMatches` |
+| `leaderboard` | `global`, `weekly`, `totalBeerPool`                                 |
+| `admin`       | `createMatch`, `updateMatch`, `deleteMatch`, `setBettingRatios`     |
 
 Three procedure types are defined in `src/server/api/trpc.ts`:
+
 - `publicProcedure` — no auth required
 - `protectedProcedure` — requires NextAuth session (`UNAUTHORIZED` if missing)
 - `adminProcedure` — requires admin cookie (separate from user session)
@@ -145,9 +157,10 @@ Follow Conventional Commits: `<type>(<scope>): <description>`
 Types: `feat`, `fix`, `chore`, `refactor`, `docs`, `style`, `test`
 
 - Subject line: imperative mood, ≤72 chars, no trailing period
-- Body: explain *why*, not what — omit if the subject line is self-explanatory
+- Body: explain _why_, not what — omit if the subject line is self-explanatory
 
 ## Notes
 
 - `TECHNICAL_BRIEF.md` documents an earlier design (PostgreSQL, OAuth, Football-Data.org API, Vercel crons). The actual implementation differs — trust the code, not the brief.
+- `docs/POST-MORTEM.md` documents the production data-loss incident that motivated the migration-based workflow above.
 - Tailwind CSS v4 is fully set up — no `tailwind.config.js`. Theme tokens are defined in `src/styles/globals.css` using `@theme {}`. The PostCSS plugin is `@tailwindcss/postcss`.

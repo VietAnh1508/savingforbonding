@@ -36,7 +36,7 @@ Or create a token with the Turso CLI:
   process.exit(1);
 }
 
-execSync("npx prisma db push", {
+execSync("npx prisma migrate deploy", {
   stdio: "inherit",
   env: {
     ...process.env,
@@ -44,6 +44,9 @@ execSync("npx prisma db push", {
   },
 });
 
-execSync("node --env-file=.env scripts/backfill-user-joining-dates.mjs", {
+// Inherits whichever env this wrapper was launched with (.env or
+// .env.production) — must not reload .env here, or the prod variant would
+// silently backfill the dev database instead.
+execSync("node scripts/backfill-user-joining-dates.mjs", {
   stdio: "inherit",
 });
