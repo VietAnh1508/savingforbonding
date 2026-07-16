@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { AccuracyTable } from "~/app/insight/_components/accuracy-table";
+import { AccuracyChart } from "~/app/insight/_components/accuracy-chart";
 import { BeerAccumulationChart } from "~/app/insight/_components/beer-accumulation-chart";
 import { BiggestMoverCard } from "~/app/insight/_components/biggest-mover-card";
 import {
@@ -81,7 +81,7 @@ export function InsightTabs({
 
       <div className="min-w-0 flex-1">
         {activeTab === "accuracy" && (
-          <AccuracyTable
+          <AccuracyChart
             entries={global.entries}
             currentUserId={currentUserId}
           />
