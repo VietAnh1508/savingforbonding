@@ -73,7 +73,7 @@ export const adminRouter = createTRPCRouter({
   }),
 
   repairBeerTotals: adminProcedure.mutation(async ({ ctx }) => {
-    const [completedMatches, resolvedVotes, users, championVotes] =
+    const [completedMatches, resolvedVotes, users, championVotes, allInUsers] =
       await Promise.all([
         ctx.db.match.findMany({
           where: { status: "COMPLETED" },
@@ -94,6 +94,10 @@ export const adminRouter = createTRPCRouter({
         ctx.db.championVote.findMany({
           select: { userId: true, points: true },
         }),
+        ctx.db.vote.findMany({
+          where: { isAllIn: true, isCorrect: { not: null } },
+          select: { userId: true },
+        }),
       ]);
 
     const matchInputs = completedMatches.map((match) => ({
@@ -109,10 +113,17 @@ export const adminRouter = createTRPCRouter({
     const championPointsByUser = new Map(
       championVotes.map((v) => [v.userId, v.points]),
     );
+    // The replay above is a fixed additive fold and can't reproduce an
+    // all-in vote's clear-to-zero/double effect (which depends on the live
+    // balance at resolution time, not a fixed delta) — skip these users so
+    // repair doesn't overwrite their correct live totals with a wrong value.
+    const allInUserIds = new Set(allInUsers.map((v) => v.userId));
 
     let usersUpdated = 0;
 
     for (const user of users) {
+      if (allInUserIds.has(user.id)) continue;
+
       const baseBeers = finalBeers[user.id] ?? 0;
       const championPoints = championPointsByUser.get(user.id) ?? 0;
       const newTotalPoints = Math.max(0, baseBeers + championPoints);
@@ -391,6 +402,29 @@ export const adminRouter = createTRPCRouter({
       return ctx.db.stage.update({
         where: { id: stageId },
         data: { maxStarMultiplier },
+      });
+    }),
+
+  updateStageAllInEnabled: adminProcedure
+    .input(z.object({ stageId: z.string(), allInEnabled: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const { stageId, allInEnabled } = input;
+
+      const completedMatch = await ctx.db.match.findFirst({
+        where: { stageId, status: "COMPLETED" },
+        select: { id: true },
+      });
+      if (completedMatch) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Cannot edit All In for a stage that already has completed matches",
+        });
+      }
+
+      return ctx.db.stage.update({
+        where: { id: stageId },
+        data: { allInEnabled },
       });
     }),
 

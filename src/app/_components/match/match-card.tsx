@@ -6,7 +6,8 @@ import { MatchScore } from "~/app/_components/match/match-score";
 import { MatchVoteCounts } from "~/app/_components/match/match-vote-counts";
 import { RatioDisplay } from "~/app/_components/match/ratio-display";
 import { TeamFlag } from "~/app/_components/match/team-flag";
-import { StarBadge, StarPicker } from "~/app/_components/star-picker";
+import { AllInBadge, AllInCheckbox, StarBadge, StarPicker } from "~/app/_components/star-picker";
+import { useSetAllIn } from "~/app/hooks/use-set-all-in";
 import { useSetStar } from "~/app/hooks/use-set-star";
 import { formatBeers, formatKickoffTime, hasVotingHandicap } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
@@ -35,7 +36,9 @@ function MatchCardFooter({
   stageNoVotePenalty: number;
 }) {
   if (isSignedIn && isCompleted && voteResult) {
-    const starIcon = voteResult.starMultiplier ? (
+    const starIcon = voteResult.isAllIn ? (
+      <AllInBadge />
+    ) : voteResult.starMultiplier ? (
       <StarBadge multiplier={voteResult.starMultiplier} />
     ) : null;
 
@@ -152,10 +155,37 @@ export function MatchCard({
   });
   const showStar = isStarred || isStarToggleAllowed;
 
+  // All in — interactive when voting is open, user has a saved vote, and
+  // the stage allows it. Mutually exclusive with the star, both locally
+  // (optimistic) and server-side (each mutation clears the other field).
+  const currentIsAllIn = voteResult?.isAllIn ?? false;
+  const [allInOverride, setAllInOverride] = useState<boolean | undefined>(
+    undefined,
+  );
+  const activeIsAllIn =
+    allInOverride !== undefined ? allInOverride : currentIsAllIn;
+  const allInTogglePossible =
+    isSignedIn &&
+    match.votingOpen &&
+    !!prediction &&
+    match.stageAllInEnabled;
+  const showAllIn = activeIsAllIn || allInTogglePossible;
+
   const utils = api.useUtils();
   const setStar = useSetStar({
-    onMutate: (variables) => setMultiplierOverride(variables.multiplier),
+    onMutate: (variables) => {
+      setMultiplierOverride(variables.multiplier);
+      if (variables.multiplier !== null) setAllInOverride(false);
+    },
     onError: () => setMultiplierOverride(undefined),
+    onSettled: () => void utils.match.listMatches.invalidate(),
+  });
+  const setAllIn = useSetAllIn({
+    onMutate: (variables) => {
+      setAllInOverride(variables.isAllIn);
+      if (variables.isAllIn) setMultiplierOverride(null);
+    },
+    onError: () => setAllInOverride(undefined),
     onSettled: () => void utils.match.listMatches.invalidate(),
   });
 
@@ -232,6 +262,18 @@ export function MatchCard({
               No handicap set
             </span>
           )}
+          {showAllIn &&
+            (allInTogglePossible ? (
+              <AllInCheckbox
+                checked={activeIsAllIn}
+                disabled={setAllIn.isPending}
+                onChange={(next) =>
+                  setAllIn.mutate({ matchId: match.id, isAllIn: next })
+                }
+              />
+            ) : (
+              activeIsAllIn && <AllInBadge />
+            ))}
           {predictsDraw && (
             <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
               predict draw

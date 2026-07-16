@@ -1,5 +1,6 @@
 import { type PrismaClient } from "../../../generated/prisma";
 import {
+  allInResolvedPoints,
   beerCostForStarVote,
   beerCostForVote,
   deriveResult,
@@ -68,6 +69,29 @@ export async function resolveMatchVotes(
       match.homeRatio,
       match.awayRatio,
     );
+    if (vote.isAllIn) {
+      const user = await db.user.findUnique({
+        where: { id: vote.userId },
+        select: { totalPoints: true, weeklyPoints: true },
+      });
+      const currentTotal = user?.totalPoints ?? 0;
+      const currentWeekly = user?.weeklyPoints ?? 0;
+      const newTotal = allInResolvedPoints(isCorrect, currentTotal);
+      const newWeekly = allInResolvedPoints(isCorrect, currentWeekly);
+      const totalDelta = newTotal - currentTotal;
+
+      await db.vote.update({
+        where: { id: vote.id },
+        data: { isCorrect, points: totalDelta },
+      });
+      await db.user.update({
+        where: { id: vote.userId },
+        data: { totalPoints: newTotal, weeklyPoints: newWeekly },
+      });
+      beersCharged += totalDelta;
+      continue;
+    }
+
     const beers = vote.starMultiplier
       ? beerCostForStarVote(isCorrect, stagePenalty, vote.starMultiplier)
       : beerCostForVote(isCorrect, stagePenalty);

@@ -1,7 +1,8 @@
 "use client";
 
 import { OutcomePicker } from "~/app/_components/match/outcome-picker";
-import { StarBadge, StarPicker } from "~/app/_components/star-picker";
+import { AllInBadge, StarBadge, StarPicker } from "~/app/_components/star-picker";
+import { useSetAllIn } from "~/app/hooks/use-set-all-in";
 import { useSetStar } from "~/app/hooks/use-set-star";
 import {
   BEER_NO_VOTE,
@@ -37,8 +38,10 @@ export function VoteForm({
   const votingOpen = match?.votingOpen ?? false;
   const matchStage = match?.stage ?? null;
   const currentMultiplier = match?.userVote?.starMultiplier ?? null;
+  const currentIsAllIn = match?.userVote?.isAllIn ?? false;
   const starsAllocated = match?.stageStarsAllocated ?? 0;
   const stageMaxStarMultiplier = match?.stageMaxStarMultiplier ?? 0;
+  const stageAllInEnabled = match?.stageAllInEnabled ?? false;
 
   const { data: starAllotments } = api.vote.getStarAllotments.useQuery(
     undefined,
@@ -74,6 +77,7 @@ export function VoteForm({
                 outcome,
                 isCorrect: null,
                 starMultiplier: null,
+                isAllIn: false,
                 points: 0,
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -105,7 +109,12 @@ export function VoteForm({
         if (!old?.userVote) return old;
         return {
           ...old,
-          userVote: { ...old.userVote, starMultiplier: multiplier },
+          userVote: {
+            ...old.userVote,
+            starMultiplier: multiplier,
+            // Placing a star gives up all-in.
+            isAllIn: multiplier === null ? old.userVote.isAllIn : false,
+          },
         };
       });
       return { previous };
@@ -116,6 +125,39 @@ export function VoteForm({
           ? "Star removed"
           : `Star placed at ×${variables.multiplier}!`,
       );
+    },
+    onError: (_error, _input, ctx) => {
+      const context = ctx as { previous: MatchDetail | undefined } | undefined;
+      if (context?.previous) {
+        utils.match.getById.setData({ id: matchId }, context.previous);
+      }
+    },
+    onSettled: () => {
+      void utils.match.getById.invalidate({ id: matchId });
+      void utils.match.listMatches.invalidate();
+    },
+  });
+
+  const setAllIn = useSetAllIn({
+    onMutate: async ({ isAllIn }) => {
+      await utils.match.getById.cancel({ id: matchId });
+      const previous = utils.match.getById.getData({ id: matchId });
+      utils.match.getById.setData({ id: matchId }, (old) => {
+        if (!old?.userVote) return old;
+        return {
+          ...old,
+          userVote: {
+            ...old.userVote,
+            isAllIn,
+            // Going all-in gives up any placed star.
+            starMultiplier: isAllIn ? null : old.userVote.starMultiplier,
+          },
+        };
+      });
+      return { previous };
+    },
+    onSuccess: (_result, variables) => {
+      toast.success(variables.isAllIn ? "You're all in!" : "All in cancelled");
     },
     onError: (_error, _input, ctx) => {
       const context = ctx as { previous: MatchDetail | undefined } | undefined;
@@ -147,7 +189,11 @@ export function VoteForm({
     }
 
     const starMultiplier = userVote?.starMultiplier ?? null;
-    const starIcon = starMultiplier && <StarBadge multiplier={starMultiplier} />;
+    const starIcon = userVote?.isAllIn ? (
+      <AllInBadge />
+    ) : (
+      starMultiplier && <StarBadge multiplier={starMultiplier} />
+    );
 
     if (isCorrect === null) {
       return (
@@ -261,6 +307,38 @@ export function VoteForm({
       {setStar.error && (
         <p className="text-sm text-red-600 dark:text-red-400">
           {setStar.error.message}
+        </p>
+      )}
+      {currentVote && stageAllInEnabled && (
+        <label
+          className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition ${
+            currentIsAllIn
+              ? "border-red-500 bg-red-500/10 shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
+              : "border-red-500/30 bg-red-500/5 hover:border-red-500/50"
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={currentIsAllIn}
+            disabled={setAllIn.isPending}
+            onChange={(e) => setAllIn.mutate({ matchId, isAllIn: e.target.checked })}
+            className="mt-1 h-5 w-5 rounded border-red-500/40 bg-foreground/10 text-red-500 focus:ring-2 focus:ring-red-500/50"
+          />
+          <span className="text-sm">
+            <span className="flex items-center gap-1.5 font-bold text-red-600 dark:text-red-400">
+              {currentIsAllIn && <AllInBadge />}
+              All in
+            </span>
+            <span className="mt-0.5 block text-xs text-foreground/60">
+              Correct wipes your beer debt to zero; wrong doubles it. Clears
+              any star.
+            </span>
+          </span>
+        </label>
+      )}
+      {setAllIn.error && (
+        <p className="text-sm text-red-600 dark:text-red-400">
+          {setAllIn.error.message}
         </p>
       )}
       {currentVote && (
