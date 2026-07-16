@@ -11,16 +11,8 @@ import {
   YAxis,
 } from "recharts";
 
+import { formatAxisDate } from "~/app/insight/_components/format-axis-date";
 import { api } from "~/trpc/react";
-
-function formatAxisDate(dateStr: string): string {
-  const date = new Date(`${dateStr}T00:00:00Z`);
-  return date.toLocaleDateString("en-GB", {
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  });
-}
 
 const PALETTE = [
   "#f59e0b",
