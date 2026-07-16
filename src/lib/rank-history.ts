@@ -76,6 +76,56 @@ export type RankHistoryResult = {
   series: { userId: string; name: string | null; image: string | null }[];
 };
 
+export type RankMove = {
+  userId: string;
+  fromDate: string;
+  toDate: string;
+  fromRank: number;
+  toRank: number;
+  delta: number; // fromRank - toRank; positive = climbed, negative = dropped
+};
+
+// "One day" here means one match day (a day with a completed match) — the
+// only granularity DaySnapshots are sampled at, since there's nothing to
+// diff on a day with no completed matches.
+export function findBiggestSingleDayMoves(days: DaySnapshot[]): {
+  biggestClimb: RankMove | null;
+  biggestDrop: RankMove | null;
+} {
+  let biggestClimb: RankMove | null = null;
+  let biggestDrop: RankMove | null = null;
+
+  for (let i = 1; i < days.length; i++) {
+    const prev = days[i - 1]!;
+    const curr = days[i]!;
+    for (const userId of Object.keys(curr.ranks)) {
+      const fromRank = prev.ranks[userId];
+      const toRank = curr.ranks[userId];
+      if (fromRank === undefined || toRank === undefined) continue;
+
+      const delta = fromRank - toRank;
+      if (delta === 0) continue;
+
+      const move: RankMove = {
+        userId,
+        fromDate: prev.date,
+        toDate: curr.date,
+        fromRank,
+        toRank,
+        delta,
+      };
+
+      if (delta > 0 && (!biggestClimb || delta > biggestClimb.delta)) {
+        biggestClimb = move;
+      } else if (delta < 0 && (!biggestDrop || delta < biggestDrop.delta)) {
+        biggestDrop = move;
+      }
+    }
+  }
+
+  return { biggestClimb, biggestDrop };
+}
+
 export function computeRankHistory(
   completedMatches: MatchInput[],
   votes: VoteInput[],

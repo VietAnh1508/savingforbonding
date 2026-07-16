@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { AccuracyTable } from "~/app/insight/_components/accuracy-table";
 import { BeerAccumulationChart } from "~/app/insight/_components/beer-accumulation-chart";
+import { BiggestMoverCard } from "~/app/insight/_components/biggest-mover-card";
 import { RankHistoryChart } from "~/app/insight/_components/rank-history-chart";
 import { type RouterOutputs } from "~/trpc/react";
 
@@ -48,7 +49,10 @@ export function InsightTabs({
       )}
 
       {activeTab === "rankHistory" && (
-        <RankHistoryChart currentUserId={currentUserId} />
+        <>
+          <BiggestMoverCard />
+          <RankHistoryChart currentUserId={currentUserId} />
+        </>
       )}
 
       {activeTab === "beerPool" && <BeerAccumulationChart />}
