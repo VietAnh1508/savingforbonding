@@ -8,12 +8,7 @@ import { RatioDisplay } from "~/app/_components/match/ratio-display";
 import { TeamFlag } from "~/app/_components/match/team-flag";
 import { StarBadge, StarPicker } from "~/app/_components/star-picker";
 import { useSetStar } from "~/app/hooks/use-set-star";
-import {
-  formatBeers,
-  formatKickoffTime,
-  hasVotingHandicap,
-  MIN_STAR_MULTIPLIER,
-} from "~/lib/match";
+import { formatBeers, formatKickoffTime, hasVotingHandicap } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listMatches"][number];
@@ -191,19 +186,10 @@ export function MatchCard({
                     starsRemaining !== null &&
                     starsRemaining === 0)
                 }
-                onPlace={() =>
-                  setStar.mutate({
-                    matchId: match.id,
-                    multiplier: MIN_STAR_MULTIPLIER,
-                  })
-                }
-                onRemove={() =>
-                  setStar.mutate({ matchId: match.id, multiplier: null })
-                }
-                onChangeMultiplier={(multiplier) =>
+                onSelect={(multiplier) =>
                   setStar.mutate({ matchId: match.id, multiplier })
                 }
-                gapClassName="gap-0.5"
+                starClassName="h-3.5 w-3.5"
               />
             ) : (
               activeMultiplier !== null && (

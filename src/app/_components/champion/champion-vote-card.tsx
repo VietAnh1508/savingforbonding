@@ -178,9 +178,7 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
               isCastPending={castVote.isPending}
               starMultiplier={selected ? (myVote?.starMultiplier ?? null) : null}
               maxStarMultiplier={maxStarMultiplier}
-              onPlaceStar={() => setStar.mutate({ multiplier: MIN_STAR_MULTIPLIER })}
-              onRemoveStar={() => setStar.mutate({ multiplier: null })}
-              onChangeStarMultiplier={(multiplier) => setStar.mutate({ multiplier })}
+              onSelectStar={(multiplier) => setStar.mutate({ multiplier })}
               isSettingStar={setStar.isPending}
             />
           );

@@ -73,7 +73,6 @@ export function VoteForm({
                 matchId,
                 outcome,
                 isCorrect: null,
-                starTier: null,
                 starMultiplier: null,
                 points: 0,
                 createdAt: new Date(),
@@ -235,7 +234,7 @@ export function VoteForm({
               <p className="mt-0.5 text-xs text-foreground/50">
                 {currentMultiplier
                   ? `Clear ${formatBeers((match?.stageWrongPenalty ?? 0) * currentMultiplier)} at ×${currentMultiplier} stakes`
-                  : `Place a star, then choose your stakes from ×${MIN_STAR_MULTIPLIER} up to ×${stageMaxStarMultiplier}`}
+                  : `Pick your stakes, from ×${MIN_STAR_MULTIPLIER} up to ×${stageMaxStarMultiplier}`}
               </p>
             </div>
             <div className="flex shrink-0 flex-col items-center gap-1">
@@ -248,13 +247,7 @@ export function VoteForm({
                     starsRemaining !== null &&
                     starsRemaining === 0)
                 }
-                onPlace={() =>
-                  setStar.mutate({ matchId, multiplier: MIN_STAR_MULTIPLIER })
-                }
-                onRemove={() => setStar.mutate({ matchId, multiplier: null })}
-                onChangeMultiplier={(multiplier) =>
-                  setStar.mutate({ matchId, multiplier })
-                }
+                onSelect={(multiplier) => setStar.mutate({ matchId, multiplier })}
               />
               <span className="text-xs text-foreground/40">
                 {starsRemaining === null

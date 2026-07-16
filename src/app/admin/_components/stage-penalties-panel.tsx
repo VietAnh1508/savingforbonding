@@ -3,10 +3,12 @@
 import { useState } from "react";
 
 import { SubmitButton } from "~/app/_components/submit-button";
+import { STAR_TIER_INFO } from "~/app/_components/star-tiers";
 import { useToast } from "~/app/_components/toast";
 import {
   BEER_WIN,
   noVotePenaltyForStage,
+  STAR_TIER_MULTIPLIERS,
   validateMaxStarMultiplier,
   validateStagePenalty,
   validateStageStars,
@@ -15,6 +17,34 @@ import {
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Stage = RouterOutputs["admin"]["listStagePenalties"][number];
+
+function MaxMultiplierSelect({
+  value,
+  onChange,
+  disabled,
+  className,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+  disabled?: boolean;
+  className: string;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+      disabled={disabled}
+      className={className}
+    >
+      <option value={0}>Disabled</option>
+      {STAR_TIER_MULTIPLIERS.map((tier) => (
+        <option key={tier} value={tier}>
+          {STAR_TIER_INFO[tier].name} (×{tier})
+        </option>
+      ))}
+    </select>
+  );
+}
 
 function StageRow({ stage }: { stage: Stage }) {
   const utils = api.useUtils();
@@ -83,6 +113,8 @@ function StageRow({ stage }: { stage: Stage }) {
   const locked = stage.hasCompletedMatch;
   const inputClass =
     "w-20 rounded-lg border border-foreground/10 bg-foreground/10 px-2 py-1 text-sm disabled:opacity-50";
+  const selectClass =
+    "w-32 rounded-lg border border-foreground/10 bg-foreground/10 px-2 py-1 text-sm disabled:opacity-50";
 
   return (
     <tr className="border-b border-foreground/5 last:border-0">
@@ -128,14 +160,11 @@ function StageRow({ stage }: { stage: Stage }) {
         />
       </td>
       <td className="py-2 pr-4">
-        <input
-          type="number"
-          min="0"
-          step="2"
-          value={Number.isNaN(maxStarMultiplier) ? "" : maxStarMultiplier}
-          onChange={(e) => setMaxStarMultiplier(e.target.valueAsNumber)}
+        <MaxMultiplierSelect
+          value={maxStarMultiplier}
+          onChange={setMaxStarMultiplier}
           disabled={locked}
-          className={inputClass}
+          className={selectClass}
         />
       </td>
       <td className="py-2">
@@ -210,13 +239,10 @@ function ChampionMaxMultiplierControl() {
         action={handleSave}
         className="mt-2 flex items-center gap-2"
       >
-        <input
-          type="number"
-          min="0"
-          step="2"
-          value={Number.isNaN(displayValue) ? "" : displayValue}
-          onChange={(e) => setValue(e.target.valueAsNumber)}
-          className="w-20 rounded-lg border border-foreground/10 bg-foreground/10 px-2 py-1 text-sm"
+        <MaxMultiplierSelect
+          value={displayValue}
+          onChange={setValue}
+          className="rounded-lg border border-foreground/10 bg-foreground/10 px-2 py-1 text-sm"
         />
         <SubmitButton size="sm">Save</SubmitButton>
       </form>
@@ -260,7 +286,7 @@ export function StagePenaltiesPanel() {
               <th className="pb-2 pr-4 font-normal">Wrong</th>
               <th className="pb-2 pr-4 font-normal">No pick</th>
               <th className="pb-2 pr-4 font-normal">Stars</th>
-              <th className="pb-2 pr-4 font-normal">Max ×</th>
+              <th className="pb-2 pr-4 font-normal">Star tier</th>
               <th className="pb-2 font-normal"></th>
             </tr>
           </thead>

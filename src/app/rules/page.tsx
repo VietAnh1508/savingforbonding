@@ -1,7 +1,8 @@
 import { BeerStakes } from "~/app/_components/beer-stakes";
 import { StarIcon } from "~/app/_components/icons/star-icon";
+import { STAR_TIER_INFO, starTierTextClass } from "~/app/_components/star-tiers";
 import { Nav } from "~/app/_components/nav";
-import { formatBeers, isStarEligibleStage, MIN_STAR_MULTIPLIER } from "~/lib/match";
+import { formatBeers, isStarEligibleStage, MIN_STAR_MULTIPLIER, STAR_TIER_MULTIPLIERS } from "~/lib/match";
 import { api } from "~/trpc/server";
 
 export default async function RulesPage() {
@@ -33,12 +34,21 @@ export default async function RulesPage() {
           <p className="mb-3">
             In knockout rounds, you can place a{" "}
             <strong className="text-foreground/90">Star of Hope</strong> on any
-            match you&apos;ve voted on — but stars are scarce, and once placed
-            you choose your own stakes on a slider, from ×{MIN_STAR_MULTIPLIER}{" "}
-            up to that stage&apos;s max: clears that many times the stage wrong
-            penalty on a correct vote (floored at 0), or costs that many times
-            on a wrong vote.
+            match you&apos;ve voted on — but stars are scarce, and each one
+            comes in a color tier, up to that stage&apos;s max:
           </p>
+          <ul className="mb-3 list-inside list-disc space-y-1">
+            {STAR_TIER_MULTIPLIERS.map((tier) => (
+              <li key={tier}>
+                <span className={starTierTextClass(tier)}>
+                  {STAR_TIER_INFO[tier].name} star
+                </span>{" "}
+                — ×{tier} the stakes: clears {tier} times the stage wrong
+                penalty on a correct vote (floored at 0), or costs {tier} times
+                on a wrong vote
+              </li>
+            ))}
+          </ul>
           <p className="mb-2">
             Stars can only be placed, removed, or re-adjusted before the voting
             window closes (5 minutes before kickoff). Each stage has a fixed

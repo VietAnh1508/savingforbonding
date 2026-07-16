@@ -10,7 +10,7 @@ import { StarPicker } from "~/app/_components/star-picker";
 import { useToast } from "~/app/_components/toast";
 import { useModalDismiss } from "~/app/hooks/use-modal-dismiss";
 import { useSetStar } from "~/app/hooks/use-set-star";
-import { formatKickoffTime, MIN_STAR_MULTIPLIER, voterLabel } from "~/lib/match";
+import { formatKickoffTime, voterLabel } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { type VoteOutcome } from "../../../../generated/prisma";
 
@@ -192,19 +192,10 @@ export function DayPredictModal({
                         multiplier={currentMultiplier}
                         maxMultiplier={match.stageMaxStarMultiplier}
                         disabled={setStar.isPending || locked || (!isStarred && !canStar)}
-                        onPlace={() =>
-                          setStar.mutate({
-                            matchId: match.id,
-                            multiplier: MIN_STAR_MULTIPLIER,
-                          })
-                        }
-                        onRemove={() =>
-                          setStar.mutate({ matchId: match.id, multiplier: null })
-                        }
-                        onChangeMultiplier={(multiplier) =>
+                        onSelect={(multiplier) =>
                           setStar.mutate({ matchId: match.id, multiplier })
                         }
-                        gapClassName="gap-0.5"
+                        starClassName="h-3.5 w-3.5"
                       />
                     )}
                     <RatioDisplay
