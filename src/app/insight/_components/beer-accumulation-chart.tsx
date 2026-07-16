@@ -10,18 +10,8 @@ import {
   YAxis,
 } from "recharts";
 
+import { formatAxisDate } from "~/app/insight/_components/format-axis-date";
 import { api } from "~/trpc/react";
-
-function formatAxisDate(dateStr: string): string {
-  const [, month, day] = dateStr.split("-");
-  if (!month || !day) return dateStr;
-  const date = new Date(`${dateStr}T00:00:00Z`);
-  return date.toLocaleDateString("en-GB", {
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  });
-}
 
 export function BeerAccumulationChart() {
   const { data, isLoading } = api.leaderboard.beerByDay.useQuery();

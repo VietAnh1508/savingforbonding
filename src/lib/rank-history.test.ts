@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { BEER_LOSE, BEER_NO_VOTE, BEER_WIN } from "~/lib/match";
-import { computeRankHistory } from "~/lib/rank-history";
+import {
+  computeRankHistory,
+  findBiggestSingleDayMoves,
+  type DaySnapshot,
+} from "~/lib/rank-history";
 
 // Noon UTC on a given date = 7pm VN = same calendar day in VN
 const d = (dateStr: string) => new Date(`${dateStr}T12:00:00Z`);
@@ -229,5 +233,91 @@ describe("computeRankHistory", () => {
 
     expect(result.days[0]!.date).toBe("2026-06-12");
     expect(result.days[1]!.date).toBe("2026-06-13");
+  });
+});
+
+describe("findBiggestSingleDayMoves", () => {
+  const day = (date: string, ranks: Record<string, number>): DaySnapshot => ({
+    date,
+    ranks,
+    beers: {},
+  });
+
+  it("returns null for both when there are fewer than 2 days", () => {
+    expect(findBiggestSingleDayMoves([])).toEqual({
+      biggestClimb: null,
+      biggestDrop: null,
+    });
+    expect(
+      findBiggestSingleDayMoves([day("2026-06-12", { alice: 1 })]),
+    ).toEqual({ biggestClimb: null, biggestDrop: null });
+  });
+
+  it("identifies a user climbing from rank 3 to rank 1 as the biggest climb", () => {
+    const days = [
+      day("2026-06-12", { alice: 3, bob: 1, carol: 2 }),
+      day("2026-06-13", { alice: 1, bob: 2, carol: 3 }),
+    ];
+
+    const { biggestClimb } = findBiggestSingleDayMoves(days);
+
+    expect(biggestClimb).toEqual({
+      userId: "alice",
+      fromDate: "2026-06-12",
+      toDate: "2026-06-13",
+      fromRank: 3,
+      toRank: 1,
+      delta: 2,
+    });
+  });
+
+  it("identifies a user dropping from rank 1 to rank 4 as the biggest drop", () => {
+    const days = [
+      day("2026-06-12", { alice: 1, bob: 2 }),
+      day("2026-06-13", { alice: 4, bob: 1 }),
+    ];
+
+    const { biggestDrop } = findBiggestSingleDayMoves(days);
+
+    expect(biggestDrop).toEqual({
+      userId: "alice",
+      fromDate: "2026-06-12",
+      toDate: "2026-06-13",
+      fromRank: 1,
+      toRank: 4,
+      delta: -3,
+    });
+  });
+
+  it("keeps the first transition on a tie in magnitude", () => {
+    const days = [
+      day("2026-06-12", { alice: 3, bob: 1 }),
+      day("2026-06-13", { alice: 1, bob: 3 }),
+      day("2026-06-14", { alice: 3, bob: 1 }),
+    ];
+
+    const { biggestClimb } = findBiggestSingleDayMoves(days);
+
+    // Both alice (day1->day2) and bob (day2->day3) climb by 2 — first wins.
+    expect(biggestClimb).toEqual({
+      userId: "alice",
+      fromDate: "2026-06-12",
+      toDate: "2026-06-13",
+      fromRank: 3,
+      toRank: 1,
+      delta: 2,
+    });
+  });
+
+  it("ignores users missing from either snapshot and zero-delta moves", () => {
+    const days = [
+      day("2026-06-12", { alice: 1 }),
+      day("2026-06-13", { alice: 1, bob: 2 }),
+    ];
+
+    expect(findBiggestSingleDayMoves(days)).toEqual({
+      biggestClimb: null,
+      biggestDrop: null,
+    });
   });
 });
