@@ -134,14 +134,14 @@ export function AccuracyChart({
           />
           <XAxis
             type="number"
-            dataKey="participationRate"
+            dataKey="accuracyPct"
             domain={[0, 100]}
             unit="%"
             tick={{ fontSize: 11, fill: "currentColor", opacity: 0.5 }}
             axisLine={false}
             tickLine={false}
             label={{
-              value: "Participation rate",
+              value: "Accuracy",
               position: "insideBottom",
               offset: -10,
               fill: "currentColor",
@@ -151,7 +151,7 @@ export function AccuracyChart({
           />
           <YAxis
             type="number"
-            dataKey="accuracyPct"
+            dataKey="participationRate"
             domain={[0, 100]}
             unit="%"
             tick={{ fontSize: 11, fill: "currentColor", opacity: 0.5 }}
@@ -159,7 +159,7 @@ export function AccuracyChart({
             tickLine={false}
             width={40}
             label={{
-              value: "Accuracy",
+              value: "Participation rate",
               angle: -90,
               position: "insideLeft",
               fill: "currentColor",
