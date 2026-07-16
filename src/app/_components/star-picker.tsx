@@ -76,17 +76,6 @@ export function StarBadge({
   );
 }
 
-/** Read-only "all in" indicator, shown wherever StarBadge would be — the two are mutually exclusive. */
-export function AllInBadge({ className = "" }: { className?: string }) {
-  return (
-    <span
-      className={`inline-flex items-center rounded-full bg-red-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400 ${className}`}
-    >
-      ALL IN
-    </span>
-  );
-}
-
 // Explicit checkbox for quickly toggling "all in" on the match card — a real
 // checkbox rather than a pill, so it reads as an action to take, not a
 // status that's already true.

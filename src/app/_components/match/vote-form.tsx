@@ -1,7 +1,8 @@
 "use client";
 
+import { AllInIcon } from "~/app/_components/icons/all-in-icon";
 import { OutcomePicker } from "~/app/_components/match/outcome-picker";
-import { AllInBadge, StarBadge, StarPicker } from "~/app/_components/star-picker";
+import { StarBadge, StarPicker } from "~/app/_components/star-picker";
 import { useSetAllIn } from "~/app/hooks/use-set-all-in";
 import { useSetStar } from "~/app/hooks/use-set-star";
 import {
@@ -190,7 +191,7 @@ export function VoteForm({
 
     const starMultiplier = userVote?.starMultiplier ?? null;
     const starIcon = userVote?.isAllIn ? (
-      <AllInBadge />
+      <AllInIcon />
     ) : (
       starMultiplier && <StarBadge multiplier={starMultiplier} />
     );
@@ -274,7 +275,9 @@ export function VoteForm({
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 text-sm font-medium">
-                {currentMultiplier && <StarBadge multiplier={currentMultiplier} />}
+                {currentMultiplier && (
+                  <StarBadge multiplier={currentMultiplier} />
+                )}
                 {currentMultiplier ? "Starred" : "Star of Hope"}
               </p>
               <p className="mt-0.5 text-xs text-foreground/50">
@@ -293,7 +296,9 @@ export function VoteForm({
                     starsRemaining !== null &&
                     starsRemaining === 0)
                 }
-                onSelect={(multiplier) => setStar.mutate({ matchId, multiplier })}
+                onSelect={(multiplier) =>
+                  setStar.mutate({ matchId, multiplier })
+                }
               />
               <span className="text-xs text-foreground/40">
                 {starsRemaining === null
@@ -321,17 +326,18 @@ export function VoteForm({
             type="checkbox"
             checked={currentIsAllIn}
             disabled={setAllIn.isPending}
-            onChange={(e) => setAllIn.mutate({ matchId, isAllIn: e.target.checked })}
+            onChange={(e) =>
+              setAllIn.mutate({ matchId, isAllIn: e.target.checked })
+            }
             className="mt-1 h-5 w-5 rounded border-red-500/40 bg-foreground/10 text-red-500 focus:ring-2 focus:ring-red-500/50"
           />
           <span className="text-sm">
             <span className="flex items-center gap-1.5 font-bold text-red-600 dark:text-red-400">
-              {currentIsAllIn && <AllInBadge />}
               All in
             </span>
             <span className="mt-0.5 block text-xs text-foreground/60">
-              Correct wipes your beer debt to zero; wrong doubles it. Clears
-              any star.
+              Correct wipes your beer debt to zero; wrong doubles it. Clears any
+              star.
             </span>
           </span>
         </label>
