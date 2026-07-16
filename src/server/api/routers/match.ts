@@ -58,6 +58,7 @@ export const matchRouter = createTRPCRouter({
               isCorrect: true,
               points: true,
               starMultiplier: true,
+              isAllIn: true,
             },
           })
         : [];
@@ -73,6 +74,7 @@ export const matchRouter = createTRPCRouter({
         stageNoVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
         stageStarsAllocated: match.stage?.starsAllocated ?? 0,
         stageMaxStarMultiplier: match.stage?.maxStarMultiplier ?? 0,
+        stageAllInEnabled: match.stage?.allInEnabled ?? false,
         userVoteOutcome: userVoteByMatchId.get(match.id)?.outcome ?? null,
         userVoteResult: userVoteByMatchId.get(match.id) ?? null,
         voteCounts: voteCountsByMatchId.get(match.id) ?? emptyMatchVoteCounts(),
@@ -93,6 +95,7 @@ export const matchRouter = createTRPCRouter({
           select: {
             outcome: true,
             starMultiplier: true,
+            isAllIn: true,
             user: { select: { id: true, name: true } },
           },
         }),
@@ -117,7 +120,7 @@ export const matchRouter = createTRPCRouter({
         away: MatchVoter[];
       } = { home: [], draw: [], away: [] };
       for (const v of allVotes) {
-        const entry = { ...v.user, starMultiplier: v.starMultiplier };
+        const entry = { ...v.user, starMultiplier: v.starMultiplier, isAllIn: v.isAllIn };
         if (v.outcome === "HOME_WIN") {
           voteCounts.home++;
           voters.home.push(entry);
@@ -137,6 +140,7 @@ export const matchRouter = createTRPCRouter({
         stageNoVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
         stageStarsAllocated: match.stage?.starsAllocated ?? 0,
         stageMaxStarMultiplier: match.stage?.maxStarMultiplier ?? 0,
+        stageAllInEnabled: match.stage?.allInEnabled ?? false,
         votingOpen: isVotingOpen(match.kickoffAt, match.status),
         userVote,
         voteCounts,

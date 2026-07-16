@@ -12,6 +12,7 @@ export type MatchVoter = {
   id: string;
   name: string | null;
   starMultiplier: number | null;
+  isAllIn: boolean;
 };
 
 export const VOTE_LOCK_MINUTES = 5;
@@ -103,6 +104,11 @@ export function beerCostForVote(
   penalty: StagePenaltyValues,
 ): number {
   return isCorrect ? BEER_WIN : wrongPenaltyForStage(penalty);
+}
+
+/** All-in resolution: a correct pick clears the counter to 0; a wrong pick doubles it. */
+export function allInResolvedPoints(isCorrect: boolean, current: number): number {
+  return isCorrect ? 0 : current * 2;
 }
 
 export function validateStagePenalty(

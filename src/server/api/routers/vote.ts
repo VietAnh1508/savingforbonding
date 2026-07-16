@@ -382,7 +382,55 @@ export const voteRouter = createTRPCRouter({
 
         return tx.vote.update({
           where: { id: vote.id },
-          data: { starMultiplier: nextMultiplier },
+          // Placing a star gives up all-in — the two are mutually exclusive.
+          data: {
+            starMultiplier: nextMultiplier,
+            ...(nextMultiplier !== null ? { isAllIn: false } : {}),
+          },
+        });
+      });
+    }),
+
+  setAllIn: protectedProcedure
+    .input(z.object({ matchId: z.string(), isAllIn: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      return ctx.db.$transaction(async (tx) => {
+        const [vote, match] = await Promise.all([
+          tx.vote.findUnique({
+            where: { userId_matchId: { userId, matchId: input.matchId } },
+          }),
+          tx.match.findUnique({
+            where: { id: input.matchId },
+            select: {
+              stage: { select: { allInEnabled: true } },
+              kickoffAt: true,
+              status: true,
+            },
+          }),
+        ]);
+
+        if (!vote) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "You haven't voted on this match" });
+        }
+        if (!match) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Match not found" });
+        }
+        if (!isVotingOpen(match.kickoffAt, match.status)) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Voting is closed for this match" });
+        }
+        if (input.isAllIn && !match.stage?.allInEnabled) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "All In is not available for this stage" });
+        }
+
+        return tx.vote.update({
+          where: { id: vote.id },
+          // Going all-in gives up any placed star — mutually exclusive.
+          data: {
+            isAllIn: input.isAllIn,
+            ...(input.isAllIn ? { starMultiplier: null } : {}),
+          },
         });
       });
     }),

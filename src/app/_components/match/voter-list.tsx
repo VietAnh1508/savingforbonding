@@ -1,5 +1,5 @@
 import { type MatchVoter } from "~/lib/match";
-import { StarBadge } from "~/app/_components/star-picker";
+import { AllInBadge, StarBadge } from "~/app/_components/star-picker";
 
 function VoterColumn({ voters, grow }: { voters: MatchVoter[]; grow?: boolean }) {
   return (
@@ -9,6 +9,7 @@ function VoterColumn({ voters, grow }: { voters: MatchVoter[]; grow?: boolean })
       ) : (
         voters.map((v) => (
           <span key={v.id} className="flex items-center gap-0.5 text-xs text-foreground/60">
+            {v.isAllIn && <AllInBadge />}
             {v.starMultiplier && <StarBadge multiplier={v.starMultiplier} />}
             {v.name}
           </span>

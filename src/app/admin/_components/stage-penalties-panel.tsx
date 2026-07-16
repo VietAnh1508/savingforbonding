@@ -60,11 +60,13 @@ function StageRow({ stage }: { stage: Stage }) {
   const [maxStarMultiplier, setMaxStarMultiplier] = useState(
     stage.maxStarMultiplier,
   );
+  const [allInEnabled, setAllInEnabled] = useState(stage.allInEnabled);
   const [formError, setFormError] = useState<string | null>(null);
 
   const updatePenalty = api.admin.updateStagePenalty.useMutation();
   const updateStars = api.admin.updateStageStars.useMutation();
   const updateMaxMultiplier = api.admin.updateStageMaxMultiplier.useMutation();
+  const updateAllInEnabled = api.admin.updateStageAllInEnabled.useMutation();
 
   async function handleSave() {
     if (
@@ -101,6 +103,10 @@ function StageRow({ stage }: { stage: Stage }) {
         updateMaxMultiplier.mutateAsync({
           stageId: stage.id,
           maxStarMultiplier,
+        }),
+        updateAllInEnabled.mutateAsync({
+          stageId: stage.id,
+          allInEnabled,
         }),
       ]);
       await utils.admin.listStagePenalties.invalidate();
@@ -167,6 +173,15 @@ function StageRow({ stage }: { stage: Stage }) {
           className={selectClass}
         />
       </td>
+      <td className="py-2 pr-4">
+        <input
+          type="checkbox"
+          checked={allInEnabled}
+          onChange={(e) => setAllInEnabled(e.target.checked)}
+          disabled={locked}
+          className="h-4 w-4 rounded border-foreground/20 bg-foreground/10 text-emerald-500 focus:ring-emerald-500/50 disabled:opacity-50"
+        />
+      </td>
       <td className="py-2">
         {locked ? (
           <p className="text-xs text-foreground/40">
@@ -178,12 +193,14 @@ function StageRow({ stage }: { stage: Stage }) {
             {(formError ??
               updatePenalty.error ??
               updateStars.error ??
-              updateMaxMultiplier.error) && (
+              updateMaxMultiplier.error ??
+              updateAllInEnabled.error) && (
               <p className="mt-1 text-xs text-red-400">
                 {formError ??
                   updatePenalty.error?.message ??
                   updateStars.error?.message ??
-                  updateMaxMultiplier.error?.message}
+                  updateMaxMultiplier.error?.message ??
+                  updateAllInEnabled.error?.message}
               </p>
             )}
           </form>
@@ -287,6 +304,7 @@ export function StagePenaltiesPanel() {
               <th className="pb-2 pr-4 font-normal">No pick</th>
               <th className="pb-2 pr-4 font-normal">Stars</th>
               <th className="pb-2 pr-4 font-normal">Star tier</th>
+              <th className="pb-2 pr-4 font-normal">All in</th>
               <th className="pb-2 font-normal"></th>
             </tr>
           </thead>

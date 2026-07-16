@@ -43,6 +43,7 @@ model Stage {
   isKnockout          Boolean       @default(false)
   starsAllocated      Int           @default(0)
   maxStarMultiplier   Int           @default(0)
+  allInEnabled        Boolean       @default(false)
   matches             Match[]
   penalty             StagePenalty?
 
@@ -106,6 +107,7 @@ model Vote {
   outcome        VoteOutcome
   isCorrect      Boolean?
   starMultiplier Int?
+  isAllIn        Boolean       @default(false)
   points         Int           @default(0)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
