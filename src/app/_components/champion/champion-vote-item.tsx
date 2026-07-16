@@ -22,9 +22,7 @@ export function ChampionVoteItem({
   isCastPending,
   starMultiplier,
   maxStarMultiplier,
-  onPlaceStar,
-  onRemoveStar,
-  onChangeStarMultiplier,
+  onSelectStar,
   isSettingStar,
 }: {
   candidate: VoteCount["candidate"];
@@ -40,9 +38,7 @@ export function ChampionVoteItem({
   isCastPending: boolean;
   starMultiplier: number | null;
   maxStarMultiplier: number;
-  onPlaceStar: () => void;
-  onRemoveStar: () => void;
-  onChangeStarMultiplier: (multiplier: number) => void;
+  onSelectStar: (multiplier: number | null) => void;
   isSettingStar: boolean;
 }) {
   const eliminated = !!candidate.eliminatedAt;
@@ -113,9 +109,8 @@ export function ChampionVoteItem({
             multiplier={starMultiplier}
             maxMultiplier={maxStarMultiplier}
             disabled={!votingOpen || isSettingStar}
-            onPlace={onPlaceStar}
-            onRemove={onRemoveStar}
-            onChangeMultiplier={onChangeStarMultiplier}
+            onSelect={onSelectStar}
+            starClassName="h-3.5 w-3.5"
           />
         )}
       </div>

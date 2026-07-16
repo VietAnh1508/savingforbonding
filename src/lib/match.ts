@@ -28,8 +28,8 @@ export const CHAMPION_VOTE_BONUS = 50;
 
 /** Minimum (and default) multiplier a player can pick when placing a star. */
 export const MIN_STAR_MULTIPLIER = 2;
-/** The slider only ever lands on multiples of this step. */
-export const STAR_MULTIPLIER_STEP = 2;
+/** Fixed star tiers, each doubling the last — mirrors the old Yellow/Red/Purple/Black scheme. */
+export const STAR_TIER_MULTIPLIERS = [2, 4, 8, 16] as const;
 
 /** Whether a stage allows placing a star at all (0/unset means disabled). */
 export function isStarEligibleStage(
@@ -39,39 +39,31 @@ export function isStarEligibleStage(
 }
 
 export function isValidStarMultiplier(n: number): boolean {
-  return (
-    Number.isInteger(n) &&
-    n >= MIN_STAR_MULTIPLIER &&
-    n % STAR_MULTIPLIER_STEP === 0
-  );
+  return (STAR_TIER_MULTIPLIERS as readonly number[]).includes(n);
 }
 
-/** Validates a star multiplier input: `null` (no star) or a valid even multiplier. */
+/** Validates a star multiplier input: `null` (no star) or one of the fixed tiers. */
 export const starMultiplierSchema = z.union([
   z.number().refine(isValidStarMultiplier, {
-    message: "Multiplier must be an even number, 2 or higher",
+    message: `Multiplier must be one of ×${STAR_TIER_MULTIPLIERS.join(", ×")}`,
   }),
   z.null(),
 ]);
 
-/** Bounds `multiplier` to `[MIN_STAR_MULTIPLIER, maxStarMultiplier]`, rounded down to a valid step. Returns `null` if `maxStarMultiplier` disables stars for the stage. */
+/** Bounds `multiplier` to the stage's tier ceiling. Returns `null` if `maxStarMultiplier` disables stars for the stage. */
 export function clampStarMultiplier(
   multiplier: number,
   maxStarMultiplier: number,
 ): number | null {
   if (!isStarEligibleStage(maxStarMultiplier)) return null;
-  const bounded = Math.min(
-    Math.max(multiplier, MIN_STAR_MULTIPLIER),
-    maxStarMultiplier,
-  );
-  return bounded - (bounded % STAR_MULTIPLIER_STEP);
+  return Math.min(multiplier, maxStarMultiplier);
 }
 
 export function validateMaxStarMultiplier(n: number): string | null {
   const isDisabled = n === 0;
-  const isValidStep = n >= MIN_STAR_MULTIPLIER && n % STAR_MULTIPLIER_STEP === 0;
-  if (!Number.isInteger(n) || (!isDisabled && !isValidStep) || n > 100) {
-    return `Max multiplier must be 0 (disabled) or a multiple of ${STAR_MULTIPLIER_STEP} from ${MIN_STAR_MULTIPLIER} to 100`;
+  const isValidTier = (STAR_TIER_MULTIPLIERS as readonly number[]).includes(n);
+  if (!Number.isInteger(n) || (!isDisabled && !isValidTier)) {
+    return `Max multiplier must be 0 (disabled) or one of ×${STAR_TIER_MULTIPLIERS.join(", ×")}`;
   }
   return null;
 }
