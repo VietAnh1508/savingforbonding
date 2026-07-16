@@ -73,7 +73,6 @@ export function VoteForm({
                 matchId,
                 outcome,
                 isCorrect: null,
-                starTier: null,
                 starMultiplier: null,
                 points: 0,
                 createdAt: new Date(),
