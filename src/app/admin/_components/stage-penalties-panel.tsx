@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
-import { SubmitButton } from "~/app/_components/submit-button";
 import { STAR_TIER_INFO } from "~/app/_components/star-tiers";
+import { SubmitButton } from "~/app/_components/submit-button";
 import { useToast } from "~/app/_components/toast";
 import {
   BEER_WIN,
@@ -252,10 +252,7 @@ function ChampionMaxMultiplierControl() {
       <p className="mt-1 text-sm text-foreground/60">
         Highest stake a player can choose when starring their champion pick.
       </p>
-      <form
-        action={handleSave}
-        className="mt-2 flex items-center gap-2"
-      >
+      <form action={handleSave} className="mt-2 flex items-center gap-2">
         <MaxMultiplierSelect
           value={displayValue}
           onChange={setValue}
@@ -273,7 +270,8 @@ function ChampionMaxMultiplierControl() {
 }
 
 export function StagePenaltiesPanel() {
-  const { data: stages = [], isLoading } = api.admin.listStagePenalties.useQuery();
+  const { data: stages = [], isLoading } =
+    api.admin.listStagePenalties.useQuery();
 
   if (isLoading) {
     return <p className="text-foreground/50">Loading stages...</p>;
@@ -284,10 +282,9 @@ export function StagePenaltiesPanel() {
       <div>
         <h2 className="text-lg font-semibold">Stage Penalties</h2>
         <p className="mt-1 text-sm text-foreground/60">
-          Wrong-prediction and no-pick beer penalties, the Star of Hope
-          budget, and the highest multiplier a player can choose, per stage.
-          Correct predictions always cost {BEER_WIN} beer, unaffected by this
-          table.
+          Wrong-prediction and no-pick beer penalties, the Star of Hope budget,
+          and the highest multiplier a player can choose, per stage. Correct
+          predictions always cost {BEER_WIN} beer, unaffected by this table.
         </p>
       </div>
 
@@ -303,8 +300,8 @@ export function StagePenaltiesPanel() {
               <th className="pb-2 pr-4 font-normal">Wrong</th>
               <th className="pb-2 pr-4 font-normal">No pick</th>
               <th className="pb-2 pr-4 font-normal">Stars</th>
-              <th className="pb-2 pr-4 font-normal">Star tier</th>
-              <th className="pb-2 pr-4 font-normal">All in</th>
+              <th className="pb-2 pr-4 font-normal">Highest star tier</th>
+              <th className="pb-2 pr-4 font-normal">Allow all in</th>
               <th className="pb-2 font-normal"></th>
             </tr>
           </thead>
