@@ -5,15 +5,17 @@ import { useState } from "react";
 import { AccuracyTable } from "~/app/insight/_components/accuracy-table";
 import { BeerAccumulationChart } from "~/app/insight/_components/beer-accumulation-chart";
 import { BiggestMoverCard } from "~/app/insight/_components/biggest-mover-card";
+import { MostFollowedCard } from "~/app/insight/_components/most-followed-card";
 import { RankHistoryChart } from "~/app/insight/_components/rank-history-chart";
 import { type RouterOutputs } from "~/trpc/react";
 
-type TabId = "accuracy" | "rankHistory" | "beerPool";
+type TabId = "accuracy" | "rankHistory" | "beerPool" | "mostFollowed";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "accuracy", label: "Best Predictors" },
   { id: "rankHistory", label: "Rank History" },
   { id: "beerPool", label: "Beer Pool" },
+  { id: "mostFollowed", label: "Most Followed" },
 ];
 
 export function InsightTabs({
@@ -56,6 +58,8 @@ export function InsightTabs({
       )}
 
       {activeTab === "beerPool" && <BeerAccumulationChart />}
+
+      {activeTab === "mostFollowed" && <MostFollowedCard />}
     </div>
   );
 }

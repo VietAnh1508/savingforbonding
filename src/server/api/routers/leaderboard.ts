@@ -250,4 +250,25 @@ export const leaderboardRouter = createTRPCRouter({
 
     return computeRankHistory(matchInputs, resolvedVotes, allUsers);
   }),
+
+  topFollowed: publicProcedure.query(async ({ ctx }) => {
+    const counts = await ctx.db.userFollow.groupBy({
+      by: ["followingId"],
+      _count: { _all: true },
+      orderBy: { _count: { followingId: "desc" } },
+      take: 3,
+    });
+    if (counts.length === 0) return [];
+
+    const users = await ctx.db.user.findMany({
+      where: { id: { in: counts.map((c) => c.followingId) } },
+      select: { id: true, name: true, image: true },
+    });
+    const userMap = new Map(users.map((u) => [u.id, u]));
+
+    return counts.flatMap((c) => {
+      const user = userMap.get(c.followingId);
+      return user ? [{ ...user, followerCount: c._count._all }] : [];
+    });
+  }),
 });
