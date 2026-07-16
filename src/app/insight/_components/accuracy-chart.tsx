@@ -2,7 +2,6 @@
 
 import {
   CartesianGrid,
-  LabelList,
   ResponsiveContainer,
   Scatter,
   ScatterChart,
@@ -134,14 +133,14 @@ export function AccuracyChart({
           />
           <XAxis
             type="number"
-            dataKey="accuracyPct"
+            dataKey="participationRate"
             domain={[0, 100]}
             unit="%"
             tick={{ fontSize: 11, fill: "currentColor", opacity: 0.5 }}
             axisLine={false}
             tickLine={false}
             label={{
-              value: "Accuracy",
+              value: "Participation rate",
               position: "insideBottom",
               offset: -10,
               fill: "currentColor",
@@ -151,7 +150,7 @@ export function AccuracyChart({
           />
           <YAxis
             type="number"
-            dataKey="participationRate"
+            dataKey="accuracyPct"
             domain={[0, 100]}
             unit="%"
             tick={{ fontSize: 11, fill: "currentColor", opacity: 0.5 }}
@@ -159,7 +158,7 @@ export function AccuracyChart({
             tickLine={false}
             width={40}
             label={{
-              value: "Participation rate",
+              value: "Accuracy",
               angle: -90,
               position: "insideLeft",
               fill: "currentColor",
@@ -178,17 +177,7 @@ export function AccuracyChart({
             shape={(props) => (
               <CustomDot {...props} currentUserId={currentUserId} />
             )}
-          >
-            <LabelList
-              dataKey="name"
-              position="right"
-              offset={10}
-              fontSize={11}
-              fill="currentColor"
-              fillOpacity={0.7}
-              formatter={(label) => label ?? "Anonymous"}
-            />
-          </Scatter>
+          />
         </ScatterChart>
       </ResponsiveContainer>
     </div>
