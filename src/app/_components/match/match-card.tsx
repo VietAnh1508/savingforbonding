@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { AllInIcon } from "~/app/_components/icons/all-in-icon";
 import { MatchStatusBadge } from "~/app/_components/match-status-badge";
 import { MatchScore } from "~/app/_components/match/match-score";
 import { MatchVoteCounts } from "~/app/_components/match/match-vote-counts";
 import { RatioDisplay } from "~/app/_components/match/ratio-display";
 import { TeamFlag } from "~/app/_components/match/team-flag";
-import { AllInBadge, AllInCheckbox, StarBadge, StarPicker } from "~/app/_components/star-picker";
+import { AllInCheckbox, StarBadge, StarPicker } from "~/app/_components/star-picker";
 import { useSetAllIn } from "~/app/hooks/use-set-all-in";
 import { useSetStar } from "~/app/hooks/use-set-star";
 import { formatBeers, formatKickoffTime, hasVotingHandicap } from "~/lib/match";
@@ -37,7 +38,7 @@ function MatchCardFooter({
 }) {
   if (isSignedIn && isCompleted && voteResult) {
     const starIcon = voteResult.isAllIn ? (
-      <AllInBadge />
+      <AllInIcon />
     ) : voteResult.starMultiplier ? (
       <StarBadge multiplier={voteResult.starMultiplier} />
     ) : null;
@@ -272,7 +273,7 @@ export function MatchCard({
                 }
               />
             ) : (
-              activeIsAllIn && <AllInBadge />
+              activeIsAllIn && <AllInIcon />
             ))}
           {predictsDraw && (
             <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
