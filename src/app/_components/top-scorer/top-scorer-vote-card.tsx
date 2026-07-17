@@ -40,6 +40,11 @@ function TopScorerStakesBanner({
           <span className="font-medium text-foreground/80">No pick</span> —
           no penalty either way.
         </li>
+        <li className="text-foreground/50">
+          Ties break by most goals, then most assists, then fewest minutes
+          played — still level after that, it&apos;s a shared award. (follows
+          FIFA rule)
+        </li>
       </ul>
       {maxStarMultiplier >= MIN_STAR_MULTIPLIER && (
         <>

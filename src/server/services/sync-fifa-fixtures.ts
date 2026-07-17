@@ -112,6 +112,11 @@ async function resolveChampionIfFinal(
  * every sync so a lagging vnexpress result or a later re-sync naturally
  * retries — resolveTopScorerVotes is delta-based, so repeat calls with the
  * same winner set are no-ops.
+ *
+ * Winner(s) are the scorers tied for first under the full Golden Boot
+ * tiebreak chain (goals, then assists, then minutes played — see
+ * compareGoldenBoot), not goals alone: two players level on goals but ahead
+ * on assists or minutes played aren't joint winners.
  */
 async function resolveTopScorerIfFinal(
   db: PrismaClient,
@@ -124,8 +129,11 @@ async function resolveTopScorerIfFinal(
   const scorers = await getTopScorers();
   if (!scorers.length) return 0;
 
-  const topGoals = Math.max(...scorers.map((s) => s.goals.total));
-  const winners = scorers.filter((s) => s.goals.total === topGoals);
+  const [best, ...rest] = [...scorers].sort(compareGoldenBoot);
+  const winners = [
+    best!,
+    ...rest.filter((s) => compareGoldenBoot(s, best!) === 0),
+  ];
 
   const winnerCandidates = await Promise.all(
     winners.map((winner) => upsertTopScorerCandidate(db, winner)),
