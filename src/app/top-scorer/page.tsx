@@ -12,7 +12,6 @@ export default async function TopScorerPage() {
   const [, votingStatus] = await Promise.all([
     api.topScorerVote.getVoteCounts.prefetch(),
     api.topScorerVote.getVotingStatus(),
-    api.topScorerVote.getVotingStatus.prefetch(),
     ...(isSignedIn ? [api.topScorerVote.getMyVote.prefetch()] : []),
   ]);
 
@@ -40,7 +39,10 @@ export default async function TopScorerPage() {
             <ChampionVotingCountdown deadline={votingStatus.deadline} />
           </p>
         )}
-        <TopScorerVoteCard isSignedIn={isSignedIn} />
+        <TopScorerVoteCard
+          isSignedIn={isSignedIn}
+          initialVotingStatus={votingStatus}
+        />
       </main>
     </HydrateClient>
   );

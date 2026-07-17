@@ -5,9 +5,11 @@ import { useState } from "react";
 import { SignInPrompt } from "~/app/_components/sign-in-prompt";
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { CHAMPION_VOTE_BONUS, formatBeers, MIN_STAR_MULTIPLIER } from "~/lib/match";
-import { api } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react";
 import { useToast } from "../toast";
 import { ChampionVoteItem } from "./champion-vote-item";
+
+type VotingStatus = RouterOutputs["championVote"]["getVotingStatus"];
 
 function ChampionStakesBanner({ maxStarMultiplier }: { maxStarMultiplier: number }) {
   return (
@@ -55,7 +57,13 @@ function ChampionStakesBanner({ maxStarMultiplier }: { maxStarMultiplier: number
   );
 }
 
-export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
+export function ChampionVoteCard({
+  isSignedIn,
+  initialVotingStatus,
+}: {
+  isSignedIn: boolean;
+  initialVotingStatus?: VotingStatus;
+}) {
   const utils = api.useUtils();
   const toast = useToast();
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -65,7 +73,10 @@ export function ChampionVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
   const { data: myVote } = api.championVote.getMyVote.useQuery(undefined, {
     enabled: isSignedIn,
   });
-  const { data: votingStatus } = api.championVote.getVotingStatus.useQuery();
+  const { data: votingStatus } = api.championVote.getVotingStatus.useQuery(
+    undefined,
+    { initialData: initialVotingStatus },
+  );
 
   const castVote = api.championVote.cast.useMutation({
     onSuccess: () => {
