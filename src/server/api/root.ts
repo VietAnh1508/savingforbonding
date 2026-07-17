@@ -4,6 +4,7 @@ import { championVoteRouter } from "~/server/api/routers/champion-vote";
 import { leaderboardRouter } from "~/server/api/routers/leaderboard";
 import { matchRouter } from "~/server/api/routers/match";
 import { stageRouter } from "~/server/api/routers/stage";
+import { topScorerVoteRouter } from "~/server/api/routers/top-scorer-vote";
 import { userRouter } from "~/server/api/routers/user";
 import { voteRouter } from "~/server/api/routers/vote";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
@@ -16,6 +17,7 @@ export const appRouter = createTRPCRouter({
   user: userRouter,
   stage: stageRouter,
   championVote: championVoteRouter,
+  topScorerVote: topScorerVoteRouter,
   challenge: challengeRouter,
 });
 

@@ -13,15 +13,23 @@ export default async function ProfilePage() {
   const session = await auth();
   if (!session?.user) redirect("/auth/signin");
 
-  const [stats, votes, missedMatches, followers, nameUpdatedAt, championVote] =
-    await Promise.all([
-      api.vote.getMyStats(),
-      api.vote.getMyVotes(),
-      api.vote.getMyMissedMatches(),
-      api.vote.getMyFollowers(),
-      api.user.getNameUpdatedAt(),
-      api.championVote.getMyVote(),
-    ]);
+  const [
+    stats,
+    votes,
+    missedMatches,
+    followers,
+    nameUpdatedAt,
+    championVote,
+    topScorerVote,
+  ] = await Promise.all([
+    api.vote.getMyStats(),
+    api.vote.getMyVotes(),
+    api.vote.getMyMissedMatches(),
+    api.vote.getMyFollowers(),
+    api.user.getNameUpdatedAt(),
+    api.championVote.getMyVote(),
+    api.topScorerVote.getMyVote(),
+  ]);
 
   const voteItems = votes.map((v) => ({
     kind: "vote" as const,
@@ -76,6 +84,11 @@ export default async function ProfilePage() {
 
   const championResolved = championVote != null && championVote.isCorrect !== null;
   const championPoints = championVote?.points ?? 0;
+  const topScorerResolved =
+    topScorerVote != null && topScorerVote.isCorrect !== null;
+  const topScorerPoints = topScorerVote?.points ?? 0;
+  const extraStatTiles =
+    (championResolved ? 1 : 0) + (topScorerResolved ? 1 : 0);
 
   return (
     <HydrateClient>
@@ -93,7 +106,11 @@ export default async function ProfilePage() {
 
           <div
             className={`mb-4 grid grid-cols-2 gap-3 ${
-              championResolved ? "sm:grid-cols-4" : "sm:grid-cols-3"
+              extraStatTiles === 2
+                ? "sm:grid-cols-5"
+                : extraStatTiles === 1
+                  ? "sm:grid-cols-4"
+                  : "sm:grid-cols-3"
             }`}
           >
             {[
@@ -125,6 +142,24 @@ export default async function ProfilePage() {
                 </div>
                 <div className="text-xs text-foreground/50">
                   Champion Vote
+                </div>
+              </div>
+            )}
+            {topScorerResolved && (
+              <div className="flex min-h-14 flex-col items-center justify-center rounded-xl border border-foreground/10 bg-foreground/5 p-2.5 text-center sm:min-h-16 sm:p-3">
+                <div
+                  className={`text-xl font-bold sm:text-2xl ${
+                    topScorerPoints > 0
+                      ? "text-red-700 dark:text-red-300"
+                      : topScorerPoints < 0
+                        ? "text-emerald-700 dark:text-emerald-300"
+                        : ""
+                  }`}
+                >
+                  {topScorerPoints > 0 ? `+${topScorerPoints}` : topScorerPoints}
+                </div>
+                <div className="text-xs text-foreground/50">
+                  Top Scorer Vote
                 </div>
               </div>
             )}

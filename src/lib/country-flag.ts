@@ -69,11 +69,15 @@ export function isKnownCountry(countryName: string): boolean {
   return countryName.trim().toLowerCase() in FIFA_CODES;
 }
 
+/** FIFA's 3-letter country code (matches `IdCountry` from the FIFA API), or null if unrecognized. */
+export function getFifaCountryCode(countryName: string): string | null {
+  return FIFA_CODES[countryName.trim().toLowerCase()] ?? null;
+}
+
 export function getFifaFlagUrl(countryName: string): string | null {
   if (isPlaceholderTeam(countryName)) return null;
 
-  const key = countryName.trim().toLowerCase();
-  const code = FIFA_CODES[key];
+  const code = getFifaCountryCode(countryName);
   if (!code) return null;
 
   return `${FIFA_FLAG_BASE}/${code}`;

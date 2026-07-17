@@ -26,6 +26,8 @@ export const BEER_LOSE = BEER_PLATFORM_FEE + BEER_LOSE_PENALTY;
 export const BEER_NO_VOTE = 2;
 /** Beer swing for a champion pick: correct picks subtract this many, wrong picks add it. */
 export const CHAMPION_VOTE_BONUS = 50;
+/** Beer swing for a top scorer pick — its own constant so it can be tuned independently of the champion bonus. */
+export const TOP_SCORER_VOTE_BONUS = 50;
 
 /** Minimum (and default) multiplier a player can pick when placing a star. */
 export const MIN_STAR_MULTIPLIER = 2;
@@ -69,12 +71,27 @@ export function validateMaxStarMultiplier(n: number): string | null {
   return null;
 }
 
+function beerCostForBonusVote(
+  isCorrect: boolean,
+  starMultiplier: number | null,
+  bonus: number,
+): number {
+  const swing = bonus * (starMultiplier ?? 1);
+  return isCorrect ? -swing : swing;
+}
+
 export function beerCostForChampionVote(
   isCorrect: boolean,
   starMultiplier: number | null,
 ): number {
-  const bonus = CHAMPION_VOTE_BONUS * (starMultiplier ?? 1);
-  return isCorrect ? -bonus : bonus;
+  return beerCostForBonusVote(isCorrect, starMultiplier, CHAMPION_VOTE_BONUS);
+}
+
+export function beerCostForTopScorerVote(
+  isCorrect: boolean,
+  starMultiplier: number | null,
+): number {
+  return beerCostForBonusVote(isCorrect, starMultiplier, TOP_SCORER_VOTE_BONUS);
 }
 
 export function beerCostForStarVote(

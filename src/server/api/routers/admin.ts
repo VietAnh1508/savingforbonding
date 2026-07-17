@@ -430,7 +430,13 @@ export const adminRouter = createTRPCRouter({
 
   getGameSettings: adminProcedure.query(async ({ ctx }) => {
     const settings = await ctx.db.gameSettings.findUnique({ where: { id: 1 } });
-    return settings ?? { id: 1, championMaxStarMultiplier: 4 };
+    return (
+      settings ?? {
+        id: 1,
+        championMaxStarMultiplier: 4,
+        topScorerMaxStarMultiplier: 4,
+      }
+    );
   }),
 
   updateChampionMaxMultiplier: adminProcedure
@@ -454,6 +460,32 @@ export const adminRouter = createTRPCRouter({
         where: { id: 1 },
         create: { id: 1, championMaxStarMultiplier },
         update: { championMaxStarMultiplier },
+      });
+    }),
+
+  updateTopScorerMaxMultiplier: adminProcedure
+    .input(
+      z
+        .object({ topScorerMaxStarMultiplier: z.number().int() })
+        .superRefine((data, ctx) => {
+          const error = validateMaxStarMultiplier(
+            data.topScorerMaxStarMultiplier,
+          );
+          if (error) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: error,
+              path: ["topScorerMaxStarMultiplier"],
+            });
+          }
+        }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { topScorerMaxStarMultiplier } = input;
+      return ctx.db.gameSettings.upsert({
+        where: { id: 1 },
+        create: { id: 1, topScorerMaxStarMultiplier },
+        update: { topScorerMaxStarMultiplier },
       });
     }),
 });

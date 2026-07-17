@@ -269,6 +269,65 @@ function ChampionMaxMultiplierControl() {
   );
 }
 
+function TopScorerMaxMultiplierControl() {
+  const utils = api.useUtils();
+  const toast = useToast();
+  const { data: settings } = api.admin.getGameSettings.useQuery();
+  const [value, setValue] = useState<number | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const updateTopScorerMax = api.admin.updateTopScorerMaxMultiplier.useMutation({
+    onSuccess: async () => {
+      await utils.admin.getGameSettings.invalidate();
+      toast.success("Top scorer max multiplier updated");
+    },
+  });
+
+  const displayValue = value ?? settings?.topScorerMaxStarMultiplier ?? 0;
+
+  async function handleSave() {
+    if (Number.isNaN(displayValue)) {
+      setFormError("Value must be a valid number");
+      return;
+    }
+    const error = validateMaxStarMultiplier(displayValue);
+    if (error) {
+      setFormError(error);
+      return;
+    }
+    setFormError(null);
+    try {
+      await updateTopScorerMax.mutateAsync({
+        topScorerMaxStarMultiplier: displayValue,
+      });
+    } catch {
+      // surfaced via updateTopScorerMax.error below
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-foreground/10 p-4">
+      <h3 className="text-sm font-semibold">Top scorer vote max multiplier</h3>
+      <p className="mt-1 text-sm text-foreground/60">
+        Highest stake a player can choose when starring their top scorer pick.
+      </p>
+      <form action={handleSave} className="mt-2 flex items-center gap-2">
+        <MaxMultiplierSelect
+          value={displayValue}
+          onChange={setValue}
+          className="rounded-lg border border-foreground/10 bg-foreground/10 px-2 py-1 text-sm"
+        />
+        <SubmitButton size="sm">Save</SubmitButton>
+      </form>
+      {(formError ?? updateTopScorerMax.error) && (
+        <p className="mt-1 text-xs text-red-400">
+          {formError ?? updateTopScorerMax.error?.message}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function StagePenaltiesPanel() {
   const { data: stages = [], isLoading } =
     api.admin.listStagePenalties.useQuery();
@@ -289,6 +348,7 @@ export function StagePenaltiesPanel() {
       </div>
 
       <ChampionMaxMultiplierControl />
+      <TopScorerMaxMultiplierControl />
 
       {stages.length === 0 ? (
         <p className="text-foreground/40">No stages found.</p>
