@@ -9,9 +9,11 @@ import {
   MIN_STAR_MULTIPLIER,
   TOP_SCORER_VOTE_BONUS,
 } from "~/lib/match";
-import { api } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react";
 import { useToast } from "../toast";
 import { TopScorerVoteItem } from "./top-scorer-vote-item";
+
+type VotingStatus = RouterOutputs["topScorerVote"]["getVotingStatus"];
 
 function TopScorerStakesBanner({
   maxStarMultiplier,
@@ -62,7 +64,13 @@ function TopScorerStakesBanner({
   );
 }
 
-export function TopScorerVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
+export function TopScorerVoteCard({
+  isSignedIn,
+  initialVotingStatus,
+}: {
+  isSignedIn: boolean;
+  initialVotingStatus?: VotingStatus;
+}) {
   const utils = api.useUtils();
   const toast = useToast();
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -71,7 +79,10 @@ export function TopScorerVoteCard({ isSignedIn }: { isSignedIn: boolean }) {
   const { data: myVote } = api.topScorerVote.getMyVote.useQuery(undefined, {
     enabled: isSignedIn,
   });
-  const { data: votingStatus } = api.topScorerVote.getVotingStatus.useQuery();
+  const { data: votingStatus } = api.topScorerVote.getVotingStatus.useQuery(
+    undefined,
+    { initialData: initialVotingStatus },
+  );
 
   const castVote = api.topScorerVote.cast.useMutation({
     onSuccess: () => {
