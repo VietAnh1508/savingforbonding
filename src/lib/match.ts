@@ -123,6 +123,15 @@ export function beerCostForVote(
   return isCorrect ? BEER_WIN : wrongPenaltyForStage(penalty);
 }
 
+/** Beers saved by starring a vote vs. what a plain (unstarred) vote on the same pick would have cost. */
+export function beersSavedByStarring(
+  actualPoints: number,
+  isCorrect: boolean,
+  penalty: StagePenaltyValues,
+): number {
+  return beerCostForVote(isCorrect, penalty) - actualPoints;
+}
+
 /** All-in resolution: a correct pick clears the counter to 0; a wrong pick doubles it. */
 export function allInResolvedPoints(isCorrect: boolean, current: number): number {
   return isCorrect ? 0 : current * 2;
