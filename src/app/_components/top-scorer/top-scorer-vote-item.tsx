@@ -1,8 +1,10 @@
 "use client";
 
+import { InfoIcon } from "~/app/_components/icons/info-icon";
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
 import { TeamFlag } from "~/app/_components/match/team-flag";
 import { StarBadge, StarPicker } from "~/app/_components/star-picker";
+import { Tooltip } from "~/app/_components/tooltip";
 import { voterLabel } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
@@ -61,8 +63,18 @@ export function TopScorerVoteItem({
       >
         <TeamFlag country={candidate.countryName} size="md" />
         <span className="flex-1">{candidate.playerName}</span>
-        <span className="rounded-full bg-foreground/10 px-2 py-0.5 text-xs font-semibold text-foreground/70">
-          {candidate.goals} goals
+        <span className="flex flex-col items-end gap-0.5">
+          <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+            {candidate.goals} goals
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="text-xs text-foreground/50">
+              {candidate.assists} assists
+            </span>
+            <Tooltip label={`${candidate.minutesPlayed}' played`}>
+              <InfoIcon className="h-3.5 w-3.5 text-foreground/40" />
+            </Tooltip>
+          </span>
         </span>
         <span className="text-sm font-normal text-foreground/50">
           {voterLabel(count)}
