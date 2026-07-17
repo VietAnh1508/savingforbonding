@@ -72,12 +72,10 @@ export async function resolveMatchVotes(
     if (vote.isAllIn) {
       const user = await db.user.findUnique({
         where: { id: vote.userId },
-        select: { totalPoints: true, weeklyPoints: true },
+        select: { totalPoints: true },
       });
       const currentTotal = user?.totalPoints ?? 0;
-      const currentWeekly = user?.weeklyPoints ?? 0;
       const newTotal = allInResolvedPoints(isCorrect, currentTotal);
-      const newWeekly = allInResolvedPoints(isCorrect, currentWeekly);
       const totalDelta = newTotal - currentTotal;
 
       await db.vote.update({
@@ -86,7 +84,7 @@ export async function resolveMatchVotes(
       });
       await db.user.update({
         where: { id: vote.userId },
-        data: { totalPoints: newTotal, weeklyPoints: newWeekly },
+        data: { totalPoints: newTotal },
       });
       beersCharged += totalDelta;
       continue;
@@ -106,19 +104,17 @@ export async function resolveMatchVotes(
         where: { id: vote.userId },
         data: {
           totalPoints: { increment: beers },
-          weeklyPoints: { increment: beers },
         },
       });
     } else {
       const user = await db.user.findUnique({
         where: { id: vote.userId },
-        select: { totalPoints: true, weeklyPoints: true },
+        select: { totalPoints: true },
       });
       await db.user.update({
         where: { id: vote.userId },
         data: {
           totalPoints: Math.max(0, (user?.totalPoints ?? 0) + beers),
-          weeklyPoints: Math.max(0, (user?.weeklyPoints ?? 0) + beers),
         },
       });
     }
@@ -149,7 +145,6 @@ export async function resolveMatchVotes(
         where: { id: user.id },
         data: {
           totalPoints: { increment: noVotePenalty },
-          weeklyPoints: { increment: noVotePenalty },
         },
       });
       beersCharged += noVotePenalty;

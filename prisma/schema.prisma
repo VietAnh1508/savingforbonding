@@ -126,7 +126,6 @@ model User {
   emailVerified        DateTime?
   image                String?
   totalPoints          Int            @default(0)
-  weeklyPoints         Int            @default(0)
   mustChangePassword   Boolean        @default(false)
   createdAt            DateTime       @default(now())
   nameUpdatedAt        DateTime?
