@@ -131,7 +131,7 @@ export const adminRouter = createTRPCRouter({
       if (newTotalPoints !== user.totalPoints) {
         await ctx.db.user.update({
           where: { id: user.id },
-          data: { totalPoints: newTotalPoints, weeklyPoints: newTotalPoints },
+          data: { totalPoints: newTotalPoints },
         });
         usersUpdated++;
       }
@@ -153,7 +153,6 @@ export const adminRouter = createTRPCRouter({
         name: true,
         email: true,
         totalPoints: true,
-        weeklyPoints: true,
         createdAt: true,
         _count: { select: { votes: true } },
       },

@@ -105,7 +105,6 @@ export async function signUp(formData: FormData) {
       name: typeof name === "string" && name.trim() ? name.trim() : null,
       createdAt: new Date(),
       totalPoints: noVoteDebt,
-      weeklyPoints: noVoteDebt,
     },
   });
 
