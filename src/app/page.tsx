@@ -2,6 +2,7 @@ import { ChampionVotingBanner } from "~/app/_components/champion-voting-banner";
 import { LeaderboardPicksBanner } from "~/app/_components/leaderboard-picks-banner";
 import { MatchTabs } from "~/app/_components/match/match-tabs";
 import { Nav } from "~/app/_components/nav";
+import { TopScorerVotingBanner } from "~/app/_components/top-scorer-voting-banner";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -13,7 +14,13 @@ export default async function Home() {
     api.match.listMatches.prefetch({}),
     api.leaderboard.bottomThreePicks.prefetch(),
     api.championVote.getVotingStatus.prefetch(),
-    ...(isSignedIn ? [api.championVote.getMyVote.prefetch()] : []),
+    api.topScorerVote.getVotingStatus.prefetch(),
+    ...(isSignedIn
+      ? [
+          api.championVote.getMyVote.prefetch(),
+          api.topScorerVote.getMyVote.prefetch(),
+        ]
+      : []),
   ]);
 
   return (
@@ -21,6 +28,7 @@ export default async function Home() {
       <Nav />
       <main className="container mx-auto px-4 pb-8">
         <ChampionVotingBanner isSignedIn={isSignedIn} />
+        <TopScorerVotingBanner isSignedIn={isSignedIn} />
         <LeaderboardPicksBanner />
         <MatchTabs isSignedIn={isSignedIn} />
       </main>

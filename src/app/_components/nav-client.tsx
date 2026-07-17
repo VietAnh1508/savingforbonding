@@ -44,6 +44,7 @@ export function NavMenu({ user }: NavClientProps) {
   const navItems = [
     { href: "/", label: "Matches" },
     { href: "/champion", label: "Champion" },
+    { href: "/top-scorer", label: "Top Scorer" },
     { href: "/challenge", label: "Challenge" },
     { href: "/leaderboard", label: "Leaderboard" },
     { href: "/insight", label: "Insight" },

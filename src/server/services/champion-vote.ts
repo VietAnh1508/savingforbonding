@@ -1,4 +1,5 @@
 import { beerCostForChampionVote } from "~/lib/match";
+import { applyPointsDelta } from "~/server/services/points";
 import { type PrismaClient } from "../../../generated/prisma";
 
 /**
@@ -24,19 +25,7 @@ export async function resolveChampionVotes(
     const delta = newPoints - vote.points;
 
     if (delta !== 0) {
-      const user = await db.user.findUnique({
-        where: { id: vote.userId },
-        select: { totalPoints: true, weeklyPoints: true },
-      });
-      if (user) {
-        await db.user.update({
-          where: { id: vote.userId },
-          data: {
-            totalPoints: Math.max(0, user.totalPoints + delta),
-            weeklyPoints: Math.max(0, user.weeklyPoints + delta),
-          },
-        });
-      }
+      await applyPointsDelta(db, vote.userId, delta);
       usersUpdated++;
     }
 

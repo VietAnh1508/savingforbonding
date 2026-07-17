@@ -34,18 +34,18 @@ enum ChallengeStatus {
 }
 
 model Stage {
-  id                  String        @id
-  name                String
-  startDate           DateTime
-  endDate             DateTime
-  sequenceOrder       Int
-  seasonId            String
-  isKnockout          Boolean       @default(false)
-  starsAllocated      Int           @default(0)
-  maxStarMultiplier   Int           @default(0)
-  allInEnabled        Boolean       @default(false)
-  matches             Match[]
-  penalty             StagePenalty?
+  id                String        @id
+  name              String
+  startDate         DateTime
+  endDate           DateTime
+  sequenceOrder     Int
+  seasonId          String
+  isKnockout        Boolean       @default(false)
+  starsAllocated    Int           @default(0)
+  maxStarMultiplier Int           @default(0)
+  allInEnabled      Boolean       @default(false)
+  matches           Match[]
+  penalty           StagePenalty?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -55,8 +55,9 @@ model Stage {
  * Singleton settings row (id fixed at 1) for game config that isn't stage-scoped.
  */
 model GameSettings {
-  id                        Int @id @default(1)
-  championMaxStarMultiplier Int @default(4)
+  id                         Int @id @default(1)
+  championMaxStarMultiplier  Int @default(4)
+  topScorerMaxStarMultiplier Int @default(4)
 }
 
 model StagePenalty {
@@ -99,18 +100,18 @@ model Match {
 }
 
 model Vote {
-  id             String        @id @default(cuid())
+  id             String      @id @default(cuid())
   userId         String
   matchId        String
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  match          Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match          Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
   outcome        VoteOutcome
   isCorrect      Boolean?
   starMultiplier Int?
-  isAllIn        Boolean       @default(false)
-  points         Int           @default(0)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  isAllIn        Boolean     @default(false)
+  points         Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
   @@unique([userId, matchId])
   @@index([matchId])
@@ -118,25 +119,26 @@ model Vote {
 }
 
 model User {
-  id                   String        @id @default(cuid())
+  id                   String         @id @default(cuid())
   name                 String?
-  email                String        @unique
+  email                String         @unique
   passwordHash         String?
   emailVerified        DateTime?
   image                String?
-  totalPoints          Int           @default(0)
-  weeklyPoints         Int           @default(0)
-  mustChangePassword   Boolean       @default(false)
-  createdAt            DateTime      @default(now())
+  totalPoints          Int            @default(0)
+  weeklyPoints         Int            @default(0)
+  mustChangePassword   Boolean        @default(false)
+  createdAt            DateTime       @default(now())
   nameUpdatedAt        DateTime?
   termsAcceptedAt      DateTime?
-  termsAcceptedVersion Int           @default(1)
+  termsAcceptedVersion Int            @default(1)
   votes                Vote[]
-  following            UserFollow[]  @relation("FollowerFollows")
-  followers            UserFollow[]  @relation("FollowingFollows")
+  following            UserFollow[]   @relation("FollowerFollows")
+  followers            UserFollow[]   @relation("FollowingFollows")
   championVote         ChampionVote?
-  challengesSent       Challenge[]   @relation("ChallengeChallenger")
-  challengesReceived   Challenge[]   @relation("ChallengeOpponent")
+  topScorerVote        TopScorerVote?
+  challengesSent       Challenge[]    @relation("ChallengeChallenger")
+  challengesReceived   Challenge[]    @relation("ChallengeOpponent")
 }
 
 model UserFollow {
@@ -171,6 +173,36 @@ model ChampionVote {
   isCorrect      Boolean?
   starMultiplier Int?
   points         Int                @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([candidateId])
+}
+
+model TopScorerCandidate {
+  id               String          @id @default(cuid())
+  externalPlayerId String          @unique
+  playerName       String
+  countryName      String
+  goals            Int             @default(0)
+  assists          Int             @default(0)
+  minutesPlayed    Int             @default(0)
+  votes            TopScorerVote[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TopScorerVote {
+  id             String              @id @default(cuid())
+  userId         String              @unique
+  candidateId    String?
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  candidate      TopScorerCandidate? @relation(fields: [candidateId], references: [id])
+  isCorrect      Boolean?
+  starMultiplier Int?
+  points         Int                 @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
