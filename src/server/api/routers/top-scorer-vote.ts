@@ -40,7 +40,14 @@ export const topScorerVoteRouter = createTRPCRouter({
   getVoteCounts: publicProcedure.query(async ({ ctx }) => {
     const [candidates, votes] = await Promise.all([
       ctx.db.topScorerCandidate.findMany({
-        orderBy: { goals: "desc" },
+        // Same tiebreak rule as compareGoldenBoot (goals, then assists, then
+        // fewest minutes played) — Prisma can't take a JS comparator, so it's
+        // expressed here as a declarative multi-column sort instead.
+        orderBy: [
+          { goals: "desc" },
+          { assists: "desc" },
+          { minutesPlayed: "asc" },
+        ],
       }),
       ctx.db.topScorerVote.findMany({
         select: {

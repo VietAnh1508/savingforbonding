@@ -33,16 +33,17 @@ export async function fetchTopScorers(): Promise<VnexpressTopScorer[]> {
 }
 
 /**
- * Ranks by the real FIFA Golden Boot tiebreaker: most goals, then fewest
- * minutes played, then most assists.
+ * Ranks by the real FIFA Golden Boot tiebreaker: most goals, then most
+ * assists, then fewest minutes played. Players level on all three share the
+ * award.
  */
 export function compareGoldenBoot(
   a: VnexpressTopScorer,
   b: VnexpressTopScorer,
 ): number {
   if (b.goals.total !== a.goals.total) return b.goals.total - a.goals.total;
-  if (a.games.minutes_played !== b.games.minutes_played) {
-    return a.games.minutes_played - b.games.minutes_played;
-  }
-  return (b.goals.assists ?? 0) - (a.goals.assists ?? 0);
+  const aAssists = a.goals.assists ?? 0;
+  const bAssists = b.goals.assists ?? 0;
+  if (bAssists !== aAssists) return bAssists - aAssists;
+  return a.games.minutes_played - b.games.minutes_played;
 }
