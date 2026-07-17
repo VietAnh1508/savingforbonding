@@ -12,6 +12,7 @@ import {
 } from "~/app/insight/_components/insight-tab-ids";
 import { MostFollowedCard } from "~/app/insight/_components/most-followed-card";
 import { RankHistoryChart } from "~/app/insight/_components/rank-history-chart";
+import { StarEfficiencyPanel } from "~/app/insight/_components/star-efficiency-panel";
 import { type RouterOutputs } from "~/trpc/react";
 
 function readTabFromLocation(): TabId {
@@ -97,6 +98,10 @@ export function InsightTabs({
         {activeTab === "beerPool" && <BeerAccumulationChart />}
 
         {activeTab === "mostFollowed" && <MostFollowedCard />}
+
+        {activeTab === "starEfficiency" && (
+          <StarEfficiencyPanel currentUserId={currentUserId} />
+        )}
       </div>
     </div>
   );
