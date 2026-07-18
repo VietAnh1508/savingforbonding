@@ -76,6 +76,9 @@ export function RankHistoryChart({
 
   return (
     <div className="overflow-x-auto rounded-xl border border-foreground/10 bg-foreground/5 p-4">
+      <p className="mb-2 text-xs text-foreground/40">
+        Hover a line to trace a player.
+      </p>
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
       <div style={{ minWidth }} onMouseLeave={() => setHoveredUserId(null)}>
         <ResponsiveContainer width="100%" height={480}>
@@ -145,6 +148,7 @@ export function RankHistoryChart({
                 <Line
                   key={s.userId}
                   dataKey={s.userId}
+                  className="cursor-pointer"
                   stroke={colorMap.get(s.userId)}
                   strokeWidth={isHovered ? 2.5 : 1.5}
                   strokeOpacity={opacity}

@@ -27,7 +27,7 @@ export function ScatterUserDot({
   const r = isCurrentUser ? radius + 2 : radius;
 
   return (
-    <g>
+    <g className="cursor-pointer">
       {/* Generous invisible hit area, bigger than the painted dot */}
       <circle cx={cx} cy={cy} r={r + 8} fill="transparent" />
       <circle
