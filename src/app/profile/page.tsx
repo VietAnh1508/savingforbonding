@@ -9,6 +9,31 @@ import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 import { RecentPredictions } from "./_components/recent-predictions";
 
+type MatchCoreFields = {
+  homeCountry: string;
+  awayCountry: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  homePenaltyScore: number | null;
+  awayPenaltyScore: number | null;
+  homeRatio: number;
+  awayRatio: number;
+};
+
+function pickMatchFields(match: MatchCoreFields): MatchCoreFields {
+  return {
+    homeCountry: match.homeCountry,
+    awayCountry: match.awayCountry,
+    homeScore: match.homeScore,
+    awayScore: match.awayScore,
+    homePenaltyScore: match.homePenaltyScore,
+    awayPenaltyScore: match.awayPenaltyScore,
+    homeRatio: match.homeRatio,
+    awayRatio: match.awayRatio,
+  };
+}
+
+// TODO: show champion vote and top scorer vote result
 export default async function ProfilePage() {
   const session = await auth();
   if (!session?.user) redirect("/auth/signin");
@@ -35,14 +60,7 @@ export default async function ProfilePage() {
     kind: "vote" as const,
     id: v.id,
     kickoffAt: v.match.kickoffAt,
-    homeCountry: v.match.homeCountry,
-    awayCountry: v.match.awayCountry,
-    homeScore: v.match.homeScore,
-    awayScore: v.match.awayScore,
-    homePenaltyScore: v.match.homePenaltyScore,
-    awayPenaltyScore: v.match.awayPenaltyScore,
-    homeRatio: v.match.homeRatio,
-    awayRatio: v.match.awayRatio,
+    ...pickMatchFields(v.match),
     outcome: v.outcome,
     isCorrect: v.isCorrect,
     points: v.points,
@@ -53,14 +71,7 @@ export default async function ProfilePage() {
     kind: "missed" as const,
     id: m.id,
     kickoffAt: m.kickoffAt,
-    homeCountry: m.homeCountry,
-    awayCountry: m.awayCountry,
-    homeScore: m.homeScore,
-    awayScore: m.awayScore,
-    homePenaltyScore: m.homePenaltyScore,
-    awayPenaltyScore: m.awayPenaltyScore,
-    homeRatio: m.homeRatio,
-    awayRatio: m.awayRatio,
+    ...pickMatchFields(m),
     noVotePenalty: noVotePenaltyForStage(m.stage?.penalty),
   }));
 
@@ -82,7 +93,8 @@ export default async function ProfilePage() {
     return { ...item, runningTotal };
   });
 
-  const championResolved = championVote != null && championVote.isCorrect !== null;
+  const championResolved =
+    championVote != null && championVote.isCorrect !== null;
   const championPoints = championVote?.points ?? 0;
   const topScorerResolved =
     topScorerVote != null && topScorerVote.isCorrect !== null;
@@ -140,9 +152,7 @@ export default async function ProfilePage() {
                 >
                   {championPoints > 0 ? `+${championPoints}` : championPoints}
                 </div>
-                <div className="text-xs text-foreground/50">
-                  Champion Vote
-                </div>
+                <div className="text-xs text-foreground/50">Champion Vote</div>
               </div>
             )}
             {topScorerResolved && (
@@ -156,7 +166,9 @@ export default async function ProfilePage() {
                         : ""
                   }`}
                 >
-                  {topScorerPoints > 0 ? `+${topScorerPoints}` : topScorerPoints}
+                  {topScorerPoints > 0
+                    ? `+${topScorerPoints}`
+                    : topScorerPoints}
                 </div>
                 <div className="text-xs text-foreground/50">
                   Top Scorer Vote

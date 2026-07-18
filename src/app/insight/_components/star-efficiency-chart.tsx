@@ -81,7 +81,7 @@ export function StarEfficiencyChart({
     <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4">
       <p className="mb-2 text-xs text-foreground/40">
         Dot size reflects number of starred votes — bigger dots are more
-        reliable.
+        reliable. Hover a dot for details.
       </p>
       <ResponsiveContainer width="100%" height={480}>
         <ScatterChart margin={{ top: 8, right: 16, bottom: 24, left: 8 }}>

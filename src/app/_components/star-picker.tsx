@@ -67,12 +67,11 @@ export function StarBadge({
   className?: string;
 }) {
   return (
-    <span className={`inline-flex items-center gap-0.5 ${className}`}>
-      <StarIcon filled color={starTierColor(multiplier)} />
-      {/* <span className={`text-xs font-medium ${starTierTextClass(multiplier)}`}>
-        ×{multiplier}
-      </span> */}
-    </span>
+    <Tooltip label={`×${multiplier}`}>
+      <span className={`inline-flex items-center gap-0.5 ${className}`}>
+        <StarIcon filled color={starTierColor(multiplier)} />
+      </span>
+    </Tooltip>
   );
 }
 

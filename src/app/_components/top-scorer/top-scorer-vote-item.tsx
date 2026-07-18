@@ -65,11 +65,11 @@ export function TopScorerVoteItem({
         <span className="flex-1">{candidate.playerName}</span>
         <span className="flex flex-col items-end gap-0.5">
           <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
-            {candidate.goals} goals
+            {candidate.goals} goal{candidate.goals > 1 ? "s" : ""}
           </span>
           <span className="flex items-center gap-1">
             <span className="text-xs text-foreground/50">
-              {candidate.assists} assists
+              {candidate.assists} assist{candidate.assists > 1 ? "s" : ""}
             </span>
             <Tooltip label={`${candidate.minutesPlayed}' played`}>
               <InfoIcon className="h-3.5 w-3.5 text-foreground/40" />
