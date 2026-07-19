@@ -394,7 +394,7 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
     setOpenMatchId(null);
   };
 
-  if (upcoming.length === 0) {
+  if (allMatches.length === 0) {
     return (
       <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-12 text-center">
         <p className="text-lg text-foreground/60">No matches found.</p>
