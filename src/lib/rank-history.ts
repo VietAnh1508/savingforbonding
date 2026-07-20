@@ -71,9 +71,29 @@ export type DaySnapshot = {
   beers: Record<string, number>;
 };
 
+export type BonusVoteInput = {
+  userId: string;
+  points: number;
+};
+
+// Champion/top-scorer votes settle once, on the day the Final completes —
+// applied as two separately-clamped steps (champion, then top-scorer) to
+// mirror resolveChampionVotes/resolveTopScorerVotes's two applyPointsDelta
+// calls, each of which clamps totalPoints at 0 independently.
+export type BonusRoundInput = {
+  date: string;
+  championVotes: BonusVoteInput[];
+  topScorerVotes: BonusVoteInput[];
+};
+
 export type RankHistoryResult = {
   days: DaySnapshot[];
   series: { userId: string; name: string | null; image: string | null }[];
+  bonusDay: {
+    date: string;
+    championPoints: Record<string, number>;
+    topScorerPoints: Record<string, number>;
+  } | null;
 };
 
 export type RankMove = {
@@ -126,10 +146,19 @@ export function findBiggestSingleDayMoves(days: DaySnapshot[]): {
   return { biggestClimb, biggestDrop };
 }
 
+function toPointsRecord(entries: BonusVoteInput[]): Record<string, number> {
+  const record: Record<string, number> = {};
+  for (const entry of entries) {
+    record[entry.userId] = (record[entry.userId] ?? 0) + entry.points;
+  }
+  return record;
+}
+
 export function computeRankHistory(
   completedMatches: MatchInput[],
   votes: VoteInput[],
   allUsers: UserInput[],
+  bonus?: BonusRoundInput,
 ): RankHistoryResult {
   const votesByMatch = new Map<
     string,
@@ -158,6 +187,9 @@ export function computeRankHistory(
     accum.set(user.id, { beers: 0, correct: 0, incorrect: 0 });
   }
 
+  const championPointsByUser = bonus ? toPointsRecord(bonus.championVotes) : {};
+  const topScorerPointsByUser = bonus ? toPointsRecord(bonus.topScorerVotes) : {};
+
   const orderedDates = [...matchesByDate.keys()].sort();
   let cumulativeMatchCount = 0;
   const days: DaySnapshot[] = [];
@@ -182,6 +214,15 @@ export function computeRankHistory(
         } else {
           a.beers += match.noVotePenalty;
         }
+      }
+    }
+
+    if (bonus && date === bonus.date) {
+      for (const user of allUsers) {
+        const a = accum.get(user.id)!;
+        // Two separately-clamped steps, champion then top-scorer — see BonusRoundInput.
+        a.beers = Math.max(0, a.beers + (championPointsByUser[user.id] ?? 0));
+        a.beers = Math.max(0, a.beers + (topScorerPointsByUser[user.id] ?? 0));
       }
     }
 
@@ -212,5 +253,12 @@ export function computeRankHistory(
   return {
     days,
     series: allUsers.map((u) => ({ userId: u.id, name: u.name, image: u.image })),
+    bonusDay: bonus
+      ? {
+          date: bonus.date,
+          championPoints: championPointsByUser,
+          topScorerPoints: topScorerPointsByUser,
+        }
+      : null,
   };
 }

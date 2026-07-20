@@ -124,6 +124,16 @@ export function RankHistoryChart({
                 const beers = day?.beers[hoveredUserId];
                 const series = data.series.find((s) => s.userId === hoveredUserId);
 
+                // Champion/top-scorer results land as a one-time swing on the
+                // Final's day — surface the breakdown only there.
+                const isBonusDay = data.bonusDay?.date === label;
+                const championSwing = isBonusDay
+                  ? data.bonusDay?.championPoints[hoveredUserId]
+                  : undefined;
+                const topScorerSwing = isBonusDay
+                  ? data.bonusDay?.topScorerPoints[hoveredUserId]
+                  : undefined;
+
                 return (
                   <div className="rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm shadow-lg dark:bg-neutral-900">
                     <p
@@ -137,6 +147,19 @@ export function RankHistoryChart({
                       {beers !== undefined ? `🍺 ${beers} · ` : ""}
                       {formatAxisDate(label as string)}
                     </p>
+                    {(championSwing !== undefined || topScorerSwing !== undefined) && (
+                      <p className="mt-1 text-xs text-foreground/50">
+                        {championSwing !== undefined
+                          ? `Champion ${championSwing > 0 ? "+" : ""}${championSwing}`
+                          : ""}
+                        {championSwing !== undefined && topScorerSwing !== undefined
+                          ? " · "
+                          : ""}
+                        {topScorerSwing !== undefined
+                          ? `Top scorer ${topScorerSwing > 0 ? "+" : ""}${topScorerSwing}`
+                          : ""}
+                      </p>
+                    )}
                   </div>
                 );
               }}
