@@ -294,6 +294,56 @@ describe("computeRankHistory", () => {
 
     expect(result.days[0]!.beers["bob"]).toBe(BEER_NO_VOTE);
   });
+
+  it("resolves a correct all-in vote against the reconstructed running total, ignoring the stored delta, then still applies a same-day bonus on top", () => {
+    // Regression test for a real production case: an all-in vote's stored
+    // `points` is production's live totalPoints delta at resolution time
+    // (order-dependent on whether the same-day bonus happened to apply
+    // first), which this replay can't reproduce — so all-in must resolve
+    // against the replay's own running total (clear to 0 here) instead of
+    // adding that stored delta. The bonus clamp then still runs afterward,
+    // against the combined total, exactly as for any other user.
+    const final = { id: "final", kickoffAt: d("2026-06-13"), noVotePenalty: BEER_NO_VOTE };
+    const votes = [
+      {
+        userId: "alice",
+        matchId: "final",
+        points: -9999, // arbitrary/stale delta — must be ignored for all-in
+        isCorrect: true,
+        isAllIn: true,
+      },
+    ];
+    const bonus = {
+      date: "2026-06-13",
+      championVotes: [{ userId: "alice", points: 100 }], // wrong champion pick
+      topScorerVotes: [{ userId: "alice", points: -50 }], // correct top-scorer pick
+    };
+
+    const result = computeRankHistory([final], votes, [alice], bonus);
+
+    // correct all-in -> 0. Then max(0, max(0, 0+100)-50) = 50 (two clamped steps).
+    expect(result.days[0]!.beers["alice"]).toBe(50);
+  });
+
+  it("doubles the reconstructed running total for an incorrect all-in vote, ignoring the stored delta", () => {
+    const m1 = { id: "m1", kickoffAt: d("2026-06-12"), noVotePenalty: BEER_NO_VOTE };
+    const final = { id: "final", kickoffAt: d("2026-06-13"), noVotePenalty: BEER_NO_VOTE };
+    const votes = [
+      { userId: "alice", matchId: "m1", points: BEER_LOSE, isCorrect: false },
+      {
+        userId: "alice",
+        matchId: "final",
+        points: 12345, // arbitrary/stale delta — must be ignored for all-in
+        isCorrect: false,
+        isAllIn: true,
+      },
+    ];
+
+    const result = computeRankHistory([m1, final], votes, [alice]);
+
+    // BEER_LOSE (3) doubled by the wrong all-in -> 6, ignoring the stored delta.
+    expect(result.days[1]!.beers["alice"]).toBe(BEER_LOSE * 2);
+  });
 });
 
 describe("findBiggestSingleDayMoves", () => {

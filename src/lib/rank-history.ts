@@ -1,4 +1,4 @@
-import { toVNDate } from "~/lib/match";
+import { allInResolvedPoints, toVNDate } from "~/lib/match";
 
 type RankableEntry = {
   beers: number;
@@ -57,6 +57,12 @@ export type VoteInput = {
   points: number;
   // null = vote exists but match not yet resolved; user voted, no penalty, no points yet
   isCorrect: boolean | null;
+  // All-in resolution (clear-to-zero/double) acts on the live total at
+  // resolution time in production, which this replay can't reconstruct from
+  // a stored point delta — so it's applied directly to the match bucket
+  // instead of added like a normal vote. Optional so existing fixtures/tests
+  // that only cover non-all-in votes don't need updating.
+  isAllIn?: boolean;
 };
 
 export type UserInput = {
@@ -162,13 +168,14 @@ export function computeRankHistory(
 ): RankHistoryResult {
   const votesByMatch = new Map<
     string,
-    Map<string, { points: number; isCorrect: boolean | null }>
+    Map<string, { points: number; isCorrect: boolean | null; isAllIn: boolean }>
   >();
   for (const vote of votes) {
     if (!votesByMatch.has(vote.matchId)) votesByMatch.set(vote.matchId, new Map());
     votesByMatch.get(vote.matchId)!.set(vote.userId, {
       points: vote.points,
       isCorrect: vote.isCorrect,
+      isAllIn: vote.isAllIn ?? false,
     });
   }
 
@@ -204,8 +211,15 @@ export function computeRankHistory(
         const vote = matchVotes.get(user.id);
         if (vote) {
           if (vote.isCorrect !== null) {
-            // Resolved vote: apply points, clamping at 0 (mirrors resolveMatchVotes behaviour)
-            a.beers = Math.max(0, a.beers + vote.points);
+            // Resolved vote: apply points, clamping at 0 (mirrors resolveMatchVotes
+            // behaviour). All-in is the one exception — it resolves against the
+            // *reconstructed* running total directly (clear to 0 / double) rather
+            // than adding a stored delta, since that delta was computed against
+            // production's live total at resolution time, which a replay can't
+            // otherwise reproduce (see allInResolvedPoints callers).
+            a.beers = vote.isAllIn
+              ? allInResolvedPoints(vote.isCorrect, a.beers)
+              : Math.max(0, a.beers + vote.points);
             if (vote.isCorrect) a.correct++;
             else a.incorrect++;
           }
