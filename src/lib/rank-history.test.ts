@@ -234,6 +234,66 @@ describe("computeRankHistory", () => {
     expect(result.days[0]!.date).toBe("2026-06-12");
     expect(result.days[1]!.date).toBe("2026-06-13");
   });
+
+  it("returns bonusDay: null when no bonus is passed", () => {
+    const match = { id: "m1", kickoffAt: d("2026-06-12"), noVotePenalty: BEER_NO_VOTE };
+    const result = computeRankHistory([match], [], [alice]);
+    expect(result.bonusDay).toBeNull();
+  });
+
+  it("folds champion and top-scorer swings into beers on the Final's day", () => {
+    const final = { id: "final", kickoffAt: d("2026-06-13"), noVotePenalty: BEER_NO_VOTE };
+    const votes = [
+      { userId: "alice", matchId: "final", points: BEER_WIN, isCorrect: true },
+    ];
+    const bonus = {
+      date: "2026-06-13",
+      championVotes: [{ userId: "alice", points: -50 }],
+      topScorerVotes: [{ userId: "alice", points: 50 }],
+    };
+
+    const result = computeRankHistory([final], votes, [alice], bonus);
+
+    // max(0, BEER_WIN - 50) = 0, then max(0, 0 + 50) = 50 (two clamped steps)
+    expect(result.days[0]!.beers["alice"]).toBe(50);
+    expect(result.bonusDay).toEqual({
+      date: "2026-06-13",
+      championPoints: { alice: -50 },
+      topScorerPoints: { alice: 50 },
+    });
+  });
+
+  it("clamps champion and top-scorer swings as two separate steps, not combined", () => {
+    // Mirrors resolveChampionVotes/resolveTopScorerVotes: each applyPointsDelta
+    // call clamps totalPoints at 0 independently, champion first.
+    const final = { id: "final", kickoffAt: d("2026-06-13"), noVotePenalty: BEER_NO_VOTE };
+    const votes = [
+      { userId: "alice", matchId: "final", points: 150, isCorrect: false },
+    ];
+    const bonus = {
+      date: "2026-06-13",
+      championVotes: [{ userId: "alice", points: -200 }], // correct ×4 champion pick
+      topScorerVotes: [{ userId: "alice", points: 50 }], // wrong top-scorer pick
+    };
+
+    const result = computeRankHistory([final], votes, [alice], bonus);
+
+    // max(0, max(0, 150 - 200) + 50) = 50, NOT max(0, 150 - 200 + 50) = 0
+    expect(result.days[0]!.beers["alice"]).toBe(50);
+  });
+
+  it("does not apply a bonus for users absent from the champion/top-scorer entries", () => {
+    const final = { id: "final", kickoffAt: d("2026-06-13"), noVotePenalty: BEER_NO_VOTE };
+    const bonus = {
+      date: "2026-06-13",
+      championVotes: [{ userId: "alice", points: -50 }],
+      topScorerVotes: [],
+    };
+
+    const result = computeRankHistory([final], [], [alice, bob], bonus);
+
+    expect(result.days[0]!.beers["bob"]).toBe(BEER_NO_VOTE);
+  });
 });
 
 describe("findBiggestSingleDayMoves", () => {

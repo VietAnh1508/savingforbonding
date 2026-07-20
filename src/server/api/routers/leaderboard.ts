@@ -231,18 +231,31 @@ export const leaderboardRouter = createTRPCRouter({
   }),
 
   rankByDay: publicProcedure.query(async ({ ctx }) => {
-    const [completedMatches, resolvedVotes, allUsers] = await Promise.all([
-      ctx.db.match.findMany({
-        where: { status: "COMPLETED" },
-        select: { id: true, kickoffAt: true, stage: { select: { penalty: true } } },
-        orderBy: { kickoffAt: "asc" },
-      }),
-      ctx.db.vote.findMany({
-        where: { match: { status: "COMPLETED" } },
-        select: { userId: true, matchId: true, points: true, isCorrect: true },
-      }),
-      ctx.db.user.findMany({ select: { id: true, name: true, image: true } }),
-    ]);
+    const [completedMatches, resolvedVotes, allUsers, championVotes, topScorerVotes] =
+      await Promise.all([
+        ctx.db.match.findMany({
+          where: { status: "COMPLETED" },
+          select: {
+            id: true,
+            kickoffAt: true,
+            stage: { select: { penalty: true, name: true } },
+          },
+          orderBy: { kickoffAt: "asc" },
+        }),
+        ctx.db.vote.findMany({
+          where: { match: { status: "COMPLETED" } },
+          select: { userId: true, matchId: true, points: true, isCorrect: true },
+        }),
+        ctx.db.user.findMany({ select: { id: true, name: true, image: true } }),
+        ctx.db.championVote.findMany({
+          where: { isCorrect: { not: null }, candidateId: { not: null } },
+          select: { userId: true, points: true },
+        }),
+        ctx.db.topScorerVote.findMany({
+          where: { isCorrect: { not: null }, candidateId: { not: null } },
+          select: { userId: true, points: true },
+        }),
+      ]);
 
     const matchInputs = completedMatches.map((match) => ({
       id: match.id,
@@ -250,7 +263,16 @@ export const leaderboardRouter = createTRPCRouter({
       noVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
     }));
 
-    return computeRankHistory(matchInputs, resolvedVotes, allUsers);
+    // Champion/top-scorer votes settle once, tied to the Final's completion
+    // (see resolveChampionIfFinal/resolveTopScorerIfFinal) — bucket them onto
+    // that match's day rather than whichever day the sync happened to run.
+    const finalMatch = completedMatches.find((match) => match.stage?.name === "Final");
+    const bonus =
+      finalMatch && (championVotes.length > 0 || topScorerVotes.length > 0)
+        ? { date: toVNDate(finalMatch.kickoffAt), championVotes, topScorerVotes }
+        : undefined;
+
+    return computeRankHistory(matchInputs, resolvedVotes, allUsers, bonus);
   }),
 
   topFollowed: publicProcedure.query(async ({ ctx }) => {
