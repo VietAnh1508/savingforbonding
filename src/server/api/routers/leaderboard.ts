@@ -96,6 +96,54 @@ async function getSortedLeaderboardEntries(db: PrismaClient) {
   return unsortedEntries.sort(compareLeaderboardEntries);
 }
 
+// Shared by beerByDay and rankByDay — both need the same per-day, per-user
+// beer history (completed matches + resolved votes + champion/top-scorer
+// bonus bucketed onto the Final's day); they just consume it differently.
+async function computeCurrentRankHistory(db: PrismaClient) {
+  const [completedMatches, resolvedVotes, allUsers, championVotes, topScorerVotes] =
+    await Promise.all([
+      db.match.findMany({
+        where: { status: "COMPLETED" },
+        select: {
+          id: true,
+          kickoffAt: true,
+          stage: { select: { penalty: true, name: true } },
+        },
+        orderBy: { kickoffAt: "asc" },
+      }),
+      db.vote.findMany({
+        where: { match: { status: "COMPLETED" } },
+        select: { userId: true, matchId: true, points: true, isCorrect: true },
+      }),
+      db.user.findMany({ select: { id: true, name: true, image: true } }),
+      db.championVote.findMany({
+        where: { isCorrect: { not: null }, candidateId: { not: null } },
+        select: { userId: true, points: true },
+      }),
+      db.topScorerVote.findMany({
+        where: { isCorrect: { not: null }, candidateId: { not: null } },
+        select: { userId: true, points: true },
+      }),
+    ]);
+
+  const matchInputs = completedMatches.map((match) => ({
+    id: match.id,
+    kickoffAt: match.kickoffAt,
+    noVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
+  }));
+
+  // Champion/top-scorer votes settle once, tied to the Final's completion
+  // (see resolveChampionIfFinal/resolveTopScorerIfFinal) — bucket them onto
+  // that match's day rather than whichever day the sync happened to run.
+  const finalMatch = completedMatches.find((match) => match.stage?.name === "Final");
+  const bonus =
+    finalMatch && (championVotes.length > 0 || topScorerVotes.length > 0)
+      ? { date: toVNDate(finalMatch.kickoffAt), championVotes, topScorerVotes }
+      : undefined;
+
+  return computeRankHistory(matchInputs, resolvedVotes, allUsers, bonus);
+}
+
 export const leaderboardRouter = createTRPCRouter({
   global: publicProcedure.query(async ({ ctx }) => {
     const [sorted, lastVoteUpdate, lastMatchUpdate] = await Promise.all([
@@ -180,99 +228,22 @@ export const leaderboardRouter = createTRPCRouter({
   }),
 
   beerByDay: publicProcedure.query(async ({ ctx }) => {
-    const [completedMatches, voteAggs, totalUsers] = await Promise.all([
-      ctx.db.match.findMany({
-        where: { status: "COMPLETED" },
-        select: {
-          id: true,
-          kickoffAt: true,
-          stage: { select: { penalty: true } },
-        },
-        orderBy: { kickoffAt: "asc" },
-      }),
-      ctx.db.vote.groupBy({
-        by: ["matchId"],
-        where: { isCorrect: { not: null } },
-        _sum: { points: true },
-        _count: { _all: true },
-      }),
-      ctx.db.user.count(),
-    ]);
+    // Reuse computeRankHistory's per-user, clamped-at-0 beer totals rather than
+    // summing raw points: champion/top-scorer swings (±50, up to ±800 with a
+    // star) regularly exceed a user's running total, so a naive sum would blow
+    // past the floor every real vote update respects and could go negative.
+    const { days } = await computeCurrentRankHistory(ctx.db);
 
-    const voteAggMap = new Map<
-      string,
-      { pointsSum: number; voteCount: number }
-    >();
-    for (const agg of voteAggs) {
-      voteAggMap.set(agg.matchId, {
-        pointsSum: agg._sum.points ?? 0,
-        voteCount: agg._count._all,
-      });
-    }
-
-    const dayMap = new Map<string, number>();
-    for (const match of completedMatches) {
-      const date = toVNDate(match.kickoffAt);
-      const { pointsSum, voteCount } = voteAggMap.get(match.id) ?? {
-        pointsSum: 0,
-        voteCount: 0,
-      };
-      const noVoteBeers =
-        (totalUsers - voteCount) * noVotePenaltyForStage(match.stage?.penalty);
-      dayMap.set(date, (dayMap.get(date) ?? 0) + pointsSum + noVoteBeers);
-    }
-
-    const days = [...dayMap.entries()].sort(([a], [b]) => a.localeCompare(b));
     let cumulative = 0;
-    return days.map(([date, daily]) => {
+    return days.map(({ date, beers }) => {
+      const daily = Object.values(beers).reduce((sum, b) => sum + b, 0) - cumulative;
       cumulative += daily;
       return { date, daily, cumulative };
     });
   }),
 
   rankByDay: publicProcedure.query(async ({ ctx }) => {
-    const [completedMatches, resolvedVotes, allUsers, championVotes, topScorerVotes] =
-      await Promise.all([
-        ctx.db.match.findMany({
-          where: { status: "COMPLETED" },
-          select: {
-            id: true,
-            kickoffAt: true,
-            stage: { select: { penalty: true, name: true } },
-          },
-          orderBy: { kickoffAt: "asc" },
-        }),
-        ctx.db.vote.findMany({
-          where: { match: { status: "COMPLETED" } },
-          select: { userId: true, matchId: true, points: true, isCorrect: true },
-        }),
-        ctx.db.user.findMany({ select: { id: true, name: true, image: true } }),
-        ctx.db.championVote.findMany({
-          where: { isCorrect: { not: null }, candidateId: { not: null } },
-          select: { userId: true, points: true },
-        }),
-        ctx.db.topScorerVote.findMany({
-          where: { isCorrect: { not: null }, candidateId: { not: null } },
-          select: { userId: true, points: true },
-        }),
-      ]);
-
-    const matchInputs = completedMatches.map((match) => ({
-      id: match.id,
-      kickoffAt: match.kickoffAt,
-      noVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
-    }));
-
-    // Champion/top-scorer votes settle once, tied to the Final's completion
-    // (see resolveChampionIfFinal/resolveTopScorerIfFinal) — bucket them onto
-    // that match's day rather than whichever day the sync happened to run.
-    const finalMatch = completedMatches.find((match) => match.stage?.name === "Final");
-    const bonus =
-      finalMatch && (championVotes.length > 0 || topScorerVotes.length > 0)
-        ? { date: toVNDate(finalMatch.kickoffAt), championVotes, topScorerVotes }
-        : undefined;
-
-    return computeRankHistory(matchInputs, resolvedVotes, allUsers, bonus);
+    return computeCurrentRankHistory(ctx.db);
   }),
 
   topFollowed: publicProcedure.query(async ({ ctx }) => {
