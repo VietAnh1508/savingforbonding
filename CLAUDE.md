@@ -19,7 +19,8 @@ This is an internal app shared among a group of friends — at most ~40 users. I
 ```bash
 npm run dev          # Start dev server (Turbo mode)
 npm run build        # Production build
-npm run typecheck    # Type-check (only quality gate — no test suite)
+npm run typecheck    # Type-check
+npm run test         # Run the vitest suite (currently: src/lib/rank-history.test.ts)
 
 npm run db:migrate:new       # Author + review a migration locally (classic engine, local db.sqlite)
 npm run db:migrate:turso     # Apply committed migrations to the Turso DB (dev or prod — see below)
@@ -65,7 +66,7 @@ Both Turso databases were bootstrapped onto this migration history via a one-tim
 
 **Always apply migrations to Turso before deploying code** that depends on new tables or columns.
 
-There are no tests. `npm run typecheck` is the only automated check.
+`npm run typecheck` and `npm run test` (vitest) are the automated checks. Test coverage is sparse and opt-in, not comprehensive — currently just `src/lib/rank-history.ts` (pure computation, no DB), which is exactly the kind of module worth unit-testing here: it replays beer/rank history from raw rows and has non-obvious edge cases (clamping order, all-in resolution, VN-timezone day bucketing) that are cheap to pin down with fixtures and easy to silently regress otherwise. Don't feel obligated to add tests for everything — most of this app (tRPC procedures, UI) is still verified by typecheck + manual smoke-testing per CLAUDE.md's "keep it simple" principle; add a test when a function has real logic worth pinning down independently of the DB/UI, not as a blanket rule.
 
 ### Turso CLI
 
