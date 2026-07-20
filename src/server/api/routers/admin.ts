@@ -3,15 +3,14 @@ import { z } from "zod";
 
 import {
   isMatchEditable,
-  noVotePenaltyForStage,
   validateVotingRatios,
   validateStagePenalty,
   validateStageStars,
   validateMaxStarMultiplier,
 } from "~/lib/match";
 import { hashPassword } from "~/lib/password";
-import { computeRankHistory } from "~/lib/rank-history";
 import { adminProcedure, createTRPCRouter } from "~/server/api/trpc";
+import { computeCurrentRankHistory } from "~/server/services/rank-history";
 import { resolveMatchVotes } from "~/server/services/resolve-votes";
 import { syncFifaFixtures } from "~/server/services/sync-fifa-fixtures";
 
@@ -73,60 +72,21 @@ export const adminRouter = createTRPCRouter({
   }),
 
   repairBeerTotals: adminProcedure.mutation(async ({ ctx }) => {
-    const [completedMatches, resolvedVotes, users, championVotes, allInUsers] =
-      await Promise.all([
-        ctx.db.match.findMany({
-          where: { status: "COMPLETED" },
-          select: {
-            id: true,
-            kickoffAt: true,
-            stage: { select: { penalty: true } },
-          },
-          orderBy: { kickoffAt: "asc" },
-        }),
-        ctx.db.vote.findMany({
-          where: { match: { status: "COMPLETED" } },
-          select: { userId: true, matchId: true, points: true, isCorrect: true },
-        }),
-        ctx.db.user.findMany({
-          select: { id: true, name: true, image: true, totalPoints: true },
-        }),
-        ctx.db.championVote.findMany({
-          select: { userId: true, points: true },
-        }),
-        ctx.db.vote.findMany({
-          where: { isAllIn: true, isCorrect: { not: null } },
-          select: { userId: true },
-        }),
-      ]);
-
-    const matchInputs = completedMatches.map((match) => ({
-      id: match.id,
-      kickoffAt: match.kickoffAt,
-      noVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
-    }));
-
-    // Reuses the same stage-aware no-vote penalty logic as the rank history
-    // chart, so a repair can never diverge from what the chart/badges show.
-    const { days } = computeRankHistory(matchInputs, resolvedVotes, users);
+    // Reuses the same replay that powers the beer/rank-history charts, so a
+    // repair can never diverge from what those charts show — including
+    // champion/top-scorer bonuses and all-in resolution, both of which this
+    // procedure used to compute (incompletely and inconsistently) itself.
+    const [{ days }, users, completedMatchCount] = await Promise.all([
+      computeCurrentRankHistory(ctx.db),
+      ctx.db.user.findMany({ select: { id: true, totalPoints: true } }),
+      ctx.db.match.count({ where: { status: "COMPLETED" } }),
+    ]);
     const finalBeers = days[days.length - 1]?.beers ?? {};
-    const championPointsByUser = new Map(
-      championVotes.map((v) => [v.userId, v.points]),
-    );
-    // The replay above is a fixed additive fold and can't reproduce an
-    // all-in vote's clear-to-zero/double effect (which depends on the live
-    // balance at resolution time, not a fixed delta) — skip these users so
-    // repair doesn't overwrite their correct live totals with a wrong value.
-    const allInUserIds = new Set(allInUsers.map((v) => v.userId));
 
     let usersUpdated = 0;
 
     for (const user of users) {
-      if (allInUserIds.has(user.id)) continue;
-
-      const baseBeers = finalBeers[user.id] ?? 0;
-      const championPoints = championPointsByUser.get(user.id) ?? 0;
-      const newTotalPoints = Math.max(0, baseBeers + championPoints);
+      const newTotalPoints = finalBeers[user.id] ?? 0;
 
       if (newTotalPoints !== user.totalPoints) {
         await ctx.db.user.update({
@@ -137,7 +97,7 @@ export const adminRouter = createTRPCRouter({
       }
     }
 
-    return { usersUpdated, completedMatchCount: completedMatches.length };
+    return { usersUpdated, completedMatchCount };
   }),
 
   listAll: adminProcedure.query(async ({ ctx }) => {

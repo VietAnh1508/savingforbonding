@@ -2,17 +2,12 @@ import { isKnownCountry } from "~/lib/country-flag";
 import {
   beersSavedByStarring,
   MIN_STAR_MULTIPLIER,
-  noVotePenaltyForStage,
-  toVNDate,
   vnTodayTomorrowRangeUTC,
 } from "~/lib/match";
-import {
-  assignRanks,
-  compareLeaderboardEntries,
-  computeRankHistory,
-} from "~/lib/rank-history";
+import { assignRanks, compareLeaderboardEntries } from "~/lib/rank-history";
 import { resolveUserJoiningDate } from "~/lib/user-joining-date";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { computeCurrentRankHistory } from "~/server/services/rank-history";
 import { MatchStatus, type PrismaClient } from "../../../../generated/prisma";
 
 const leaderboardUserSelect = {
@@ -94,54 +89,6 @@ async function getSortedLeaderboardEntries(db: PrismaClient) {
   });
 
   return unsortedEntries.sort(compareLeaderboardEntries);
-}
-
-// Shared by beerByDay and rankByDay — both need the same per-day, per-user
-// beer history (completed matches + resolved votes + champion/top-scorer
-// bonus bucketed onto the Final's day); they just consume it differently.
-async function computeCurrentRankHistory(db: PrismaClient) {
-  const [completedMatches, resolvedVotes, allUsers, championVotes, topScorerVotes] =
-    await Promise.all([
-      db.match.findMany({
-        where: { status: "COMPLETED" },
-        select: {
-          id: true,
-          kickoffAt: true,
-          stage: { select: { penalty: true, name: true } },
-        },
-        orderBy: { kickoffAt: "asc" },
-      }),
-      db.vote.findMany({
-        where: { match: { status: "COMPLETED" } },
-        select: { userId: true, matchId: true, points: true, isCorrect: true },
-      }),
-      db.user.findMany({ select: { id: true, name: true, image: true } }),
-      db.championVote.findMany({
-        where: { isCorrect: { not: null }, candidateId: { not: null } },
-        select: { userId: true, points: true },
-      }),
-      db.topScorerVote.findMany({
-        where: { isCorrect: { not: null }, candidateId: { not: null } },
-        select: { userId: true, points: true },
-      }),
-    ]);
-
-  const matchInputs = completedMatches.map((match) => ({
-    id: match.id,
-    kickoffAt: match.kickoffAt,
-    noVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
-  }));
-
-  // Champion/top-scorer votes settle once, tied to the Final's completion
-  // (see resolveChampionIfFinal/resolveTopScorerIfFinal) — bucket them onto
-  // that match's day rather than whichever day the sync happened to run.
-  const finalMatch = completedMatches.find((match) => match.stage?.name === "Final");
-  const bonus =
-    finalMatch && (championVotes.length > 0 || topScorerVotes.length > 0)
-      ? { date: toVNDate(finalMatch.kickoffAt), championVotes, topScorerVotes }
-      : undefined;
-
-  return computeRankHistory(matchInputs, resolvedVotes, allUsers, bonus);
 }
 
 export const leaderboardRouter = createTRPCRouter({
