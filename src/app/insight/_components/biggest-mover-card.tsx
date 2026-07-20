@@ -27,8 +27,10 @@ function MoveStat({
       </p>
       <p className={`mt-1 text-sm font-semibold ${accentClass}`}>{name}</p>
       <p className="mt-0.5 text-xs text-foreground/50">
-        #{move.fromRank} → #{move.toRank} ({formatAxisDate(move.fromDate)} →{" "}
-        {formatAxisDate(move.toDate)})
+        <span className="font-bold">
+          #{move.fromRank} → #{move.toRank}
+        </span>{" "}
+        ({formatAxisDate(move.fromDate)} → {formatAxisDate(move.toDate)})
       </p>
     </div>
   );
@@ -38,7 +40,9 @@ export function BiggestMoverCard() {
   const { data, isLoading } = api.leaderboard.rankByDay.useQuery();
 
   if (isLoading) {
-    return <div className="mb-4 h-24 animate-pulse rounded-xl bg-foreground/5" />;
+    return (
+      <div className="mb-4 h-24 animate-pulse rounded-xl bg-foreground/5" />
+    );
   }
 
   if (!data) return null;
