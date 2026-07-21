@@ -1,6 +1,6 @@
 # SavingForBonding
 
-A FIFA World Cup football prediction game for a small group of friends. Users predict match outcomes and accrue beer "debts" for wrong picks, tracked on a leaderboard. See `CLAUDE.md` for the full architecture and engineering notes.
+A FIFA World Cup football prediction game for a small group of friends. Users predict match outcomes and accrue beer "debts" for wrong picks, tracked on a leaderboard. See `CLAUDE.md` for the full architecture and engineering notes, and `CONTRIBUTING.md` for how to open an issue or submit a pull request.
 
 ## Stack
 
