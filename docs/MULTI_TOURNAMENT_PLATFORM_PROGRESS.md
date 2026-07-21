@@ -9,7 +9,7 @@ lands — don't let this drift from reality.
 
 | Phase | Description | Status |
 |---|---|---|
-| 1 | Schema plumbing | In progress — Tournament model + FKs done (dev Turso); `UserTournamentStats`/`totalPoints` migration deferred as a separate task; prod Turso not yet migrated |
+| 1 | Schema plumbing | In progress — Tournament model + FKs done (dev + prod Turso); `UserTournamentStats`/`totalPoints` migration deferred as a separate task |
 | 2 | Adapter extraction | Not started |
 | 3 | Stage-name delookup | Not started (partial stopgap landed — see Phase 1 notes) |
 | 4 | UI: tournament awareness | Not started |
@@ -73,8 +73,14 @@ smoke test against dev Turso (see log below).
       `ChampionVote.candidateId` / `TopScorerVote.candidateId` / `Match.stageId` unchanged before
       vs. after in every case. Applied to **dev Turso** 2026-07-21 with a before/after row-count
       diff on the real dev data (15 users, 307 votes, 104 matches, etc.) — zero loss. **Prod Turso
-      has not been migrated yet** — per CLAUDE.md, the fork-test against a forked prod DB is
-      mandatory before that run, now knowing it applies to both migrations.
+      migrated 2026-07-21**, per CLAUDE.md's mandatory fork-test: forked `savingforbonding-prod`
+      into a throwaway `savingforbonding-prod-fork-20260721` db, applied both migrations to the
+      fork, diffed row counts across all cascade-child + tournament-scoped tables against the real
+      prod baseline (20 users, 1379 votes, 14 champion votes, 7 top-scorer votes, 6 follows, 3
+      challenges, 104 matches — prod's dataset is larger than dev's) — zero loss, zero NULLs left
+      in any `tournamentId` column, no duplicate `(userId, tournamentId)` pairs. Only then ran
+      `npm run db:migrate:turso:prod` for real and re-verified the same counts against the live
+      database — exact match. Fork destroyed after verification.
 - [x] `npm run typecheck` and `npm run test` (27 tests) pass.
 - [x] Live smoke test against dev Turso 2026-07-21: all public pages load; admin match
       create injects `tournamentId` automatically (no more manual tournament field); admin
@@ -172,6 +178,19 @@ Doesn't block or depend on Phases 1-4.
 
 Dated entries — what happened, what was decided, what's blocked. Newest first.
 
+- **2026-07-21** — Code committed (`ac827f9`) and pushed to `origin/develop`. Ran the mandatory
+  fork-test before touching prod: forked `savingforbonding-prod` into a throwaway
+  `savingforbonding-prod-fork-20260721`, applied both migrations to the fork, diffed row counts
+  across every cascade-child and tournament-scoped table against real prod's baseline (20 users,
+  1379 votes, 14 champion votes, 7 top-scorer votes, 6 follows, 3 challenges, 104 matches — a
+  larger, higher-stakes dataset than dev's) — zero loss, zero `tournamentId` NULLs, no duplicate
+  `(userId, tournamentId)` pairs. Ran `npm run db:migrate:turso:prod` for real immediately after,
+  then re-verified the identical counts against live prod — exact match. Fork destroyed post-verify.
+  **Prod Turso is now migrated**; both `add_tournament_table` and `tighten_tournament_fks` are
+  applied there. Noted but deliberately not acted on: this repo's `nightly-release.yml` GitHub
+  Action auto-merges `develop` → `main` daily at 22:00 ICT, which would have shipped
+  `tournamentId`-dependent code to production ahead of the prod schema had this migration slipped
+  past tonight's run — moot now that prod is migrated same-day.
 - **2026-07-21** — Phase 1's `Tournament` model + FKs landed and applied to **dev Turso**
   (`fifa-world-cup-2026`, status `ACTIVE`). Scope explicitly excluded `UserTournamentStats`/
   `totalPoints` (separate follow-up — real behavior-sensitive change) and `Tournament.timezone`/
