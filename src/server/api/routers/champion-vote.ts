@@ -6,6 +6,7 @@ import {
   isStarEligibleStage,
   starMultiplierSchema,
 } from "~/lib/match";
+import { getActiveTournamentId } from "~/server/services/active-tournament";
 import {
   getChampionMaxStarMultiplier,
   getChampionVotingDeadline,
@@ -19,9 +20,10 @@ import {
 
 export const championVoteRouter = createTRPCRouter({
   getVotingStatus: publicProcedure.query(async ({ ctx }) => {
+    const tournamentId = await getActiveTournamentId(ctx.db);
     const [deadline, maxStarMultiplier] = await Promise.all([
-      getChampionVotingDeadline(ctx.db),
-      getChampionMaxStarMultiplier(ctx.db),
+      getChampionVotingDeadline(ctx.db, tournamentId),
+      getChampionMaxStarMultiplier(ctx.db, tournamentId),
     ]);
     return {
       isOpen: !deadline || new Date() < deadline,
@@ -31,18 +33,24 @@ export const championVoteRouter = createTRPCRouter({
   }),
 
   getMyVote: protectedProcedure.query(async ({ ctx }) => {
+    const tournamentId = await getActiveTournamentId(ctx.db);
     return ctx.db.championVote.findUnique({
-      where: { userId: ctx.session.user.id },
+      where: {
+        userId_tournamentId: { userId: ctx.session.user.id, tournamentId },
+      },
       include: { candidate: true },
     });
   }),
 
   getVoteCounts: publicProcedure.query(async ({ ctx }) => {
+    const tournamentId = await getActiveTournamentId(ctx.db);
     const [candidates, votes] = await Promise.all([
       ctx.db.championCandidate.findMany({
+        where: { tournamentId },
         orderBy: { teamName: "asc" },
       }),
       ctx.db.championVote.findMany({
+        where: { tournamentId },
         select: {
           candidateId: true,
           starMultiplier: true,
@@ -62,16 +70,20 @@ export const championVoteRouter = createTRPCRouter({
   cast: protectedProcedure
     .input(z.object({ candidateId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      if (!(await isChampionVotingOpen(ctx.db))) {
+      const [tournamentId, candidate] = await Promise.all([
+        getActiveTournamentId(ctx.db),
+        ctx.db.championCandidate.findUnique({
+          where: { id: input.candidateId },
+        }),
+      ]);
+
+      if (!(await isChampionVotingOpen(ctx.db, tournamentId))) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Champion voting is closed",
         });
       }
 
-      const candidate = await ctx.db.championCandidate.findUnique({
-        where: { id: input.candidateId },
-      });
       if (!candidate) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Team not found" });
       }
@@ -82,16 +94,21 @@ export const championVoteRouter = createTRPCRouter({
         });
       }
 
+      const voteWhere = {
+        userId_tournamentId: { userId: ctx.session.user.id, tournamentId },
+      };
+
       const existingVote = await ctx.db.championVote.findUnique({
-        where: { userId: ctx.session.user.id },
+        where: voteWhere,
       });
       const changingCandidate =
         !!existingVote && existingVote.candidateId !== input.candidateId;
 
       return ctx.db.championVote.upsert({
-        where: { userId: ctx.session.user.id },
+        where: voteWhere,
         create: {
           userId: ctx.session.user.id,
+          tournamentId,
           candidateId: input.candidateId,
         },
         update: {
@@ -104,8 +121,13 @@ export const championVoteRouter = createTRPCRouter({
   setStar: protectedProcedure
     .input(z.object({ multiplier: starMultiplierSchema }))
     .mutation(async ({ ctx, input }) => {
+      const tournamentId = await getActiveTournamentId(ctx.db);
+      const voteWhere = {
+        userId_tournamentId: { userId: ctx.session.user.id, tournamentId },
+      };
+
       const vote = await ctx.db.championVote.findUnique({
-        where: { userId: ctx.session.user.id },
+        where: voteWhere,
       });
       if (!vote || !vote.candidateId) {
         throw new TRPCError({
@@ -114,14 +136,17 @@ export const championVoteRouter = createTRPCRouter({
         });
       }
 
-      if (!(await isChampionVotingOpen(ctx.db))) {
+      if (!(await isChampionVotingOpen(ctx.db, tournamentId))) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Champion voting is closed",
         });
       }
 
-      const maxMultiplier = await getChampionMaxStarMultiplier(ctx.db);
+      const maxMultiplier = await getChampionMaxStarMultiplier(
+        ctx.db,
+        tournamentId,
+      );
 
       if (vote.starMultiplier === null && input.multiplier !== null) {
         if (!isStarEligibleStage(maxMultiplier)) {
@@ -138,7 +163,7 @@ export const championVoteRouter = createTRPCRouter({
           : clampStarMultiplier(input.multiplier, maxMultiplier);
 
       return ctx.db.championVote.update({
-        where: { userId: ctx.session.user.id },
+        where: voteWhere,
         data: { starMultiplier: nextMultiplier },
       });
     }),

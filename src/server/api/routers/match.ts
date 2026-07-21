@@ -36,7 +36,7 @@ export const matchRouter = createTRPCRouter({
             ...(statuses ? { status: { in: statuses } } : undefined),
           },
           orderBy: { kickoffAt: "asc" },
-          include: { stage: { include: { penalty: true } } },
+          include: { stage: { include: { penalty: true } }, tournament: true },
         })
       ).filter(
         (m) => isKnownCountry(m.homeCountry) && isKnownCountry(m.awayCountry),
@@ -69,6 +69,7 @@ export const matchRouter = createTRPCRouter({
 
       return matches.map((match) => ({
         ...match,
+        tournament: match.tournament.name,
         stage: match.stage?.name ?? null,
         stageWrongPenalty: wrongPenaltyForStage(match.stage?.penalty),
         stageNoVotePenalty: noVotePenaltyForStage(match.stage?.penalty),
@@ -88,7 +89,7 @@ export const matchRouter = createTRPCRouter({
       const [match, allVotes, userVote] = await Promise.all([
         ctx.db.match.findUnique({
           where: { id: input.id },
-          include: { stage: { include: { penalty: true } } },
+          include: { stage: { include: { penalty: true } }, tournament: true },
         }),
         ctx.db.vote.findMany({
           where: { matchId: input.id },
@@ -135,6 +136,7 @@ export const matchRouter = createTRPCRouter({
 
       return {
         ...match,
+        tournament: match.tournament.name,
         stage: match.stage?.name ?? null,
         stageWrongPenalty: wrongPenaltyForStage(match.stage?.penalty),
         stageNoVotePenalty: noVotePenaltyForStage(match.stage?.penalty),

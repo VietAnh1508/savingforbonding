@@ -16,7 +16,6 @@ const emptyForm = {
   homeCountry: "",
   awayCountry: "",
   kickoffAt: "",
-  tournament: "FIFA World Cup",
   homeRatio: "2.0",
   awayRatio: "0",
   status: "SCHEDULED" as EditableStatus,
@@ -36,7 +35,6 @@ export function MatchForm({ editingMatch, onSuccess, onCancel }: Props) {
         homeCountry: editingMatch.homeCountry,
         awayCountry: editingMatch.awayCountry,
         kickoffAt: toVNDate(new Date(editingMatch.kickoffAt), 16),
-        tournament: editingMatch.tournament,
         homeRatio: String(editingMatch.homeRatio),
         awayRatio: String(editingMatch.awayRatio),
         status: editingMatch.status as EditableStatus,
@@ -85,7 +83,6 @@ export function MatchForm({ editingMatch, onSuccess, onCancel }: Props) {
       homeCountry: form.homeCountry,
       awayCountry: form.awayCountry,
       kickoffAt: fromVietnamDatetimeLocal(form.kickoffAt),
-      tournament: form.tournament,
       homeRatio,
       awayRatio,
       status: form.status,
@@ -137,15 +134,6 @@ export function MatchForm({ editingMatch, onSuccess, onCancel }: Props) {
             type="datetime-local"
             value={form.kickoffAt}
             onChange={(e) => setForm({ ...form, kickoffAt: e.target.value })}
-            className={inputClass}
-          />
-        </label>
-        <label className="space-y-1">
-          <span className="text-sm text-foreground/60">Tournament</span>
-          <input
-            required
-            value={form.tournament}
-            onChange={(e) => setForm({ ...form, tournament: e.target.value })}
             className={inputClass}
           />
         </label>

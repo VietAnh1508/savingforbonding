@@ -13,8 +13,9 @@ import { type PrismaClient } from "../../../generated/prisma";
 export async function resolveTopScorerVotes(
   db: PrismaClient,
   winningCandidateIds: string[],
+  tournamentId: string,
 ) {
-  const votes = await db.topScorerVote.findMany();
+  const votes = await db.topScorerVote.findMany({ where: { tournamentId } });
 
   let usersUpdated = 0;
 
@@ -40,26 +41,31 @@ export async function resolveTopScorerVotes(
   return { votesResolved: votes.length, usersUpdated };
 }
 
-/** Top scorer vote has no stage, so its max multiplier lives in the GameSettings singleton. */
+/** Top scorer vote has no stage, so its max multiplier lives in GameSettings, one row per tournament. */
 export async function getTopScorerMaxStarMultiplier(
   db: PrismaClient,
+  tournamentId: string,
 ): Promise<number> {
-  const settings = await db.gameSettings.findUnique({ where: { id: 1 } });
+  const settings = await db.gameSettings.findUnique({ where: { tournamentId } });
   return settings?.topScorerMaxStarMultiplier ?? 4;
 }
 
 /** Kickoff of the Play-off for third place stage, or null if it isn't scheduled yet. */
 export async function getTopScorerVotingDeadline(
   db: PrismaClient,
+  tournamentId: string,
 ): Promise<Date | null> {
   const thirdPlaceStage = await db.stage.findFirst({
-    where: { name: "Play-off for third place" },
+    where: { name: "Play-off for third place", tournamentId },
     select: { startDate: true },
   });
   return thirdPlaceStage?.startDate ?? null;
 }
 
-export async function isTopScorerVotingOpen(db: PrismaClient): Promise<boolean> {
-  const deadline = await getTopScorerVotingDeadline(db);
+export async function isTopScorerVotingOpen(
+  db: PrismaClient,
+  tournamentId: string,
+): Promise<boolean> {
+  const deadline = await getTopScorerVotingDeadline(db, tournamentId);
   return !deadline || new Date() < deadline;
 }

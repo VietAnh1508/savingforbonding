@@ -77,7 +77,6 @@ export function deriveResultIfComplete(
 }
 
 export type FifaMatchPatch = {
-  tournament: string;
   homeCountry: string;
   awayCountry: string;
   kickoffAt: Date;
@@ -92,7 +91,6 @@ export type FifaMatchPatch = {
 
 export function buildFifaMatchPatch(
   existing: {
-    tournament: string;
     homeCountry: string;
     awayCountry: string;
     kickoffAt: Date;
@@ -105,7 +103,6 @@ export function buildFifaMatchPatch(
     stageId: string | null;
   },
   fifa: {
-    tournament: string;
     homeCountry: string;
     awayCountry: string;
     kickoffAt: Date;
@@ -139,7 +136,6 @@ export function buildFifaMatchPatch(
     existing.status === "COMPLETED" ? existing.kickoffAt : fifa.kickoffAt;
 
   const patch: FifaMatchPatch = {
-    tournament: fifa.tournament,
     homeCountry,
     awayCountry,
     kickoffAt,
@@ -158,7 +154,6 @@ export function buildFifaMatchPatch(
 
   const changed =
     teamsUpdated ||
-    patch.tournament !== existing.tournament ||
     patch.kickoffAt.getTime() !== existing.kickoffAt.getTime() ||
     patch.status !== existing.status ||
     patch.homeScore !== existing.homeScore ||

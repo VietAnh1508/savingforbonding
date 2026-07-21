@@ -192,6 +192,12 @@ surface as a visible sync warning, not silently vanish from the UI.
   for the common case.
 - Admin gets Tournament CRUD: create/configure a tournament (name, data source,
   timezone, stakes config), manage its stages, archive it when done.
+- `src/app/admin/_components/match-form.tsx` (admin match CRUD) needs a
+  tournament selector when adding a new match — Phase 1 hardcodes new matches
+  to `getActiveTournamentId()`, which breaks once admin can create an upcoming
+  tournament ahead of the current one ending. Scope the selector's options to
+  `ACTIVE`/`UPCOMING` tournaments only (`COMPLETED`/`ARCHIVED` shouldn't take
+  new matches).
 - Past tournaments become browsable read-only history (leaderboard/insight
   scoped to a specific past tournament) — a natural feature unlocked by the
   data model change, not extra work.

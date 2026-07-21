@@ -33,31 +33,65 @@ enum ChallengeStatus {
   DONE
 }
 
+enum TournamentStatus {
+  UPCOMING
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+model Tournament {
+  id            String           @id @default(cuid())
+  slug          String           @unique
+  name          String
+  sportKind     String           @default("football")
+  dataSourceKey String
+  startDate     DateTime
+  endDate       DateTime
+  status        TournamentStatus @default(ACTIVE)
+
+  stages              Stage[]
+  matches             Match[]
+  gameSettings        GameSettings?
+  championCandidates  ChampionCandidate[]
+  topScorerCandidates TopScorerCandidate[]
+  championVotes       ChampionVote[]
+  topScorerVotes      TopScorerVote[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Stage {
   id                String        @id
   name              String
   startDate         DateTime
   endDate           DateTime
   sequenceOrder     Int
-  seasonId          String
   isKnockout        Boolean       @default(false)
   starsAllocated    Int           @default(0)
   maxStarMultiplier Int           @default(0)
   allInEnabled      Boolean       @default(false)
+  tournamentId      String
+  tournament        Tournament    @relation(fields: [tournamentId], references: [id])
   matches           Match[]
   penalty           StagePenalty?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([tournamentId])
 }
 
 /**
- * Singleton settings row (id fixed at 1) for game config that isn't stage-scoped.
+ * Game config that isn't stage-scoped — one row per Tournament.
  */
 model GameSettings {
-  id                         Int @id @default(1)
-  championMaxStarMultiplier  Int @default(4)
-  topScorerMaxStarMultiplier Int @default(4)
+  id                         String     @id @default(cuid())
+  tournamentId               String     @unique
+  tournament                 Tournament @relation(fields: [tournamentId], references: [id])
+  championMaxStarMultiplier  Int        @default(4)
+  topScorerMaxStarMultiplier Int        @default(4)
 }
 
 model StagePenalty {
@@ -74,7 +108,8 @@ model StagePenalty {
 model Match {
   id               String       @id @default(cuid())
   externalId       String?      @unique
-  tournament       String       @default("FIFA World Cup")
+  tournamentId     String
+  tournament       Tournament   @relation(fields: [tournamentId], references: [id])
   homeCountry      String
   awayCountry      String
   kickoffAt        DateTime
@@ -97,6 +132,7 @@ model Match {
   @@index([kickoffAt])
   @@index([status])
   @@index([stageId])
+  @@index([tournamentId])
 }
 
 model Vote {
@@ -119,25 +155,25 @@ model Vote {
 }
 
 model User {
-  id                   String         @id @default(cuid())
+  id                   String          @id @default(cuid())
   name                 String?
-  email                String         @unique
+  email                String          @unique
   passwordHash         String?
   emailVerified        DateTime?
   image                String?
-  totalPoints          Int            @default(0)
-  mustChangePassword   Boolean        @default(false)
-  createdAt            DateTime       @default(now())
+  totalPoints          Int             @default(0)
+  mustChangePassword   Boolean         @default(false)
+  createdAt            DateTime        @default(now())
   nameUpdatedAt        DateTime?
   termsAcceptedAt      DateTime?
-  termsAcceptedVersion Int            @default(1)
+  termsAcceptedVersion Int             @default(1)
   votes                Vote[]
-  following            UserFollow[]   @relation("FollowerFollows")
-  followers            UserFollow[]   @relation("FollowingFollows")
-  championVote         ChampionVote?
-  topScorerVote        TopScorerVote?
-  challengesSent       Challenge[]    @relation("ChallengeChallenger")
-  challengesReceived   Challenge[]    @relation("ChallengeOpponent")
+  following            UserFollow[]    @relation("FollowerFollows")
+  followers            UserFollow[]    @relation("FollowingFollows")
+  championVotes        ChampionVote[]
+  topScorerVotes       TopScorerVote[]
+  challengesSent       Challenge[]     @relation("ChallengeChallenger")
+  challengesReceived   Challenge[]     @relation("ChallengeOpponent")
 }
 
 model UserFollow {
@@ -153,7 +189,9 @@ model UserFollow {
 
 model ChampionCandidate {
   id           String         @id @default(cuid())
-  fifaTeamId   String         @unique
+  fifaTeamId   String
+  tournamentId String
+  tournament   Tournament     @relation(fields: [tournamentId], references: [id])
   teamName     String
   countryCode  String
   eliminatedAt DateTime?
@@ -161,11 +199,16 @@ model ChampionCandidate {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([fifaTeamId, tournamentId])
+  @@index([tournamentId])
 }
 
 model ChampionVote {
   id             String             @id @default(cuid())
-  userId         String             @unique
+  userId         String
+  tournamentId   String
+  tournament     Tournament         @relation(fields: [tournamentId], references: [id])
   candidateId    String?
   user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   candidate      ChampionCandidate? @relation(fields: [candidateId], references: [id])
@@ -176,12 +219,16 @@ model ChampionVote {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([userId, tournamentId])
   @@index([candidateId])
+  @@index([tournamentId])
 }
 
 model TopScorerCandidate {
   id               String          @id @default(cuid())
-  externalPlayerId String          @unique
+  externalPlayerId String
+  tournamentId     String
+  tournament       Tournament      @relation(fields: [tournamentId], references: [id])
   playerName       String
   countryName      String
   goals            Int             @default(0)
@@ -191,11 +238,16 @@ model TopScorerCandidate {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([externalPlayerId, tournamentId])
+  @@index([tournamentId])
 }
 
 model TopScorerVote {
   id             String              @id @default(cuid())
-  userId         String              @unique
+  userId         String
+  tournamentId   String
+  tournament     Tournament          @relation(fields: [tournamentId], references: [id])
   candidateId    String?
   user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   candidate      TopScorerCandidate? @relation(fields: [candidateId], references: [id])
@@ -206,7 +258,9 @@ model TopScorerVote {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([userId, tournamentId])
   @@index([candidateId])
+  @@index([tournamentId])
 }
 
 model Challenge {

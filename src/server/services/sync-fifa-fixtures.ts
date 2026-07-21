@@ -1,13 +1,13 @@
 import { getFifaCountryCode } from "~/lib/country-flag";
 import { buildFifaMatchPatch } from "~/lib/fifa-sync";
 import { deriveResult } from "~/lib/match";
+import { getActiveTournamentId } from "~/server/services/active-tournament";
 import { resolveChampionVotes } from "~/server/services/champion-vote";
 import { resolveTopScorerVotes } from "~/server/services/top-scorer-vote";
 import {
   fetchQualifiedTeams,
   fetchWorldCupFixtures,
   fifaTeamName,
-  fifaTournamentName,
   localizedDescription,
   mapFifaMatchStatus,
   parseFifaKickoffToUtc,
@@ -39,11 +39,18 @@ const TOP_SCORER_CANDIDATE_COUNT = 10;
 async function upsertTopScorerCandidate(
   db: PrismaClient,
   scorer: VnexpressTopScorer,
+  tournamentId: string,
 ) {
   return db.topScorerCandidate.upsert({
-    where: { externalPlayerId: String(scorer.player_id) },
+    where: {
+      externalPlayerId_tournamentId: {
+        externalPlayerId: String(scorer.player_id),
+        tournamentId,
+      },
+    },
     create: {
       externalPlayerId: String(scorer.player_id),
+      tournamentId,
       playerName: scorer.player_name,
       countryName: scorer.nationality,
       goals: scorer.goals.total,
@@ -86,11 +93,14 @@ async function resolveChampionIfFinal(
   db: PrismaClient,
   fixture: FifaMatch,
   isFinal: boolean,
+  tournamentId: string,
 ): Promise<number> {
   if (!isFinal || !fixture.Winner) return 0;
 
   const winner = await db.championCandidate.findUnique({
-    where: { fifaTeamId: fixture.Winner },
+    where: {
+      fifaTeamId_tournamentId: { fifaTeamId: fixture.Winner, tournamentId },
+    },
   });
   if (!winner) {
     console.warn(
@@ -99,7 +109,11 @@ async function resolveChampionIfFinal(
     return 0;
   }
 
-  const { usersUpdated } = await resolveChampionVotes(db, winner.id);
+  const { usersUpdated } = await resolveChampionVotes(
+    db,
+    winner.id,
+    tournamentId,
+  );
   return usersUpdated;
 }
 
@@ -123,6 +137,7 @@ async function resolveTopScorerIfFinal(
   fixture: FifaMatch,
   isFinal: boolean,
   getTopScorers: () => Promise<VnexpressTopScorer[]>,
+  tournamentId: string,
 ): Promise<number> {
   if (!isFinal) return 0;
 
@@ -136,12 +151,13 @@ async function resolveTopScorerIfFinal(
   ];
 
   const winnerCandidates = await Promise.all(
-    winners.map((winner) => upsertTopScorerCandidate(db, winner)),
+    winners.map((winner) => upsertTopScorerCandidate(db, winner, tournamentId)),
   );
 
   const { usersUpdated } = await resolveTopScorerVotes(
     db,
     winnerCandidates.map((c) => c.id),
+    tournamentId,
   );
   return usersUpdated;
 }
@@ -156,9 +172,10 @@ async function resolveTopScorerIfFinal(
 async function syncTopScorerCandidates(
   db: PrismaClient,
   getTopScorers: () => Promise<VnexpressTopScorer[]>,
+  tournamentId: string,
 ): Promise<number> {
   const semiFinalStage = await db.stage.findFirst({
-    where: { name: "Semi-final" },
+    where: { name: "Semi-final", tournamentId },
   });
   if (!semiFinalStage) return 0;
 
@@ -180,15 +197,20 @@ async function syncTopScorerCandidates(
     .slice(0, TOP_SCORER_CANDIDATE_COUNT);
 
   await Promise.all(
-    topScorers.map((scorer) => upsertTopScorerCandidate(db, scorer)),
+    topScorers.map((scorer) =>
+      upsertTopScorerCandidate(db, scorer, tournamentId),
+    ),
   );
 
   return topScorers.length;
 }
 
-async function syncChampionCandidates(db: PrismaClient): Promise<number> {
+async function syncChampionCandidates(
+  db: PrismaClient,
+  tournamentId: string,
+): Promise<number> {
   const semiFinalStage = await db.stage.findFirst({
-    where: { name: "Semi-final" },
+    where: { name: "Semi-final", tournamentId },
   });
   if (!semiFinalStage) return 0;
 
@@ -197,9 +219,12 @@ async function syncChampionCandidates(db: PrismaClient): Promise<number> {
   await Promise.all(
     qualifiedTeams.map((team) =>
       db.championCandidate.upsert({
-        where: { fifaTeamId: team.IdTeam },
+        where: {
+          fifaTeamId_tournamentId: { fifaTeamId: team.IdTeam, tournamentId },
+        },
         create: {
           fifaTeamId: team.IdTeam,
+          tournamentId,
           teamName: localizedDescription(team.TeamName) ?? "TBD",
           countryCode: team.IdCountry,
         },
@@ -217,7 +242,10 @@ async function syncChampionCandidates(db: PrismaClient): Promise<number> {
 export async function syncFifaFixtures(
   db: PrismaClient,
 ): Promise<SyncFifaFixturesResult> {
-  const fixtures = await fetchWorldCupFixtures();
+  const [fixtures, tournamentId] = await Promise.all([
+    fetchWorldCupFixtures(),
+    getActiveTournamentId(db),
+  ]);
 
   // Shared across resolveTopScorerIfFinal (per-fixture) and syncTopScorerCandidates
   // (post-loop) so a Final-day sync fetches vnexpress standings once, not twice.
@@ -238,7 +266,6 @@ export async function syncFifaFixtures(
     const fifaHome = fifaTeamName(fixture.Home, fixture.PlaceHolderA);
     const fifaAway = fifaTeamName(fixture.Away, fixture.PlaceHolderB);
     const fifaKickoff = parseFifaKickoffToUtc(fixture.Date);
-    const tournament = fifaTournamentName(fixture);
     const stageId = fixture.IdStage;
 
     const fifaHomeScore = fixture.HomeTeamScore ?? fixture.Home?.Score ?? null;
@@ -247,12 +274,18 @@ export async function syncFifaFixtures(
     const fifaAwayPenaltyScore = fixture.AwayTeamPenaltyScore ?? null;
 
     const isFinal = await isFixtureCompletedFinal(db, fixture);
-    championVotesResolved += await resolveChampionIfFinal(db, fixture, isFinal);
+    championVotesResolved += await resolveChampionIfFinal(
+      db,
+      fixture,
+      isFinal,
+      tournamentId,
+    );
     topScorerVotesResolved += await resolveTopScorerIfFinal(
       db,
       fixture,
       isFinal,
       getTopScorers,
+      tournamentId,
     );
 
     const existing = await db.match.findUnique({
@@ -271,7 +304,7 @@ export async function syncFifaFixtures(
       const match = await db.match.create({
         data: {
           externalId,
-          tournament,
+          tournamentId,
           homeCountry: fifaHome,
           awayCountry: fifaAway,
           kickoffAt: fifaKickoff,
@@ -308,7 +341,6 @@ export async function syncFifaFixtures(
     } = buildFifaMatchPatch(
       existing,
       {
-        tournament,
         homeCountry: fifaHome,
         awayCountry: fifaAway,
         kickoffAt: fifaKickoff,
@@ -343,7 +375,6 @@ export async function syncFifaFixtures(
     await db.match.update({
       where: { externalId },
       data: {
-        tournament: patch.tournament,
         homeCountry: patch.homeCountry,
         awayCountry: patch.awayCountry,
         kickoffAt: patch.kickoffAt,
@@ -371,10 +402,14 @@ export async function syncFifaFixtures(
     }
   }
 
-  const championCandidatesSynced = await syncChampionCandidates(db);
+  const championCandidatesSynced = await syncChampionCandidates(
+    db,
+    tournamentId,
+  );
   const topScorerCandidatesSynced = await syncTopScorerCandidates(
     db,
     getTopScorers,
+    tournamentId,
   );
 
   return {
