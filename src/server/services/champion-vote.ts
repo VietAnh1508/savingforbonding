@@ -12,8 +12,9 @@ import { type PrismaClient } from "../../../generated/prisma";
 export async function resolveChampionVotes(
   db: PrismaClient,
   winningCandidateId: string,
+  tournamentId: string,
 ) {
-  const votes = await db.championVote.findMany();
+  const votes = await db.championVote.findMany({ where: { tournamentId } });
 
   let usersUpdated = 0;
 
@@ -38,26 +39,31 @@ export async function resolveChampionVotes(
   return { votesResolved: votes.length, usersUpdated };
 }
 
-/** Champion vote has no stage, so its max multiplier lives in the GameSettings singleton. */
+/** Champion vote has no stage, so its max multiplier lives in GameSettings, one row per tournament. */
 export async function getChampionMaxStarMultiplier(
   db: PrismaClient,
+  tournamentId: string,
 ): Promise<number> {
-  const settings = await db.gameSettings.findUnique({ where: { id: 1 } });
+  const settings = await db.gameSettings.findUnique({ where: { tournamentId } });
   return settings?.championMaxStarMultiplier ?? 4;
 }
 
 /** Kickoff of the Semi-final stage, or null if it isn't scheduled yet. */
 export async function getChampionVotingDeadline(
   db: PrismaClient,
+  tournamentId: string,
 ): Promise<Date | null> {
   const semiFinalStage = await db.stage.findFirst({
-    where: { name: "Semi-final" },
+    where: { name: "Semi-final", tournamentId },
     select: { startDate: true },
   });
   return semiFinalStage?.startDate ?? null;
 }
 
-export async function isChampionVotingOpen(db: PrismaClient): Promise<boolean> {
-  const deadline = await getChampionVotingDeadline(db);
+export async function isChampionVotingOpen(
+  db: PrismaClient,
+  tournamentId: string,
+): Promise<boolean> {
+  const deadline = await getChampionVotingDeadline(db, tournamentId);
   return !deadline || new Date() < deadline;
 }

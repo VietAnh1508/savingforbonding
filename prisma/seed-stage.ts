@@ -1,5 +1,6 @@
 import { BEER_LOSE, BEER_NO_VOTE } from "../src/lib/match";
 import { createPrismaClient } from "../src/server/create-prisma-client";
+import { getActiveTournamentId } from "../src/server/services/active-tournament";
 import { fetchStages } from "../src/server/services/fifa-api";
 
 const db = createPrismaClient();
@@ -15,7 +16,10 @@ const STARS_BY_STAGE: Record<string, number> = {
 };
 
 async function main() {
-  const stages = await fetchStages();
+  const [stages, tournamentId] = await Promise.all([
+    fetchStages(),
+    getActiveTournamentId(db),
+  ]);
 
   for (const stage of stages) {
     const name = stage.Name.find((n) => n.Locale === "en-GB")?.Description ?? stage.Name[0]!.Description;
@@ -26,7 +30,7 @@ async function main() {
         startDate: new Date(stage.StartDate),
         endDate: new Date(stage.EndDate),
         sequenceOrder: stage.SequenceOrder,
-        seasonId: stage.IdSeason,
+        tournamentId,
         isKnockout: stage.Type === 0,
       },
       create: {
@@ -35,7 +39,7 @@ async function main() {
         startDate: new Date(stage.StartDate),
         endDate: new Date(stage.EndDate),
         sequenceOrder: stage.SequenceOrder,
-        seasonId: stage.IdSeason,
+        tournamentId,
         isKnockout: stage.Type === 0,
         starsAllocated: STARS_BY_STAGE[name] ?? 0,
       },

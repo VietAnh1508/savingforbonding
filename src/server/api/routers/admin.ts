@@ -10,6 +10,7 @@ import {
 } from "~/lib/match";
 import { hashPassword } from "~/lib/password";
 import { adminProcedure, createTRPCRouter } from "~/server/api/trpc";
+import { getActiveTournamentId } from "~/server/services/active-tournament";
 import { computeCurrentRankHistory } from "~/server/services/rank-history";
 import { resolveMatchVotes } from "~/server/services/resolve-votes";
 import { syncFifaFixtures } from "~/server/services/sync-fifa-fixtures";
@@ -26,7 +27,6 @@ const matchInputSchema = z
     homeCountry: z.string().min(1),
     awayCountry: z.string().min(1),
     kickoffAt: z.date(),
-    tournament: z.string().min(1).default("FIFA World Cup"),
     homeRatio: z.number().min(0),
     awayRatio: z.number().min(0),
     status: matchStatusSchema.default("SCHEDULED"),
@@ -48,7 +48,6 @@ const matchUpdateSchema = z
     homeCountry: z.string().min(1).optional(),
     awayCountry: z.string().min(1).optional(),
     kickoffAt: z.date().optional(),
-    tournament: z.string().min(1).optional(),
     homeRatio: z.number().min(0).optional(),
     awayRatio: z.number().min(0).optional(),
     status: matchStatusSchema.optional(),
@@ -123,7 +122,8 @@ export const adminRouter = createTRPCRouter({
   create: adminProcedure
     .input(matchInputSchema)
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.match.create({ data: input });
+      const tournamentId = await getActiveTournamentId(ctx.db);
+      return ctx.db.match.create({ data: { ...input, tournamentId } });
     }),
 
   update: adminProcedure
@@ -388,10 +388,13 @@ export const adminRouter = createTRPCRouter({
     }),
 
   getGameSettings: adminProcedure.query(async ({ ctx }) => {
-    const settings = await ctx.db.gameSettings.findUnique({ where: { id: 1 } });
+    const tournamentId = await getActiveTournamentId(ctx.db);
+    const settings = await ctx.db.gameSettings.findUnique({
+      where: { tournamentId },
+    });
     return (
       settings ?? {
-        id: 1,
+        tournamentId,
         championMaxStarMultiplier: 4,
         topScorerMaxStarMultiplier: 4,
       }
@@ -415,9 +418,10 @@ export const adminRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { championMaxStarMultiplier } = input;
+      const tournamentId = await getActiveTournamentId(ctx.db);
       return ctx.db.gameSettings.upsert({
-        where: { id: 1 },
-        create: { id: 1, championMaxStarMultiplier },
+        where: { tournamentId },
+        create: { tournamentId, championMaxStarMultiplier },
         update: { championMaxStarMultiplier },
       });
     }),
@@ -441,9 +445,10 @@ export const adminRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { topScorerMaxStarMultiplier } = input;
+      const tournamentId = await getActiveTournamentId(ctx.db);
       return ctx.db.gameSettings.upsert({
-        where: { id: 1 },
-        create: { id: 1, topScorerMaxStarMultiplier },
+        where: { tournamentId },
+        create: { tournamentId, topScorerMaxStarMultiplier },
         update: { topScorerMaxStarMultiplier },
       });
     }),

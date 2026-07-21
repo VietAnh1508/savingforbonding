@@ -77,14 +77,6 @@ export function fifaTeamName(
   return "TBD";
 }
 
-export function fifaTournamentName(match: FifaMatch): string {
-  return (
-    localizedDescription(match.SeasonName) ??
-    localizedDescription(match.CompetitionName) ??
-    "FIFA World Cup"
-  );
-}
-
 const LIVE_STATUSES = new Set([3, 8, 9, 12]);
 
 export function mapFifaMatchStatus(match: FifaMatch) {

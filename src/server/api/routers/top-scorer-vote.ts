@@ -6,6 +6,7 @@ import {
   isStarEligibleStage,
   starMultiplierSchema,
 } from "~/lib/match";
+import { getActiveTournamentId } from "~/server/services/active-tournament";
 import {
   getTopScorerMaxStarMultiplier,
   getTopScorerVotingDeadline,
@@ -19,9 +20,10 @@ import {
 
 export const topScorerVoteRouter = createTRPCRouter({
   getVotingStatus: publicProcedure.query(async ({ ctx }) => {
+    const tournamentId = await getActiveTournamentId(ctx.db);
     const [deadline, maxStarMultiplier] = await Promise.all([
-      getTopScorerVotingDeadline(ctx.db),
-      getTopScorerMaxStarMultiplier(ctx.db),
+      getTopScorerVotingDeadline(ctx.db, tournamentId),
+      getTopScorerMaxStarMultiplier(ctx.db, tournamentId),
     ]);
     return {
       isOpen: !deadline || new Date() < deadline,
@@ -31,15 +33,20 @@ export const topScorerVoteRouter = createTRPCRouter({
   }),
 
   getMyVote: protectedProcedure.query(async ({ ctx }) => {
+    const tournamentId = await getActiveTournamentId(ctx.db);
     return ctx.db.topScorerVote.findUnique({
-      where: { userId: ctx.session.user.id },
+      where: {
+        userId_tournamentId: { userId: ctx.session.user.id, tournamentId },
+      },
       include: { candidate: true },
     });
   }),
 
   getVoteCounts: publicProcedure.query(async ({ ctx }) => {
+    const tournamentId = await getActiveTournamentId(ctx.db);
     const [candidates, votes] = await Promise.all([
       ctx.db.topScorerCandidate.findMany({
+        where: { tournamentId },
         // Same tiebreak rule as compareGoldenBoot (goals, then assists, then
         // fewest minutes played) — Prisma can't take a JS comparator, so it's
         // expressed here as a declarative multi-column sort instead.
@@ -50,6 +57,7 @@ export const topScorerVoteRouter = createTRPCRouter({
         ],
       }),
       ctx.db.topScorerVote.findMany({
+        where: { tournamentId },
         select: {
           candidateId: true,
           starMultiplier: true,
@@ -69,30 +77,39 @@ export const topScorerVoteRouter = createTRPCRouter({
   cast: protectedProcedure
     .input(z.object({ candidateId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      if (!(await isTopScorerVotingOpen(ctx.db))) {
+      const [tournamentId, candidate] = await Promise.all([
+        getActiveTournamentId(ctx.db),
+        ctx.db.topScorerCandidate.findUnique({
+          where: { id: input.candidateId },
+        }),
+      ]);
+
+      if (!(await isTopScorerVotingOpen(ctx.db, tournamentId))) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Top scorer voting is closed",
         });
       }
 
-      const candidate = await ctx.db.topScorerCandidate.findUnique({
-        where: { id: input.candidateId },
-      });
       if (!candidate) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Player not found" });
       }
 
+      const voteWhere = {
+        userId_tournamentId: { userId: ctx.session.user.id, tournamentId },
+      };
+
       const existingVote = await ctx.db.topScorerVote.findUnique({
-        where: { userId: ctx.session.user.id },
+        where: voteWhere,
       });
       const changingCandidate =
         !!existingVote && existingVote.candidateId !== input.candidateId;
 
       return ctx.db.topScorerVote.upsert({
-        where: { userId: ctx.session.user.id },
+        where: voteWhere,
         create: {
           userId: ctx.session.user.id,
+          tournamentId,
           candidateId: input.candidateId,
         },
         update: {
@@ -105,8 +122,13 @@ export const topScorerVoteRouter = createTRPCRouter({
   setStar: protectedProcedure
     .input(z.object({ multiplier: starMultiplierSchema }))
     .mutation(async ({ ctx, input }) => {
+      const tournamentId = await getActiveTournamentId(ctx.db);
+      const voteWhere = {
+        userId_tournamentId: { userId: ctx.session.user.id, tournamentId },
+      };
+
       const vote = await ctx.db.topScorerVote.findUnique({
-        where: { userId: ctx.session.user.id },
+        where: voteWhere,
       });
       if (!vote || !vote.candidateId) {
         throw new TRPCError({
@@ -115,14 +137,17 @@ export const topScorerVoteRouter = createTRPCRouter({
         });
       }
 
-      if (!(await isTopScorerVotingOpen(ctx.db))) {
+      if (!(await isTopScorerVotingOpen(ctx.db, tournamentId))) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Top scorer voting is closed",
         });
       }
 
-      const maxMultiplier = await getTopScorerMaxStarMultiplier(ctx.db);
+      const maxMultiplier = await getTopScorerMaxStarMultiplier(
+        ctx.db,
+        tournamentId,
+      );
 
       if (vote.starMultiplier === null && input.multiplier !== null) {
         if (!isStarEligibleStage(maxMultiplier)) {
@@ -139,7 +164,7 @@ export const topScorerVoteRouter = createTRPCRouter({
           : clampStarMultiplier(input.multiplier, maxMultiplier);
 
       return ctx.db.topScorerVote.update({
-        where: { userId: ctx.session.user.id },
+        where: voteWhere,
         data: { starMultiplier: nextMultiplier },
       });
     }),
