@@ -10,7 +10,7 @@ lands — don't let this drift from reality.
 | Phase | Description | Status |
 |---|---|---|
 | 1 | Schema plumbing | In progress — Tournament model + FKs done (dev + prod Turso); `UserTournamentStats`/`totalPoints` migration deferred as a separate task |
-| 2 | Adapter extraction | Not started |
+| 2 | Adapter extraction | In progress — `AwardSourceAdapter` + `VnexpressTopScorerAdapter` done; fixture-side adapter, factory, country-vocab move all still pending |
 | 3 | Stage-name delookup | Not started (partial stopgap landed — see Phase 1 notes) |
 | 4 | UI: tournament awareness | Not started |
 | 5 | Visual modernization (optional, parallel) | Not started |
@@ -94,21 +94,50 @@ smoke test against dev Turso (see log below).
 
 Same data, cleaner seams. Validates the Phase 1 schema before UI work builds on it.
 
-- [ ] Define normalized domain types: `NormalizedMatch`, `NormalizedStage`, `NormalizedTeam`,
-      `NormalizedAwardCandidate`
+- [x] Define normalized award-side domain type: `NormalizedAwardCandidate` —
+      `src/server/services/adapters/types.ts`
+- [ ] Define normalized fixture-side domain types: `NormalizedMatch`, `NormalizedStage`,
+      `NormalizedTeam`
 - [ ] Define `FixtureSourceAdapter` interface: `fetchStages()`, `fetchFixtures()`,
       `fetchQualifiedTeams()`
-- [ ] Define `AwardSourceAdapter` interface: `fetchCandidates(awardKey)`
+- [x] Define `AwardSourceAdapter` interface: `fetchCandidates(awardKey)` —
+      `src/server/services/adapters/types.ts`. `AwardKey` is currently just `"topScorer"` — champion
+      candidates are 100% FIFA-sourced already (no third party to decouple from), so they don't
+      need an adapter yet; extend the union if/when they get one
 - [ ] Implement `FifaWorldCupAdapter` wrapping `src/server/services/fifa-api.ts`; move status-code
-      / bracket-placeholder / localized-name resolution into the adapter, not downstream code
-- [ ] Implement `VnexpressTopScorerAdapter` wrapping `src/server/services/vnexpress-api.ts`;
-      decouple from the FIFA `fetchQualifiedTeams()` call it currently reaches into
-      (`sync-fifa-fixtures.ts:165-176`) — both adapters read/write shared normalized state instead
-      of calling each other
+      / bracket-placeholder / localized-name resolution into the adapter, not downstream code —
+      **deferred**, fixture-side work
+- [x] Implement `VnexpressTopScorerAdapter` wrapping `src/server/services/vnexpress-api.ts` —
+      `src/server/services/adapters/vnexpress-top-scorer-adapter.ts`. `fetchCandidates(awardKey)`
+      is bare (no context param): it returns every candidate, sorted, with `countryCode` resolved
+      per-candidate via the existing `getFifaCountryCode` helper. Decouples from the FIFA
+      `fetchQualifiedTeams()` reach-in (was `sync-fifa-fixtures.ts:165-176`) — the adapter no longer
+      imports `fifa-api.ts` at all; `syncTopScorerCandidates` still fetches qualified teams itself
+      (fixture-side, unchanged) and does its own `countryCode` filter + top-N slice on the adapter's
+      result, since that elimination-bracket knowledge belongs with the orchestrator, not baked into
+      the adapter interface. Both `resolveTopScorerIfFinal` and `syncTopScorerCandidates` now go
+      through the same `fetchCandidates("topScorer")` call and share `isTiedForGoldenBoot` — moved
+      to its own `src/server/services/adapters/golden-boot.ts` rather than living in the vnexpress
+      adapter file, since the Golden Boot tiebreak is the award's own rule, not something specific
+      to vnexpress as a data source — instead of each call site re-deriving the tiebreak rule; the
+      old `getTopScorers` memoization closure moved into the adapter as private per-instance state.
+      Verified with a unit test (`vnexpress-top-scorer-adapter.test.ts`, 6 cases: sort order,
+      tied-leader detection, country-code resolution, field mapping, invalid-award guard,
+      single-fetch memoization) plus `npm run typecheck` and `npm run test` (33 tests total).
 - [ ] `Tournament.dataSourceKey` selects the adapter via a small factory/switch (2-3 entries, not
       a plugin system)
 - [ ] Move country/flag vocabulary (`FIFA_CODES`, FIFA flag CDN URL in `src/lib/country-flag.ts`)
-      into the adapter's responsibility
+      into the adapter's responsibility. Note: `NormalizedAwardCandidate.countryCode`
+      (`src/server/services/adapters/types.ts`) is, today, specifically FIFA's 3-letter code —
+      `VnexpressTopScorerAdapter` resolves it via the existing `getFifaCountryCode`, and
+      `syncTopScorerCandidates` cross-references it against FIFA's own `IdCountry` from
+      `fetchQualifiedTeams()`. That's fine while every adapter is FIFA-rooted, but the field name
+      currently overpromises source-agnosticism it doesn't have. When a second, non-FIFA-sourced
+      adapter shows up, either (a) rename the field to make the FIFA-specificity explicit (e.g.
+      `fifaCountryCode`), keeping eligibility checks FIFA-rooted since that's genuinely where
+      "which teams remain" data always comes from, or (b) design a real source-agnostic country
+      vocabulary (our own code list) that every adapter maps into and eligibility checks compare
+      against instead. Decide this when that second adapter is actually being built, not before.
 - [ ] Remove the silent `isKnownCountry()` filter gate in `match.ts` (`listMatches`) and
       `leaderboard.ts` (`bottomThreePicks`); unrecognized teams should surface a visible sync
       warning instead of vanishing
@@ -178,6 +207,40 @@ Doesn't block or depend on Phases 1-4.
 
 Dated entries — what happened, what was decided, what's blocked. Newest first.
 
+- **2026-07-21** — Phase 2 started, narrowly scoped to `AwardSourceAdapter` +
+  `VnexpressTopScorerAdapter` only (match/fixture-side adapter work explicitly deferred to a later
+  session). New `src/server/services/adapters/` module: `types.ts` (`AwardKey`,
+  `NormalizedAwardCandidate`, `AwardSourceAdapter`) and `vnexpress-top-scorer-adapter.ts`. Routed
+  both `resolveTopScorerIfFinal` and `syncTopScorerCandidates` in `sync-fifa-fixtures.ts` through
+  the adapter's single `fetchCandidates("topScorer")` call — removed the direct `vnexpress-api.ts`
+  import (`compareGoldenBoot`/`fetchTopScorers`/`VnexpressTopScorer`) from that file entirely; it
+  now only reaches into `fifa-api.ts` for fixture-side data (`fetchQualifiedTeams`), not vnexpress.
+  `fetchCandidates(awardKey)` is bare, matching the plan doc's own sketch — no filter/limit
+  parameters. It returns every candidate sorted, with `countryCode` resolved per-candidate; eligibility
+  filtering + the top-N slice moved to `syncTopScorerCandidates` itself, since "which teams remain"
+  is elimination-bracket knowledge that belongs with the orchestrator, not baked as a special case
+  into the adapter's interface. This also let `fetchQualifiedTeams()` and `fetchCandidates()` go
+  back to running in parallel (`Promise.all`), matching the pre-refactor behavior. The Golden Boot
+  tie-check (previously duplicated between `compareGoldenBoot`'s sort and an inline equality check)
+  is now a single exported `isTiedForGoldenBoot` in its own
+  `src/server/services/adapters/golden-boot.ts` — pulled out of the vnexpress adapter file since
+  it's the award's own rule, not vnexpress-specific — used by both call sites. The per-sync-run
+  vnexpress-fetch memoization that used to live as a `getTopScorers` closure threaded through
+  `sync-fifa-fixtures.ts` moved into the adapter as private instance state instead. Added
+  `vnexpress-top-scorer-adapter.test.ts` (6 tests: sort order, tied-leader detection, country-code
+  resolution, field mapping, invalid-award guard, single-fetch memoization) as the actual parity
+  evidence for this refactor, since typecheck and the pre-existing `rank-history` suite don't
+  exercise this path at all. `npm run typecheck` and `npm run test` (33 tests total) both pass. Ran
+  this design past a `/simplify` pass (4 parallel reviewers: reuse/simplification/efficiency/
+  altitude) afterward — it caught the tie-check duplication and the filter/limit-as-special-case
+  issue above, both fixed; also flagged the `AwardKey`-based multi-award dispatch as arguably
+  premature, left as-is since it's literally the interface shape the plan doc specifies. Did not
+  attempt the `dataSourceKey` factory/switch, moving `FIFA_CODES`/`isKnownCountry()` into the
+  adapter, or removing the `isKnownCountry()` silent-filter gates — all explicitly out of scope for
+  this pass per the plan doc's own checklist ordering, left for a follow-up (see the note added to
+  the country-vocab checklist item above about `countryCode`'s current FIFA-specificity). No live
+  `sync:fifa` dry run against Turso was done in
+  this session.
 - **2026-07-21** — Code committed (`ac827f9`) and pushed to `origin/develop`. Ran the mandatory
   fork-test before touching prod: forked `savingforbonding-prod` into a throwaway
   `savingforbonding-prod-fork-20260721`, applied both migrations to the fork, diffed row counts

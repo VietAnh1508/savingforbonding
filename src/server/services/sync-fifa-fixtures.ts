@@ -1,6 +1,11 @@
-import { getFifaCountryCode } from "~/lib/country-flag";
 import { buildFifaMatchPatch } from "~/lib/fifa-sync";
 import { deriveResult } from "~/lib/match";
+import {
+  type AwardSourceAdapter,
+  type NormalizedAwardCandidate,
+} from "~/server/services/adapters/types";
+import { isTiedForGoldenBoot } from "~/server/services/adapters/golden-boot";
+import { VnexpressTopScorerAdapter } from "~/server/services/adapters/vnexpress-top-scorer-adapter";
 import { getActiveTournamentId } from "~/server/services/active-tournament";
 import { resolveChampionVotes } from "~/server/services/champion-vote";
 import { resolveTopScorerVotes } from "~/server/services/top-scorer-vote";
@@ -14,11 +19,6 @@ import {
   type FifaMatch,
 } from "~/server/services/fifa-api";
 import { resolveMatchVotes } from "~/server/services/resolve-votes";
-import {
-  compareGoldenBoot,
-  fetchTopScorers,
-  type VnexpressTopScorer,
-} from "~/server/services/vnexpress-api";
 import { type PrismaClient } from "../../../generated/prisma";
 
 export type SyncFifaFixturesResult = {
@@ -38,31 +38,31 @@ const TOP_SCORER_CANDIDATE_COUNT = 10;
 
 async function upsertTopScorerCandidate(
   db: PrismaClient,
-  scorer: VnexpressTopScorer,
+  candidate: NormalizedAwardCandidate,
   tournamentId: string,
 ) {
   return db.topScorerCandidate.upsert({
     where: {
       externalPlayerId_tournamentId: {
-        externalPlayerId: String(scorer.player_id),
+        externalPlayerId: candidate.externalId,
         tournamentId,
       },
     },
     create: {
-      externalPlayerId: String(scorer.player_id),
+      externalPlayerId: candidate.externalId,
       tournamentId,
-      playerName: scorer.player_name,
-      countryName: scorer.nationality,
-      goals: scorer.goals.total,
-      assists: scorer.goals.assists ?? 0,
-      minutesPlayed: scorer.games.minutes_played,
+      playerName: candidate.name,
+      countryName: candidate.countryName,
+      goals: candidate.goals,
+      assists: candidate.assists,
+      minutesPlayed: candidate.minutesPlayed,
     },
     update: {
-      playerName: scorer.player_name,
-      countryName: scorer.nationality,
-      goals: scorer.goals.total,
-      assists: scorer.goals.assists ?? 0,
-      minutesPlayed: scorer.games.minutes_played,
+      playerName: candidate.name,
+      countryName: candidate.countryName,
+      goals: candidate.goals,
+      assists: candidate.assists,
+      minutesPlayed: candidate.minutesPlayed,
     },
   });
 }
@@ -136,18 +136,20 @@ async function resolveTopScorerIfFinal(
   db: PrismaClient,
   fixture: FifaMatch,
   isFinal: boolean,
-  getTopScorers: () => Promise<VnexpressTopScorer[]>,
+  awardAdapter: AwardSourceAdapter,
   tournamentId: string,
 ): Promise<number> {
   if (!isFinal) return 0;
 
-  const scorers = await getTopScorers();
+  // Already sorted best-to-worst by the adapter (goals desc, assists desc,
+  // minutes played asc — the Golden Boot tiebreak chain).
+  const scorers = await awardAdapter.fetchCandidates("topScorer");
   if (!scorers.length) return 0;
 
-  const [best, ...rest] = [...scorers].sort(compareGoldenBoot);
+  const [best, ...rest] = scorers;
   const winners = [
     best!,
-    ...rest.filter((s) => compareGoldenBoot(s, best!) === 0),
+    ...rest.filter((candidate) => isTiedForGoldenBoot(candidate, best!)),
   ];
 
   const winnerCandidates = await Promise.all(
@@ -171,7 +173,7 @@ async function resolveTopScorerIfFinal(
  */
 async function syncTopScorerCandidates(
   db: PrismaClient,
-  getTopScorers: () => Promise<VnexpressTopScorer[]>,
+  awardAdapter: AwardSourceAdapter,
   tournamentId: string,
 ): Promise<number> {
   const semiFinalStage = await db.stage.findFirst({
@@ -179,21 +181,20 @@ async function syncTopScorerCandidates(
   });
   if (!semiFinalStage) return 0;
 
-  const [scorers, qualifiedTeams] = await Promise.all([
-    getTopScorers(),
+  const [qualifiedTeams, scorers] = await Promise.all([
     fetchQualifiedTeams(semiFinalStage.id),
+    awardAdapter.fetchCandidates("topScorer"),
   ]);
-
-  const remainingCountryCodes = new Set(
+  const eligibleCountryCodes = new Set(
     qualifiedTeams.map((team) => team.IdCountry),
   );
-  const eligibleScorers = scorers.filter((scorer) => {
-    const code = getFifaCountryCode(scorer.nationality);
-    return code !== null && remainingCountryCodes.has(code);
-  });
 
-  const topScorers = eligibleScorers
-    .sort(compareGoldenBoot)
+  const topScorers = scorers
+    .filter(
+      (candidate) =>
+        candidate.countryCode !== null &&
+        eligibleCountryCodes.has(candidate.countryCode),
+    )
     .slice(0, TOP_SCORER_CANDIDATE_COUNT);
 
   await Promise.all(
@@ -247,10 +248,10 @@ export async function syncFifaFixtures(
     getActiveTournamentId(db),
   ]);
 
-  // Shared across resolveTopScorerIfFinal (per-fixture) and syncTopScorerCandidates
-  // (post-loop) so a Final-day sync fetches vnexpress standings once, not twice.
-  let cachedTopScorers: Promise<VnexpressTopScorer[]> | null = null;
-  const getTopScorers = () => (cachedTopScorers ??= fetchTopScorers());
+  // One instance shared across resolveTopScorerIfFinal (per-fixture) and
+  // syncTopScorerCandidates (post-loop) — it caches its own vnexpress fetch,
+  // so a Final-day sync hits vnexpress once, not twice.
+  const topScorerAdapter: AwardSourceAdapter = new VnexpressTopScorerAdapter();
 
   let created = 0;
   let updated = 0;
@@ -284,7 +285,7 @@ export async function syncFifaFixtures(
       db,
       fixture,
       isFinal,
-      getTopScorers,
+      topScorerAdapter,
       tournamentId,
     );
 
@@ -408,7 +409,7 @@ export async function syncFifaFixtures(
   );
   const topScorerCandidatesSynced = await syncTopScorerCandidates(
     db,
-    getTopScorers,
+    topScorerAdapter,
     tournamentId,
   );
 

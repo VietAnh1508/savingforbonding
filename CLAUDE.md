@@ -20,7 +20,7 @@ This is an internal app shared among a group of friends — at most ~40 users. I
 npm run dev          # Start dev server (Turbo mode)
 npm run build        # Production build
 npm run typecheck    # Type-check
-npm run test         # Run the vitest suite (currently: src/lib/rank-history.test.ts)
+npm run test         # Run the vitest suite
 
 npm run db:migrate:new       # Author + review a migration locally (classic engine, local db.sqlite)
 npm run db:migrate:turso     # Apply committed migrations to the Turso DB (dev or prod — see below)
