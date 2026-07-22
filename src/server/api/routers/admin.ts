@@ -389,16 +389,18 @@ export const adminRouter = createTRPCRouter({
 
   getGameSettings: adminProcedure.query(async ({ ctx }) => {
     const tournamentId = await getActiveTournamentId(ctx.db);
-    const settings = await ctx.db.gameSettings.findUnique({
-      where: { tournamentId },
-    });
-    return (
-      settings ?? {
-        tournamentId,
-        championMaxStarMultiplier: 4,
-        topScorerMaxStarMultiplier: 4,
-      }
-    );
+    const [settings, spinCount] = await Promise.all([
+      ctx.db.gameSettings.findUnique({ where: { tournamentId } }),
+      ctx.db.beerAmountSpin.count({ where: { tournamentId } }),
+    ]);
+    return {
+      tournamentId,
+      championMaxStarMultiplier: 4,
+      topScorerMaxStarMultiplier: 4,
+      beerAmountSpinEnabled: false,
+      ...settings,
+      hasBeerAmountSpins: spinCount > 0,
+    };
   }),
 
   updateChampionMaxMultiplier: adminProcedure
@@ -450,6 +452,28 @@ export const adminRouter = createTRPCRouter({
         where: { tournamentId },
         create: { tournamentId, topScorerMaxStarMultiplier },
         update: { topScorerMaxStarMultiplier },
+      });
+    }),
+
+  updateBeerAmountSpinEnabled: adminProcedure
+    .input(z.object({ beerAmountSpinEnabled: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const tournamentId = await getActiveTournamentId(ctx.db);
+
+      const spinCount = await ctx.db.beerAmountSpin.count({
+        where: { tournamentId },
+      });
+      if (spinCount > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can't change this once players have started spinning",
+        });
+      }
+
+      return ctx.db.gameSettings.upsert({
+        where: { tournamentId },
+        create: { tournamentId, ...input },
+        update: input,
       });
     }),
 });

@@ -7,7 +7,7 @@ import { useToast } from "~/app/_components/toast";
 import { UserAvatar } from "~/app/_components/user-avatar";
 import { FollowConfirmDialog } from "~/app/leaderboard/_components/follow-confirm-dialog";
 import { RankGapBadge } from "~/app/leaderboard/_components/rank-gap-badge";
-import { formatJoiningDate } from "~/lib/datetime";
+import { formatBeerAmount } from "~/lib/beer-amount-spin";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 import {
@@ -193,8 +193,8 @@ export function LeaderboardTable({
               <th className="w-px whitespace-nowrap px-4 py-3 text-right font-medium">
                 {beersLabel}
               </th>
-              <th className="hidden w-px whitespace-nowrap px-4 py-3 font-medium sm:table-cell">
-                Joining Date
+              <th className="w-px whitespace-nowrap px-4 py-3 text-right font-medium">
+                Amount
               </th>
             </tr>
           </thead>
@@ -312,8 +312,14 @@ export function LeaderboardTable({
                       </span>
                     </div>
                   </td>
-                  <td className="hidden whitespace-nowrap px-4 py-3 text-sm text-foreground/60 sm:table-cell">
-                    {formatJoiningDate(entry.joiningDate)}
+                  <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
+                    {entry.amount !== null ? (
+                      <span className="font-medium text-foreground/80">
+                        {formatBeerAmount(entry.amount)}
+                      </span>
+                    ) : (
+                      <span className="text-foreground/30">—</span>
+                    )}
                   </td>
                 </tr>
               );

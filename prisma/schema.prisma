@@ -57,6 +57,7 @@ model Tournament {
   topScorerCandidates TopScorerCandidate[]
   championVotes       ChampionVote[]
   topScorerVotes      TopScorerVote[]
+  beerAmountSpins     BeerAmountSpin[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -92,6 +93,7 @@ model GameSettings {
   tournament                 Tournament @relation(fields: [tournamentId], references: [id])
   championMaxStarMultiplier  Int        @default(4)
   topScorerMaxStarMultiplier Int        @default(4)
+  beerAmountSpinEnabled      Boolean    @default(false)
 }
 
 model StagePenalty {
@@ -170,12 +172,13 @@ model User {
   termsAcceptedAt      DateTime?
   termsAcceptedVersion Int             @default(1)
   votes                Vote[]
-  following            UserFollow[]    @relation("FollowerFollows")
-  followers            UserFollow[]    @relation("FollowingFollows")
+  following            UserFollow[]      @relation("FollowerFollows")
+  followers            UserFollow[]      @relation("FollowingFollows")
   championVotes        ChampionVote[]
   topScorerVotes       TopScorerVote[]
-  challengesSent       Challenge[]     @relation("ChallengeChallenger")
-  challengesReceived   Challenge[]     @relation("ChallengeOpponent")
+  beerAmountSpins      BeerAmountSpin[]
+  challengesSent       Challenge[]       @relation("ChallengeChallenger")
+  challengesReceived   Challenge[]       @relation("ChallengeOpponent")
 }
 
 model UserFollow {
@@ -263,6 +266,20 @@ model TopScorerVote {
 
   @@unique([userId, tournamentId])
   @@index([candidateId])
+  @@index([tournamentId])
+}
+
+model BeerAmountSpin {
+  id           String     @id @default(cuid())
+  userId       String
+  tournamentId String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  amount       Int
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, tournamentId])
   @@index([tournamentId])
 }
 

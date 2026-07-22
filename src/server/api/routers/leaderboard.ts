@@ -1,9 +1,11 @@
+import { computeBeerPoolAmount } from "~/lib/beer-amount-spin";
 import { isKnownCountry } from "~/lib/country-flag";
 import { vnTodayTomorrowRangeUTC } from "~/lib/datetime";
 import { beersSavedByStarring, MIN_STAR_MULTIPLIER } from "~/lib/match";
 import { assignRanks, compareLeaderboardEntries } from "~/lib/rank-history";
 import { resolveUserJoiningDate } from "~/lib/user-joining-date";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { getActiveTournamentId } from "~/server/services/active-tournament";
 import { computeCurrentRankHistory } from "~/server/services/rank-history";
 import { MatchStatus, type PrismaClient } from "../../../../generated/prisma";
 
@@ -90,18 +92,24 @@ async function getSortedLeaderboardEntries(db: PrismaClient) {
 
 export const leaderboardRouter = createTRPCRouter({
   global: publicProcedure.query(async ({ ctx }) => {
-    const [sorted, lastVoteUpdate, lastMatchUpdate] = await Promise.all([
-      getSortedLeaderboardEntries(ctx.db),
-      ctx.db.vote.findFirst({
-        where: { isCorrect: { not: null } },
-        orderBy: { updatedAt: "desc" },
-        select: { updatedAt: true },
-      }),
-      ctx.db.match.findFirst({
-        orderBy: { updatedAt: "desc" },
-        select: { updatedAt: true },
-      }),
-    ]);
+    const [tournamentId, sorted, lastVoteUpdate, lastMatchUpdate] =
+      await Promise.all([
+        getActiveTournamentId(ctx.db),
+        getSortedLeaderboardEntries(ctx.db),
+        ctx.db.vote.findFirst({
+          where: { isCorrect: { not: null } },
+          orderBy: { updatedAt: "desc" },
+          select: { updatedAt: true },
+        }),
+        ctx.db.match.findFirst({
+          orderBy: { updatedAt: "desc" },
+          select: { updatedAt: true },
+        }),
+      ]);
+    const spins = await ctx.db.beerAmountSpin.findMany({
+      where: { tournamentId },
+      select: { userId: true, amount: true },
+    });
 
     const candidates = [
       lastVoteUpdate?.updatedAt,
@@ -112,7 +120,11 @@ export const leaderboardRouter = createTRPCRouter({
         ? new Date(Math.max(...candidates.map((d) => d.getTime())))
         : null;
 
-    const entries = assignRanks(sorted);
+    const amountByUserId = new Map(spins.map((s) => [s.userId, s.amount]));
+    const entries = assignRanks(sorted).map((entry) => ({
+      ...entry,
+      amount: amountByUserId.get(entry.id) ?? null,
+    }));
 
     return { entries, lastUpdated };
   }),
@@ -161,7 +173,8 @@ export const leaderboardRouter = createTRPCRouter({
   }),
 
   totalBeerPool: publicProcedure.query(async ({ ctx }) => {
-    const [aggregate, contributors] = await Promise.all([
+    const [tournamentId, aggregate, contributors] = await Promise.all([
+      getActiveTournamentId(ctx.db),
       ctx.db.user.aggregate({
         _sum: { totalPoints: true },
         _count: { _all: true },
@@ -170,11 +183,24 @@ export const leaderboardRouter = createTRPCRouter({
         where: { totalPoints: { gt: 0 } },
       }),
     ]);
+    const spins = await ctx.db.beerAmountSpin.findMany({
+      where: { tournamentId },
+      select: { amount: true },
+    });
+
+    const totalBeers = aggregate._sum.totalPoints ?? 0;
+    const { spinnerCount, averageAmount, finalAmount } = computeBeerPoolAmount(
+      totalBeers,
+      spins.map((s) => s.amount),
+    );
 
     return {
-      totalBeers: aggregate._sum.totalPoints ?? 0,
+      totalBeers,
       contributorCount: contributors,
       userCount: aggregate._count._all,
+      spinnerCount,
+      averageAmount,
+      finalAmount,
     };
   }),
 
