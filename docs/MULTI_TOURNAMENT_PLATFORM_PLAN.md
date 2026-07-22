@@ -401,6 +401,19 @@ three sub-forks in 2.1 (identity scope, which tables FK to `Team`, placeholder
 handling) are pre-resolved here as a starting recommendation so a future
 "yes, build it" doesn't have to re-derive them from scratch.
 
+**Decision 6 — Should `UserFollow` be tournament-scoped? → Proposed 2026-07-22,
+not yet confirmed.** Raised idea: who you follow might reasonably differ per
+tournament (banter-driven follows during one World Cup don't necessarily carry
+meaning for the next), similar in spirit to Decision 3's per-tournament reset
+but for the social graph rather than stats. If scoped, `UserFollow` would need
+a `tournamentId` FK and its unique constraint widened to
+`@@unique([followerId, followingId, tournamentId])`, plus every follow
+read/write path updated to filter by the active tournament. Unlike Decision 5,
+it's genuinely unclear which way this should go — a standing relationship that
+persists across tournaments is just as defensible as a per-tournament one — so
+this isn't pre-resolved with a recommendation; it needs an actual call from the
+user before scoping, per this repo's "ask rather than assume" principle.
+
 ---
 
 ## Part 4 — Phased rollout
