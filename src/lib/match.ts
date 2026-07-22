@@ -291,6 +291,17 @@ export function outcomeLabel(
   }
 }
 
+/** Picks the home or away value for a predicted outcome; null on a draw (no team picked). */
+export function pickByOutcome<T>(
+  outcome: VoteOutcome,
+  home: T,
+  away: T,
+): T | null {
+  if (outcome === "HOME_WIN") return home;
+  if (outcome === "AWAY_WIN") return away;
+  return null;
+}
+
 /** Vietnam time (UTC+7) for all match date/time display. */
 export const MATCH_DISPLAY_TIMEZONE = "Asia/Ho_Chi_Minh";
 

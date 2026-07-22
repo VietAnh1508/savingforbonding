@@ -22,6 +22,7 @@ type FifaLocalizedText = {
 type FifaTeam = {
   TeamName: FifaLocalizedText[] | null;
   Score: number | null;
+  IdCountry: string | null;
 };
 
 export type FifaMatch = {
@@ -75,6 +76,11 @@ export function fifaTeamName(
   if (name) return name;
   if (placeholder) return placeholder;
   return "TBD";
+}
+
+/** FIFA's 3-letter team/association code, straight off the match response — null for undecided (placeholder) teams. */
+export function fifaTeamCountryCode(team: FifaTeam | null): string | null {
+  return team?.IdCountry ?? null;
 }
 
 const LIVE_STATUSES = new Set([3, 8, 9, 12]);

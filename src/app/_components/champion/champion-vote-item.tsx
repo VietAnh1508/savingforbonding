@@ -61,7 +61,7 @@ export function ChampionVoteItem({
             : "bg-foreground/5 hover:bg-foreground/10"
         } ${eliminated ? "opacity-50" : ""}`}
       >
-        <TeamFlag country={candidate.teamName} size="md" />
+        <TeamFlag country={candidate.teamName} code={candidate.countryCode} size="md" />
         <span className="flex-1">{candidate.teamName}</span>
         {eliminated && (
           <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-red-600 dark:text-red-400">

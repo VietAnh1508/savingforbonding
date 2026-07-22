@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { StarBadge } from "~/app/_components/star-picker";
 import { TeamFlag } from "~/app/_components/match/team-flag";
 import { UserAvatar } from "~/app/_components/user-avatar";
-import { formatKickoffTime, outcomeLabel } from "~/lib/match";
+import { formatKickoffTime, outcomeLabel, pickByOutcome } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Picks = RouterOutputs["leaderboard"]["bottomThreePicks"];
@@ -20,10 +20,14 @@ function PickCell({
   vote,
   homeCountry,
   awayCountry,
+  homeCountryCode,
+  awayCountryCode,
 }: {
   vote: Picks["votes"][number] | undefined;
   homeCountry: string;
   awayCountry: string;
+  homeCountryCode: string | null;
+  awayCountryCode: string | null;
 }) {
   if (!vote) {
     return (
@@ -33,20 +37,19 @@ function PickCell({
     );
   }
 
-  const pickedCountry =
-    vote.outcome === "HOME_WIN"
-      ? homeCountry
-      : vote.outcome === "AWAY_WIN"
-        ? awayCountry
-        : null;
+  const picked = pickByOutcome(
+    vote.outcome,
+    { country: homeCountry, code: homeCountryCode },
+    { country: awayCountry, code: awayCountryCode },
+  );
 
   return (
     <span
       className="inline-flex items-center gap-1"
       title={outcomeLabel(vote.outcome, homeCountry, awayCountry)}
     >
-      {pickedCountry ? (
-        <TeamFlag country={pickedCountry} size="sm" />
+      {picked ? (
+        <TeamFlag country={picked.country} code={picked.code} size="sm" />
       ) : (
         <span className="text-foreground/60 text-xs font-medium">Draw</span>
       )}
@@ -101,9 +104,17 @@ export function LeaderboardPicksBanner() {
                     title={`${match.homeCountry} vs ${match.awayCountry}`}
                   >
                     <div className="flex items-center justify-center gap-1">
-                      <TeamFlag country={match.homeCountry} size="sm" />
+                      <TeamFlag
+                        country={match.homeCountry}
+                        code={match.homeCountryCode}
+                        size="sm"
+                      />
                       <span className="text-foreground/35 text-[10px]">vs</span>
-                      <TeamFlag country={match.awayCountry} size="sm" />
+                      <TeamFlag
+                        country={match.awayCountry}
+                        code={match.awayCountryCode}
+                        size="sm"
+                      />
                     </div>
                     <div className="text-foreground/35">
                       {formatKickoffTime(match.kickoffAt)}
@@ -135,6 +146,8 @@ export function LeaderboardPicksBanner() {
                         vote={votesByKey.get(voteKey(user.id, match.id))}
                         homeCountry={match.homeCountry}
                         awayCountry={match.awayCountry}
+                        homeCountryCode={match.homeCountryCode}
+                        awayCountryCode={match.awayCountryCode}
                       />
                     </td>
                   ))}

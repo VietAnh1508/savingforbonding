@@ -5,6 +5,7 @@ export type VnexpressTopScorer = {
   player_id: number;
   player_name: string;
   nationality: string;
+  logo_team: string;
   goals: { total: number; assists?: number };
   games: { minutes_played: number };
 };

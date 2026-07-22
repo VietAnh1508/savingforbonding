@@ -18,6 +18,7 @@ function toNormalizedCandidate(
     name: scorer.player_name,
     countryName: scorer.nationality,
     countryCode: getFifaCountryCode(scorer.nationality),
+    logoUrl: scorer.logo_team,
     goals: scorer.goals.total,
     assists: scorer.goals.assists ?? 0,
     minutesPlayed: scorer.games.minutes_played,

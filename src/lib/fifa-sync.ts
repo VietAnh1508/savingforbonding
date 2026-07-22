@@ -76,9 +76,22 @@ export function deriveResultIfComplete(
   return deriveResult(homeScore, awayScore);
 }
 
+/**
+ * FIFA is the only source of the code, so just take it when present; never
+ * overwrite a known code with an absence (e.g. a transient placeholder read).
+ */
+export function mergeCountryCode(
+  existing: string | null,
+  fifa: string | null,
+): string | null {
+  return fifa ?? existing;
+}
+
 export type FifaMatchPatch = {
   homeCountry: string;
   awayCountry: string;
+  homeCountryCode: string | null;
+  awayCountryCode: string | null;
   kickoffAt: Date;
   status: MatchStatus;
   homeScore: number | null;
@@ -93,6 +106,8 @@ export function buildFifaMatchPatch(
   existing: {
     homeCountry: string;
     awayCountry: string;
+    homeCountryCode: string | null;
+    awayCountryCode: string | null;
     kickoffAt: Date;
     status: MatchStatus;
     homeScore: number | null;
@@ -105,6 +120,8 @@ export function buildFifaMatchPatch(
   fifa: {
     homeCountry: string;
     awayCountry: string;
+    homeCountryCode: string | null;
+    awayCountryCode: string | null;
     kickoffAt: Date;
     status: MatchStatus;
     homeScore: number | null;
@@ -117,6 +134,14 @@ export function buildFifaMatchPatch(
 ): { patch: FifaMatchPatch; teamsUpdated: boolean; changed: boolean } {
   const homeCountry = mergeTeamName(existing.homeCountry, fifa.homeCountry);
   const awayCountry = mergeTeamName(existing.awayCountry, fifa.awayCountry);
+  const homeCountryCode = mergeCountryCode(
+    existing.homeCountryCode,
+    fifa.homeCountryCode,
+  );
+  const awayCountryCode = mergeCountryCode(
+    existing.awayCountryCode,
+    fifa.awayCountryCode,
+  );
   const status = mergeMatchStatus(existing.status, fifa.status);
   const { homeScore, awayScore } = mergeScores(
     existing.homeScore,
@@ -138,6 +163,8 @@ export function buildFifaMatchPatch(
   const patch: FifaMatchPatch = {
     homeCountry,
     awayCountry,
+    homeCountryCode,
+    awayCountryCode,
     kickoffAt,
     status,
     homeScore,
@@ -154,6 +181,8 @@ export function buildFifaMatchPatch(
 
   const changed =
     teamsUpdated ||
+    patch.homeCountryCode !== existing.homeCountryCode ||
+    patch.awayCountryCode !== existing.awayCountryCode ||
     patch.kickoffAt.getTime() !== existing.kickoffAt.getTime() ||
     patch.status !== existing.status ||
     patch.homeScore !== existing.homeScore ||

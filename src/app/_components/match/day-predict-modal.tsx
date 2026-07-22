@@ -208,6 +208,8 @@ export function DayPredictModal({
                 <OutcomePicker
                   homeCountry={match.homeCountry}
                   awayCountry={match.awayCountry}
+                  homeCountryCode={match.homeCountryCode}
+                  awayCountryCode={match.awayCountryCode}
                   selectedOutcome={selected}
                   onSelect={(outcome) => select(match.id, outcome)}
                   disabled={locked || castBatch.isPending}

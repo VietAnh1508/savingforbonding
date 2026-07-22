@@ -10,7 +10,7 @@ lands — don't let this drift from reality.
 | Phase | Description | Status |
 |---|---|---|
 | 1 | Schema plumbing | In progress — Tournament model + FKs done (dev + prod Turso); `UserTournamentStats`/`totalPoints` migration deferred as a separate task |
-| 2 | Adapter extraction | In progress — `AwardSourceAdapter` + `VnexpressTopScorerAdapter` done; fixture-side adapter, factory, country-vocab move all still pending |
+| 2 | Adapter extraction | In progress — `AwardSourceAdapter` + `VnexpressTopScorerAdapter` done; `Match.homeCountryCode`/`awayCountryCode` done (dev Turso only); `TopScorerCandidate.logoUrl` done (dev Turso only); fixture-side adapter, factory, `isKnownCountry()` removal still pending |
 | 3 | Stage-name delookup | Not started (partial stopgap landed — see Phase 1 notes) |
 | 4 | UI: tournament awareness | Not started |
 | 5 | Visual modernization (optional, parallel) | Not started |
@@ -127,17 +127,69 @@ Same data, cleaner seams. Validates the Phase 1 schema before UI work builds on 
 - [ ] `Tournament.dataSourceKey` selects the adapter via a small factory/switch (2-3 entries, not
       a plugin system)
 - [ ] Move country/flag vocabulary (`FIFA_CODES`, FIFA flag CDN URL in `src/lib/country-flag.ts`)
-      into the adapter's responsibility. Note: `NormalizedAwardCandidate.countryCode`
-      (`src/server/services/adapters/types.ts`) is, today, specifically FIFA's 3-letter code —
-      `VnexpressTopScorerAdapter` resolves it via the existing `getFifaCountryCode`, and
-      `syncTopScorerCandidates` cross-references it against FIFA's own `IdCountry` from
-      `fetchQualifiedTeams()`. That's fine while every adapter is FIFA-rooted, but the field name
-      currently overpromises source-agnosticism it doesn't have. When a second, non-FIFA-sourced
-      adapter shows up, either (a) rename the field to make the FIFA-specificity explicit (e.g.
-      `fifaCountryCode`), keeping eligibility checks FIFA-rooted since that's genuinely where
-      "which teams remain" data always comes from, or (b) design a real source-agnostic country
-      vocabulary (our own code list) that every adapter maps into and eligibility checks compare
-      against instead. Decide this when that second adapter is actually being built, not before.
+      into the adapter's responsibility. **Design decided 2026-07-22** (see plan doc §2.1/2.2,
+      updated same day) — confirmed against both live APIs first: no separate `Country`/ISO-3166
+      model (FIFA associations like England/Scotland/Wales aren't ISO-3166 countries, so an ISO
+      table would standardize on the wrong vocabulary). Instead each adapter stores its own
+      source's native identifier at ingestion, since both already provide one for free:
+  - [x] `Match.homeCountryCode`/`awayCountryCode` — **done 2026-07-22.** FIFA's `IdCountry`, read
+        straight off the matches response (`FifaTeam.IdCountry` — `fifa-api.ts:22-26`, extracted
+        via new `fifaTeamCountryCode()`) and stored at ingestion
+        (`sync-fifa-fixtures.ts` create/update paths). `buildFifaMatchPatch`
+        (`fifa-sync.ts`) gained a `mergeCountryCode` step and both fields feed its `changed`
+        check, so existing rows backfill automatically on their next sync rather than needing a
+        one-off script. Migration `20260722040406_add_match_country_codes` — two nullable
+        `ADD COLUMN`s, no table rebuild (confirmed by reading the generated SQL), so no fork-test
+        was required; applied to dev Turso. `TeamFlag` (`team-flag.tsx`) now takes an optional
+        `code` prop and skips `FIFA_CODES`/`getFifaFlagUrl` entirely when given one; wired through
+        `match-card.tsx`, `match-detail-modal.tsx`, `outcome-picker.tsx` (→ `day-predict-modal.tsx`;
+        `vote-form.tsx`'s call site doesn't render flags at all, so left untouched) and
+        `leaderboard-picks-banner.tsx` (required widening `leaderboard.bottomThreePicks`'s match
+        `select` to include the new columns — `challenge.getCreateContext`'s matches are
+        text-only, no flags rendered there, so left narrow). Verified with a live FIFA sync
+        against dev Turso (104/104 matches updated in one pass — the expected one-time backfill,
+        not drift) and a browser check of the Matches and Champion pages (flags render correctly,
+        including FIFA "home nations" like England/Scotland which have no ISO-3166 equivalent —
+        the reason 2.1 ruled out an ISO country table). **Add-on beyond the original ask:**
+        `champion-vote-item.tsx` also switched to `candidate.countryCode` (from `teamName`) for
+        its flag — `ChampionCandidate.countryCode` was already FIFA-sourced and unused for
+        display, so this was free once `TeamFlag` grew the `code` prop. `npm run typecheck` and
+        `npm run test` (33 tests) both pass; no test fixtures reference `FifaMatchPatch`/
+        `buildFifaMatchPatch` so none needed updating. Not yet applied to **prod** Turso —
+        pending explicit go-ahead per this repo's migration workflow.
+  - [x] `TopScorerCandidate.logoUrl` / `NormalizedAwardCandidate.logoUrl` — **done 2026-07-22.**
+        vnexpress's `logo_team` field, added to `VnexpressTopScorer` (`vnexpress-api.ts`) and
+        threaded through `NormalizedAwardCandidate.logoUrl` (nullable, since a future non-vnexpress
+        adapter might not have one) → `VnexpressTopScorerAdapter.toNormalizedCandidate` →
+        `upsertTopScorerCandidate` (`sync-fifa-fixtures.ts`, both create and update paths, so
+        existing rows self-backfill on their next sync). Migration
+        `20260722055402_add_topscorer_candidate_logo_url` — one nullable `ADD COLUMN`, no table
+        rebuild (confirmed by reading the generated SQL), so no fork-test was required; applied to
+        dev Turso. `TeamFlag` (`team-flag.tsx`) gained an optional `imageUrl` prop — takes priority
+        over its existing `code`/`country` lookup, so the same shape/sizing/fallback logic serves
+        both a resolved flag URL and a source-specific crest URL. `top-scorer-vote-item.tsx` now
+        calls `<TeamFlag country={candidate.countryName} imageUrl={candidate.logoUrl} size="md" />`
+        instead of duplicating `TeamFlag`'s rendering inline — falls back to the existing
+        `country`-based flag lookup whenever `logoUrl` is null (e.g. a stale candidate row that
+        predates this column and hasn't been touched by a sync since). (Iterated through a circular
+        crest shape and an inline rectangular duplicate before landing here per feedback: match the
+        rest of the app's rectangular flag treatment, and reuse `TeamFlag` rather than re-implement
+        it.) Added `is.vnecdn.net` to `next.config.js`'s image `remotePatterns`. Verified
+        with `vnexpress-top-scorer-adapter.test.ts` (updated for the new field, 6 tests still pass),
+        `npm run typecheck` + `npm run test` (33 tests) clean, a live `npm run sync:fifa` against dev
+        Turso (confirmed via `turso db shell` that current top-scorer candidates now carry a
+        `logo_team` URL), and a browser check of the Top Scorer page — candidates with a synced
+        `logoUrl` show their circular team crest, and one stale pre-existing row (L. Messi, not in
+        vnexpress's current standings so untouched by this sync) correctly falls back to the
+        rectangular flag rendering. Not yet applied to **prod** Turso — pending explicit go-ahead.
+  - [x] `NormalizedAwardCandidate.countryCode` stays as-is (still FIFA's 3-letter code via
+        `getFifaCountryCode`) — confirmed unchanged. It's not for flag display anymore (once
+        `logoUrl` above lands), it's specifically for `syncTopScorerCandidates`'s eligibility
+        bridge against FIFA's `qualifiedTeams` `IdCountry` set. That cross-source reconciliation
+        is inherent to vnexpress never emitting its own code, not something the codes/logoUrl
+        above fix — so the field's FIFA-specificity (previously an open question in this doc) is
+        fine to leave as-is; it isn't standing in for a general country vocabulary, just this one
+        adapter's own matching need.
 - [ ] Remove the silent `isKnownCountry()` filter gate in `match.ts` (`listMatches`) and
       `leaderboard.ts` (`bottomThreePicks`); unrecognized teams should surface a visible sync
       warning instead of vanishing
@@ -207,6 +259,66 @@ Doesn't block or depend on Phases 1-4.
 
 Dated entries — what happened, what was decided, what's blocked. Newest first.
 
+- **2026-07-22** — vnexpress side of the country-vocabulary design implemented:
+  `TopScorerCandidate.logoUrl`, sourced from vnexpress's `logo_team` field at ingestion instead of
+  the `countryName -> FIFA_CODES -> flag-CDN` chain the top-scorer UI used before. Schema: migration
+  `20260722055402_add_topscorer_candidate_logo_url` — reviewed the generated SQL first (one nullable
+  `ALTER TABLE ... ADD COLUMN`, no rebuild), so no fork-test was needed; applied to dev Turso only,
+  prod deliberately left untouched pending explicit go-ahead. Code: `vnexpress-api.ts`
+  (`VnexpressTopScorer.logo_team`), `adapters/types.ts` (`NormalizedAwardCandidate.logoUrl`, nullable
+  for future non-vnexpress adapters), `vnexpress-top-scorer-adapter.ts` (maps `logo_team` straight
+  through), `sync-fifa-fixtures.ts` (`upsertTopScorerCandidate` writes `logoUrl` on both create and
+  update, so existing rows self-backfill on next sync rather than needing a script). UI:
+  `top-scorer-vote-item.tsx` renders a circular `next/image` from `candidate.logoUrl`, falling back
+  to the existing `TeamFlag`-by-`countryName` rendering when null. `next.config.js` image
+  `remotePatterns` gained `is.vnecdn.net`. Verified: `vnexpress-top-scorer-adapter.test.ts` updated
+  for the new field (6 tests still pass), `npm run typecheck` + `npm run test` (33 tests) clean, a
+  live `npm run sync:fifa` against dev Turso populated `logoUrl` on the current top-scorer
+  candidates (confirmed via `turso db shell`), and a browser check of the Top Scorer page showed
+  circular team crests rendering for synced candidates and the correct flag fallback for one stale
+  pre-existing row (L. Messi — not in vnexpress's current standings, so untouched by this sync).
+- **2026-07-22** — FIFA side of the country-vocabulary design (previous log entry, same day)
+  implemented: `Match.homeCountryCode`/`awayCountryCode`, sourced from FIFA's `IdCountry` at
+  ingestion instead of re-derived via `FIFA_CODES`. Schema: migration
+  `20260722040406_add_match_country_codes` — reviewed the generated SQL first (two nullable
+  `ALTER TABLE ... ADD COLUMN`s, no `CREATE TABLE "new_*"`/rebuild), so no fork-test was needed per
+  CLAUDE.md's own rule; applied to dev Turso only, prod deliberately left untouched pending
+  explicit go-ahead. Code: `fifa-api.ts` (`FifaTeam.IdCountry`, new `fifaTeamCountryCode()`),
+  `fifa-sync.ts` (`mergeCountryCode`, both fields added to `FifaMatchPatch`'s `changed` check so
+  existing null rows self-backfill on next sync rather than needing a script), `sync-fifa-fixtures.ts`
+  (wires it into both the create and update paths). UI: `TeamFlag` (`team-flag.tsx`) takes an
+  optional `code` prop and bypasses the name lookup when given one; wired through
+  `match-card.tsx`, `match-detail-modal.tsx`, `outcome-picker.tsx` → `day-predict-modal.tsx`, and
+  `leaderboard-picks-banner.tsx` (widened `leaderboard.bottomThreePicks`'s `select` for this —
+  checked `challenge.getCreateContext` too, but its matches list is text-only, no flags, so left
+  narrow). Verified: `npm run typecheck` + `npm run test` (33 tests) clean; a live `npm run
+  sync:fifa` against dev Turso updated all 104 matches in one pass (the expected one-time
+  null→code backfill, confirmed via `turso db shell` — 0 remaining NULLs on either column
+  afterward), and a browser check of the Matches/Champion pages showed flags rendering correctly,
+  including FIFA "home nations" (England, Scotland) that have no ISO-3166 code — living proof of
+  why 2.1 ruled out an ISO country table. Folded in one small add-on beyond the original ask:
+  `champion-vote-item.tsx` switched its flag from `candidate.teamName` to `candidate.countryCode`,
+  since `ChampionCandidate.countryCode` was already FIFA-sourced and just sitting unused for
+  display. Deliberately left for the separate, still-open vnexpress side: `TopScorerCandidate
+  .logoUrl`, and the `isKnownCountry()` filter-gate removal in `match.ts`/`leaderboard.ts` (both
+  still tracked as unchecked items above).
+- **2026-07-22** — Country-vocabulary design decided (plan doc §1.2/1.3/2.1/2.2 updated; checklist
+  above updated to match). Triggered by re-reading the live FIFA matches API
+  (`api.fifa.com/api/v3/calendar/matches`) and vnexpress topscorer API directly — confirmed FIFA's
+  matches response already carries `IdCountry`/`Abbreviation` per team (not just `fetchQualifiedTeams`,
+  which was the only endpoint we'd previously read a code from), and vnexpress's response carries a
+  `logo_team` crest-image URL, neither of which our current types (`FifaTeam`, `VnexpressTopScorer`)
+  capture. Decision: no separate `Country`/ISO-3166 model — FIFA associations (England, Scotland,
+  Wales, Northern Ireland, Chinese Taipei, Kosovo, ...) don't map onto ISO-3166 countries, so that
+  table would standardize on the wrong vocabulary for a football platform. Instead, store each
+  source's own native identifier directly at ingestion (`Match.homeCountryCode`/`awayCountryCode`
+  from FIFA, `TopScorerCandidate.logoUrl` from vnexpress) — this fully removes the reverse
+  name-lookup (`FIFA_CODES` + `isKnownCountry()`) for match data and top-scorer flag display.
+  `NormalizedAwardCandidate.countryCode` stays FIFA-specific on purpose: it's solving a distinct,
+  narrower problem (matching vnexpress's free-text `nationality` against FIFA's own qualified-team
+  list for candidate eligibility), which isn't fixed by codes/logos sourced directly since vnexpress
+  itself never emits a code. Doc-only change this session — no schema/code touched yet; still
+  queued as unchecked Phase 2 subtasks above.
 - **2026-07-21** — Phase 2 started, narrowly scoped to `AwardSourceAdapter` +
   `VnexpressTopScorerAdapter` only (match/fixture-side adapter work explicitly deferred to a later
   session). New `src/server/services/adapters/` module: `types.ts` (`AwardKey`,

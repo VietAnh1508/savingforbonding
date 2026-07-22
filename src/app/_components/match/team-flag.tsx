@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { getFifaFlagUrl } from "~/lib/country-flag";
+import { getFifaFlagUrl, getFlagUrlForCode } from "~/lib/country-flag";
 
 const SIZE_CLASSES = {
   sm: "h-6 aspect-[3/2]",
@@ -17,12 +17,18 @@ const SIZE_DIMENSIONS = {
 
 export function TeamFlag({
   country,
+  code,
+  imageUrl,
   size = "md",
 }: {
   country: string;
+  /** FIFA team/association code, when already known — skips the name lookup entirely. */
+  code?: string | null;
+  /** Pre-resolved image URL (e.g. a source-specific team crest) — takes priority over `code`/`country` lookup. */
+  imageUrl?: string | null;
   size?: keyof typeof SIZE_CLASSES;
 }) {
-  const url = getFifaFlagUrl(country);
+  const url = imageUrl ?? (code ? getFlagUrlForCode(code) : getFifaFlagUrl(country));
 
   if (!url) {
     return (

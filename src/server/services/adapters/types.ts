@@ -12,6 +12,8 @@ export type NormalizedAwardCandidate = {
   countryName: string;
   /** FIFA 3-letter code resolved from `countryName`, or null if unrecognized. */
   countryCode: string | null;
+  /** Per-team crest/logo image URL, or null if the source doesn't provide one. */
+  logoUrl: string | null;
   goals: number;
   assists: number;
   minutesPlayed: number;
