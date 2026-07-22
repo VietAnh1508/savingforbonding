@@ -1,4 +1,5 @@
 import { adminRouter } from "~/server/api/routers/admin";
+import { beerAmountSpinRouter } from "~/server/api/routers/beer-amount-spin";
 import { challengeRouter } from "~/server/api/routers/challenge";
 import { championVoteRouter } from "~/server/api/routers/champion-vote";
 import { leaderboardRouter } from "~/server/api/routers/leaderboard";
@@ -18,6 +19,7 @@ export const appRouter = createTRPCRouter({
   stage: stageRouter,
   championVote: championVoteRouter,
   topScorerVote: topScorerVoteRouter,
+  beerAmountSpin: beerAmountSpinRouter,
   challenge: challengeRouter,
 });
 

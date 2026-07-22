@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { formatDateTime } from "~/lib/datetime";
 import { CURRENT_TERMS_VERSION } from "~/lib/terms-content";
 import { nameChangeAvailableAt } from "~/lib/user";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
@@ -30,7 +31,7 @@ export const userRouter = createTRPCRouter({
       if (availableAt) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: `You can change your name again on ${availableAt.toLocaleString()}.`,
+          message: `You can change your name again on ${formatDateTime(availableAt)}.`,
         });
       }
 

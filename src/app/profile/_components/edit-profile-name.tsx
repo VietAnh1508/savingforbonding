@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { formatDateTime } from "~/lib/datetime";
 import { nameChangeAvailableAt } from "~/lib/user";
 import { api } from "~/trpc/react";
 
@@ -98,7 +99,7 @@ export function EditProfileName({
               aria-label="Edit name"
               title={
                 lockedUntil
-                  ? `You can change your name again on ${lockedUntil.toLocaleString()}`
+                  ? `You can change your name again on ${formatDateTime(lockedUntil)}`
                   : "Edit name"
               }
               className="rounded-md p-1 text-foreground/40 transition hover:bg-foreground/10 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
@@ -112,7 +113,7 @@ export function EditProfileName({
           <p className="text-sm text-foreground/60 sm:text-base">{email}</p>
           {lockedUntil && (
             <p className="mt-1 text-xs text-foreground/40">
-              You can change your name again on {lockedUntil.toLocaleString()}
+              You can change your name again on {formatDateTime(lockedUntil)}
             </p>
           )}
         </div>

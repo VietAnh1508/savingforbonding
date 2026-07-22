@@ -132,8 +132,12 @@ Pages are async server components that call `api.*.prefetch()` to populate the R
 ### Voting / beer logic
 
 - Voting closes 5 minutes before kickoff (`VOTE_LOCK_MINUTES = 5` in `src/lib/match.ts`).
-- Beer penalties: correct prediction = 1 beer, wrong = 3 beers, no vote on a completed match = 2 beers.
+- Beer penalties are per-stage (wrong-pick and no-vote penalties can differ by stage, e.g. group stage vs. knockout) and scale with a per-vote star multiplier the user can place. See `src/lib/match.ts` for the exact rules — champion and top-scorer picks carry their own bonus swing on the same star-multiplier mechanic.
 - `src/server/services/resolve-votes.ts` marks votes correct/incorrect. It's called from `syncFifaFixtures` whenever a sync sees a match newly transition to `COMPLETED` — so it runs on the same cadence as the FIFA sync above (daily cron, or on-demand), not the instant the match itself finishes.
+
+### Date/time formatting
+
+All user-facing dates and times go through the formatters in `src/lib/datetime.ts`, which format in `APP_TIMEZONE` (Vietnam, UTC+7) regardless of where the code runs. Never call `.toLocaleString()` / `.toLocaleDateString()` / `.toLocaleTimeString()` directly on a `Date` in a component or router — with no explicit timezone these default to the runtime's local timezone, which differs between server (Vercel, UTC) and client (browser), causing wrong displayed times on the server and SSR/hydration mismatches on the client. If a new use case needs a format none of the existing functions produce, add a new formatter to `datetime.ts` (with its own `Intl.DateTimeFormat` instance, `APP_TIMEZONE`-scoped) — don't write an ad-hoc formatting function or inline `Intl.DateTimeFormat`/`toLocaleDateString` call directly in a component or router.
 
 ### Path alias
 
@@ -148,6 +152,7 @@ This repo (`origin`, `VietAnh1508/savingforbonding`) is a fork of an upstream re
 - `src/server/api/trpc.ts` — tRPC context, procedure factories, middleware
 - `src/server/api/root.ts` — root router combining all sub-routers
 - `src/lib/match.ts` — voting window and beer calculation logic
+- `src/lib/datetime.ts` — timezone-aware date/time formatting (see "Date/time formatting" above)
 - `src/trpc/react.tsx` — client-side tRPC + React Query provider setup
 - `prisma/schema.prisma` — complete data model
 

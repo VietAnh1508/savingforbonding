@@ -10,7 +10,8 @@ import { StarPicker } from "~/app/_components/star-picker";
 import { useToast } from "~/app/_components/toast";
 import { useModalDismiss } from "~/app/hooks/use-modal-dismiss";
 import { useSetStar } from "~/app/hooks/use-set-star";
-import { formatKickoffTime, voterLabel } from "~/lib/match";
+import { formatKickoffTime } from "~/lib/datetime";
+import { voterLabel } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { type VoteOutcome } from "../../../../generated/prisma";
 

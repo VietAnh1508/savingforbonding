@@ -3,7 +3,8 @@
 import { useState } from "react";
 
 import { MatchStatusBadge } from "~/app/_components/match-status-badge";
-import { formatMatchDateTime, isMatchEditable } from "~/lib/match";
+import { formatDateTime } from "~/lib/datetime";
+import { isMatchEditable } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["admin"]["listAll"][number];
@@ -34,7 +35,7 @@ export function MatchCard({ match, onEdit }: Props) {
             {match.homeCountry} vs {match.awayCountry}
           </div>
           <div className="mt-1 text-sm text-foreground/50">
-            {formatMatchDateTime(match.kickoffAt)}
+            {formatDateTime(match.kickoffAt)}
           </div>
           <div className="mt-1 font-mono text-sm text-emerald-600 dark:text-emerald-400">
             1: {match.homeRatio.toFixed(2)} · 2: {match.awayRatio.toFixed(2)}

@@ -11,7 +11,7 @@ import { VoterList } from "~/app/_components/match/voter-list";
 import { VotingRatios } from "~/app/_components/match/voting-ratios";
 import { SignInPrompt } from "~/app/_components/sign-in-prompt";
 import { useModalDismiss } from "~/app/hooks/use-modal-dismiss";
-import { formatMatchDateTime } from "~/lib/match";
+import { formatDateTime } from "~/lib/datetime";
 import { api } from "~/trpc/react";
 
 export function MatchDetailModal({
@@ -87,7 +87,7 @@ export function MatchDetailModal({
                     dateTime={match.kickoffAt.toISOString()}
                     className="text-sm text-foreground/50"
                   >
-                    {formatMatchDateTime(match.kickoffAt)}
+                    {formatDateTime(match.kickoffAt)}
                   </time>
                 </div>
 

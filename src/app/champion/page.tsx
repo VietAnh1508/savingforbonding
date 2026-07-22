@@ -1,7 +1,7 @@
 import { ChampionVoteCard } from "~/app/_components/champion/champion-vote-card";
 import { ChampionVotingCountdown } from "~/app/_components/champion/champion-voting-countdown";
 import { Nav } from "~/app/_components/nav";
-import { formatMatchDateTime } from "~/lib/match";
+import { formatDateTime } from "~/lib/datetime";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -29,7 +29,7 @@ export default async function ChampionPage() {
             <span className="font-semibold text-amber-600 dark:text-amber-400">
               the Semi-Final kicks off
               {votingStatus.deadline &&
-                ` (${formatMatchDateTime(votingStatus.deadline)})`}
+                ` (${formatDateTime(votingStatus.deadline)})`}
             </span>
             .
           </p>

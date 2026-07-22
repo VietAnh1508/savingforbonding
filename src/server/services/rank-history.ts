@@ -1,4 +1,5 @@
-import { noVotePenaltyForStage, toVNDate } from "~/lib/match";
+import { toVNDate } from "~/lib/datetime";
+import { noVotePenaltyForStage } from "~/lib/match";
 import { computeRankHistory } from "~/lib/rank-history";
 import { type PrismaClient } from "../../../generated/prisma";
 

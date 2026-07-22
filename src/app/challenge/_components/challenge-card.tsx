@@ -10,7 +10,8 @@ import {
   challengeSettlement,
   isParticipant,
 } from "~/lib/challenge";
-import { formatBeers, formatMatchDateTime } from "~/lib/match";
+import { formatDateTime } from "~/lib/datetime";
+import { formatBeers } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
 type Challenge = RouterOutputs["challenge"]["listMine"][number];
@@ -64,7 +65,7 @@ export function ChallengeCard({
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="text-sm text-foreground/60">
           {challenge.match.homeCountry} vs {challenge.match.awayCountry} —{" "}
-          {formatMatchDateTime(challenge.match.kickoffAt)}
+          {formatDateTime(challenge.match.kickoffAt)}
         </span>
         <div className="flex items-center gap-1.5">
           {isMine && (

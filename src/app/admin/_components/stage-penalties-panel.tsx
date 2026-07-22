@@ -328,6 +328,85 @@ function TopScorerMaxMultiplierControl() {
   );
 }
 
+function ToggleSwitch({
+  checked,
+  onChange,
+  disabled,
+  label,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+        checked ? "bg-emerald-500" : "bg-foreground/20"
+      }`}
+    >
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+          checked ? "translate-x-6" : "translate-x-1"
+        }`}
+      />
+    </button>
+  );
+}
+
+function BeerAmountSpinToggleControl() {
+  const utils = api.useUtils();
+  const toast = useToast();
+  const { data: settings } = api.admin.getGameSettings.useQuery();
+
+  const updateEnabled = api.admin.updateBeerAmountSpinEnabled.useMutation({
+    onSuccess: async () => {
+      await utils.admin.getGameSettings.invalidate();
+      toast.success("Beer amount spin setting updated");
+    },
+  });
+
+  const enabled = settings?.beerAmountSpinEnabled ?? false;
+  const locked = settings?.hasBeerAmountSpins ?? false;
+
+  return (
+    <div className="rounded-xl border border-foreground/10 p-4">
+      <h3 className="text-sm font-semibold">Beer amount spin</h3>
+      <p className="mt-1 text-sm text-foreground/60">
+        Let players spin the wheel to pick their price-per-beer once the pool
+        is confirmed.
+      </p>
+      <div className="mt-2 flex items-center gap-2 text-sm">
+        <ToggleSwitch
+          checked={enabled}
+          disabled={updateEnabled.isPending || locked}
+          onChange={(checked) =>
+            updateEnabled.mutate({ beerAmountSpinEnabled: checked })
+          }
+          label="Spinning is open"
+        />
+        Spinning is open
+      </div>
+      {locked && (
+        <p className="mt-1 text-xs text-foreground/40">
+          Locked — players have already spun, so this can&apos;t be changed.
+        </p>
+      )}
+      {updateEnabled.error && (
+        <p className="mt-1 text-xs text-red-400">
+          {updateEnabled.error.message}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function StagePenaltiesPanel() {
   const { data: stages = [], isLoading } =
     api.admin.listStagePenalties.useQuery();
@@ -349,6 +428,7 @@ export function StagePenaltiesPanel() {
 
       <ChampionMaxMultiplierControl />
       <TopScorerMaxMultiplierControl />
+      <BeerAmountSpinToggleControl />
 
       {stages.length === 0 ? (
         <p className="text-foreground/40">No stages found.</p>

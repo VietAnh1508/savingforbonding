@@ -10,7 +10,8 @@ import { TeamFlag } from "~/app/_components/match/team-flag";
 import { AllInCheckbox, StarBadge, StarPicker } from "~/app/_components/star-picker";
 import { useSetAllIn } from "~/app/hooks/use-set-all-in";
 import { useSetStar } from "~/app/hooks/use-set-star";
-import { formatBeers, formatKickoffTime, hasVotingHandicap } from "~/lib/match";
+import { formatKickoffTime } from "~/lib/datetime";
+import { formatBeers, hasVotingHandicap } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listMatches"][number];

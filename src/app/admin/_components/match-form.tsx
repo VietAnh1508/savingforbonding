@@ -2,11 +2,8 @@
 
 import { useState } from "react";
 
-import {
-  fromVietnamDatetimeLocal,
-  toVNDate,
-  validateVotingRatios,
-} from "~/lib/match";
+import { fromVietnamDatetimeLocal, toVNDate } from "~/lib/datetime";
+import { validateVotingRatios } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["admin"]["listAll"][number];

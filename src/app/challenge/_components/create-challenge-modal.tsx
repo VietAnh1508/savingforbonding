@@ -8,7 +8,8 @@ import { useToast } from "~/app/_components/toast";
 import { UserAvatar } from "~/app/_components/user-avatar";
 import { useModalDismiss } from "~/app/hooks/use-modal-dismiss";
 import { maxStakeBeers } from "~/lib/challenge";
-import { formatBeers, formatMatchDateTime } from "~/lib/match";
+import { formatDateTime } from "~/lib/datetime";
+import { formatBeers } from "~/lib/match";
 import { api } from "~/trpc/react";
 
 export function CreateChallengeModal({ onClose }: { onClose: () => void }) {
@@ -171,7 +172,7 @@ export function CreateChallengeModal({ onClose }: { onClose: () => void }) {
                       >
                         {m.homeCountry} vs {m.awayCountry}
                         <span className="ml-2 text-xs text-foreground/50">
-                          {formatMatchDateTime(m.kickoffAt)}
+                          {formatDateTime(m.kickoffAt)}
                         </span>
                       </button>
                     ))}

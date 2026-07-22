@@ -2,20 +2,26 @@ import Link from "next/link";
 
 import { Nav } from "~/app/_components/nav";
 import { LeaderboardTable } from "~/app/leaderboard/_components/leaderboard-table";
-import { MATCH_DISPLAY_TIMEZONE } from "~/lib/match";
+import { SpinButtonSection } from "~/app/leaderboard/_components/spin-button-section";
+import { formatBeerAmount } from "~/lib/beer-amount-spin";
+import { formatShortDateTime } from "~/lib/datetime";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
 export default async function LeaderboardPage() {
-  const [global, beerPool, , session] = await Promise.all([
+  const [global, beerPool, , spinStatus, session] = await Promise.all([
     api.leaderboard.global(),
     api.leaderboard.totalBeerPool(),
     api.leaderboard.rankByDay.prefetch(),
+    api.beerAmountSpin.getStatus(),
     auth(),
   ]);
 
   if (session?.user) {
-    await api.vote.getFollowing.prefetch();
+    await Promise.all([
+      api.vote.getFollowing.prefetch(),
+      api.beerAmountSpin.getMySpin.prefetch(),
+    ]);
   }
 
   return (
@@ -37,6 +43,28 @@ export default async function LeaderboardPage() {
           <p className="mt-3 text-lg text-foreground/80">
             beers pledged across {beerPool.userCount} players
           </p>
+
+          {spinStatus.enabled &&
+            (beerPool.spinnerCount > 0 ? (
+              <p className="mt-2 text-sm text-foreground/60">
+                Avg. {formatBeerAmount(beerPool.averageAmount!)}/beer
+                across {beerPool.spinnerCount} spinner
+                {beerPool.spinnerCount === 1 ? "" : "s"} →{" "}
+                <span className="font-semibold text-foreground">
+                  {formatBeerAmount(beerPool.finalAmount!)} total
+                </span>
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-foreground/40">
+                No one has spun the wheel yet — amount TBD.
+              </p>
+            ))}
+
+          {session?.user && (
+            <div className="mt-5">
+              <SpinButtonSection />
+            </div>
+          )}
         </div>
 
         <div className="mb-3 flex items-center justify-between text-xs">
@@ -49,14 +77,7 @@ export default async function LeaderboardPage() {
           {global.lastUpdated && (
             <span className="text-foreground/40">
               Last updated:{" "}
-              {global.lastUpdated.toLocaleString("en-GB", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                timeZone: MATCH_DISPLAY_TIMEZONE,
-              })}
+              {formatShortDateTime(global.lastUpdated)}
             </span>
           )}
         </div>
