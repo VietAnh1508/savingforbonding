@@ -112,6 +112,8 @@ model Match {
   tournament       Tournament   @relation(fields: [tournamentId], references: [id])
   homeCountry      String
   awayCountry      String
+  homeCountryCode  String?
+  awayCountryCode  String?
   kickoffAt        DateTime
   status           MatchStatus  @default(SCHEDULED)
   homeScore        Int?

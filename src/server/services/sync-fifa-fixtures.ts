@@ -12,6 +12,7 @@ import { resolveTopScorerVotes } from "~/server/services/top-scorer-vote";
 import {
   fetchQualifiedTeams,
   fetchWorldCupFixtures,
+  fifaTeamCountryCode,
   fifaTeamName,
   localizedDescription,
   mapFifaMatchStatus,
@@ -266,6 +267,8 @@ export async function syncFifaFixtures(
     const fifaStatus = mapFifaMatchStatus(fixture);
     const fifaHome = fifaTeamName(fixture.Home, fixture.PlaceHolderA);
     const fifaAway = fifaTeamName(fixture.Away, fixture.PlaceHolderB);
+    const fifaHomeCode = fifaTeamCountryCode(fixture.Home);
+    const fifaAwayCode = fifaTeamCountryCode(fixture.Away);
     const fifaKickoff = parseFifaKickoffToUtc(fixture.Date);
     const stageId = fixture.IdStage;
 
@@ -308,6 +311,8 @@ export async function syncFifaFixtures(
           tournamentId,
           homeCountry: fifaHome,
           awayCountry: fifaAway,
+          homeCountryCode: fifaHomeCode,
+          awayCountryCode: fifaAwayCode,
           kickoffAt: fifaKickoff,
           status,
           homeScore,
@@ -344,6 +349,8 @@ export async function syncFifaFixtures(
       {
         homeCountry: fifaHome,
         awayCountry: fifaAway,
+        homeCountryCode: fifaHomeCode,
+        awayCountryCode: fifaAwayCode,
         kickoffAt: fifaKickoff,
         status: fifaStatus,
         homeScore: fifaHomeScore,
@@ -378,6 +385,8 @@ export async function syncFifaFixtures(
       data: {
         homeCountry: patch.homeCountry,
         awayCountry: patch.awayCountry,
+        homeCountryCode: patch.homeCountryCode,
+        awayCountryCode: patch.awayCountryCode,
         kickoffAt: patch.kickoffAt,
         stageId: patch.stageId,
         ...(!isTransitioningToCompleted && {

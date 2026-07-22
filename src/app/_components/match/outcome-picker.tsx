@@ -1,7 +1,7 @@
 "use client";
 
 import { TeamFlag } from "~/app/_components/match/team-flag";
-import { outcomeLabel } from "~/lib/match";
+import { outcomeLabel, pickByOutcome } from "~/lib/match";
 import { type VoteOutcome } from "../../../../generated/prisma";
 
 const OUTCOMES: VoteOutcome[] = ["HOME_WIN", "DRAW", "AWAY_WIN"];
@@ -9,6 +9,8 @@ const OUTCOMES: VoteOutcome[] = ["HOME_WIN", "DRAW", "AWAY_WIN"];
 export function OutcomePicker({
   homeCountry,
   awayCountry,
+  homeCountryCode = null,
+  awayCountryCode = null,
   selectedOutcome,
   onSelect,
   disabled = false,
@@ -17,6 +19,8 @@ export function OutcomePicker({
 }: {
   homeCountry: string;
   awayCountry: string;
+  homeCountryCode?: string | null;
+  awayCountryCode?: string | null;
   selectedOutcome: VoteOutcome | null | undefined;
   onSelect: (outcome: VoteOutcome) => void;
   disabled?: boolean;
@@ -32,7 +36,13 @@ export function OutcomePicker({
       {OUTCOMES.map((outcome) => {
         const label = outcomeLabel(outcome, homeCountry, awayCountry);
         const selected = selectedOutcome === outcome;
-        const flag = showFlags && outcome !== "DRAW" ? (outcome === "HOME_WIN" ? homeCountry : awayCountry) : null;
+        const flagTeam = showFlags
+          ? pickByOutcome(
+              outcome,
+              { country: homeCountry, code: homeCountryCode },
+              { country: awayCountry, code: awayCountryCode },
+            )
+          : null;
 
         return (
           <button
@@ -51,7 +61,9 @@ export function OutcomePicker({
                 : `border-foreground/10 bg-foreground/5 ${isCompact ? "hover:border-emerald-500/40" : "hover:border-emerald-500/50"} hover:bg-foreground/10`
             }`}
           >
-            {flag && <TeamFlag country={flag} size="sm" />}
+            {flagTeam && (
+              <TeamFlag country={flagTeam.country} code={flagTeam.code} size="sm" />
+            )}
             <span className={isCompact ? "truncate" : "font-semibold"}>{label}</span>
           </button>
         );

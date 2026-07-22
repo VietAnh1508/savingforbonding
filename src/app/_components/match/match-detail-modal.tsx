@@ -93,7 +93,7 @@ export function MatchDetailModal({
 
                 <div className="flex items-center justify-between gap-6">
                   <div className="flex flex-1 flex-col items-center gap-3 text-center">
-                    <TeamFlag country={match.homeCountry} size="md" />
+                    <TeamFlag country={match.homeCountry} code={match.homeCountryCode} size="md" />
                     <h3 className="text-lg font-bold">{match.homeCountry}</h3>
                   </div>
 
@@ -109,7 +109,7 @@ export function MatchDetailModal({
                   </div>
 
                   <div className="flex flex-1 flex-col items-center gap-3 text-center">
-                    <TeamFlag country={match.awayCountry} size="md" />
+                    <TeamFlag country={match.awayCountry} code={match.awayCountryCode} size="md" />
                     <h3 className="text-lg font-bold">{match.awayCountry}</h3>
                   </div>
                 </div>

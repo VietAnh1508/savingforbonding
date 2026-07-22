@@ -235,7 +235,7 @@ export function MatchCard({
         <div
           className={`flex min-w-0 flex-1 flex-col items-center gap-1 text-center ${predictedTeamClass(predictsHomeWin)}`}
         >
-          <TeamFlag country={match.homeCountry} size="sm" />
+          <TeamFlag country={match.homeCountry} code={match.homeCountryCode} size="sm" />
           <span className="text-sm font-medium">{match.homeCountry}</span>
           {predictsHomeWin && (
             <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
@@ -285,7 +285,7 @@ export function MatchCard({
         <div
           className={`flex min-w-0 flex-1 flex-col items-center gap-1 text-center ${predictedTeamClass(predictsAwayWin)}`}
         >
-          <TeamFlag country={match.awayCountry} size="sm" />
+          <TeamFlag country={match.awayCountry} code={match.awayCountryCode} size="sm" />
           <span className="text-sm font-medium">{match.awayCountry}</span>
           {predictsAwayWin && (
             <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">

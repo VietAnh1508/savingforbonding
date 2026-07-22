@@ -1,6 +1,10 @@
 # Multi-Tournament Platform Plan
 
-Status: **draft — architecture decisions made (Part 3), nothing in this doc has been implemented.**
+Status: **draft — architecture decisions made (Part 3). One piece of Part 4
+Phase 2 has already landed ahead of the rest of this plan:
+`AwardSourceAdapter`/`NormalizedAwardCandidate` (`src/server/services/adapters/`)
+now wraps vnexpress. `FixtureSourceAdapter`/`FifaWorldCupAdapter` (the FIFA side)
+does not exist yet. Nothing else in this doc has been implemented.**
 
 ## Goal
 
@@ -66,6 +70,18 @@ candidate lists never narrow.
   `match.ts`'s `listMatches` and `leaderboard.ts`'s `bottomThreePicks` — any team
   not in this hardcoded FIFA namespace just disappears from the UI, no error.
   This is a landmine for any future adapter with a different team vocabulary.
+  **This lookup table is unnecessary, not just risky**: the FIFA matches
+  endpoint (`api.fifa.com/api/v3/calendar/matches`) already returns the code
+  directly on each `Home`/`Away` object — `IdCountry` and `Abbreviation`
+  (confirmed against the live API, e.g. `"IdCountry":"MEX","Abbreviation":"MEX"`),
+  plus a `PictureUrl` template with the code baked in. `fetchQualifiedTeams`
+  already reads this same `IdCountry` field for `ChampionCandidate.countryCode`
+  (`sync-fifa-fixtures.ts:230,234`) — the matches endpoint just isn't parsed for
+  it. `FifaTeam` (`fifa-api.ts:22-25`) only types `TeamName`/`Score` today, so
+  the name gets stored on `Match` and `FIFA_CODES` re-derives the code from it
+  by string matching. Typing the field and storing it directly removes the
+  reverse lookup (and the `isKnownCountry` filter gate) for match data entirely
+  — see 2.1.
 
 ### 1.3 vnexpress adapter coupling — `src/server/services/vnexpress-api.ts`
 
@@ -73,9 +89,29 @@ candidate lists never narrow.
   vnexpress-specific shape (`data.data["1"].data`).
 - The FIFA and vnexpress syncs are **not independent** — vnexpress candidate
   eligibility is gated by a FIFA `fetchQualifiedTeams` call
-  (`sync-fifa-fixtures.ts:165-176`), and country-name reconciliation between the
-  two sources happens via an ad hoc `getFifaCountryCode` bridge. A clean adapter
-  design needs to decouple these into independent fetch/normalize passes.
+  (`syncTopScorerCandidates`, `sync-fifa-fixtures.ts:174-207`): only the 4
+  semifinalists' players can still add to their goal tally, so candidates are
+  filtered to `qualifiedTeams`' `IdCountry` set. Since vnexpress's `nationality`
+  string doesn't reliably match FIFA's team-name spelling, this filter goes
+  through `getFifaCountryCode(nationality)` (`vnexpress-top-scorer-adapter.ts:20`)
+  to get a comparable code first. **This bridge is a genuine, still-necessary
+  use of the hardcoded lookup table** — it's solving cross-source candidate
+  *eligibility matching*, not flag display (see below), and isn't fixed by
+  storing codes on `Match`/`TopScorerCandidate` since vnexpress itself never
+  emits a code for its own `nationality` field. A clean adapter design still
+  needs to decouple this into independent fetch/normalize passes so the
+  reconciliation is explicit adapter-boundary logic, not an inline call.
+- The vnexpress topscorer response also carries a `logo_team` field per player
+  (confirmed against the live API, e.g.
+  `"logo_team":"https://is.vnecdn.net/objects/teams/2.png?v=1"`) — a stable,
+  per-team crest/flag image URL, not currently typed on `VnexpressTopScorer`
+  (`vnexpress-api.ts:4-10`) or stored anywhere. For the top-scorer voting UI,
+  which currently renders a flag via `TeamFlag` →
+  `getFifaFlagUrl(candidate.countryName)` (a `nationality`-string → `FIFA_CODES`
+  → FIFA flag-CDN chain, `top-scorer-vote-item.tsx:64`), this is a strictly
+  better source: it's already a direct image URL from vnexpress itself, needs
+  no name lookup, and — being a team crest rather than a national flag — works
+  the same whether the source is international or club football. See 2.1.
 
 ### 1.4 Business logic — what's actually generic already
 
@@ -149,6 +185,115 @@ TopScorerVote: @@unique([userId, tournamentId])   (was @unique(userId))
 every tournament), but per-tournament beer totals need their own home — see
 Decision 3 below.
 
+**Country vocabulary — no separate `Country`/ISO-3166 model.** A dedicated
+country table sounds like the "standardize it" move, but FIFA associations
+aren't ISO-3166 countries: England, Scotland, Wales, and Northern Ireland each
+have a FIFA code with no ISO-3166 entry (same story for Chinese Taipei,
+Kosovo, etc). Modeling this as ISO countries would standardize on the wrong
+vocabulary for a football platform. Instead, each adapter captures its *own*
+source's native identifier at normalization time, since both sources already
+provide one for free (see 1.2/1.3 above):
+
+```
+Match.homeCountryCode, Match.awayCountryCode   -> FIFA's IdCountry/Abbreviation,
+                                                   stored at ingestion (replaces
+                                                   FIFA_CODES + isKnownCountry
+                                                   for match data)
+TopScorerCandidate.logoUrl                     -> vnexpress's logo_team,
+                                                   stored at ingestion (replaces
+                                                   the countryName -> FIFA_CODES
+                                                   -> flag-CDN chain for the
+                                                   top-scorer UI)
+NormalizedAwardCandidate.countryCode           -> stays: still needed for the
+                                                   eligibility bridge against
+                                                   FIFA's qualifiedTeams (1.3),
+                                                   a distinct problem from
+                                                   flag display
+NormalizedAwardCandidate.logoUrl               -> new field, sourced from
+                                                   logo_team
+```
+
+This removes `FIFA_CODES`/`isKnownCountry` as a silent filter gate for match
+data entirely (a new adapter with a different vocabulary just populates its
+own code column, no shared table to keep in sync) and removes the name-based
+flag lookup for top scorers. It does *not* remove `getFifaCountryCode` outright
+— the vnexpress-eligibility bridge (1.3) still needs a name-based reconciliation
+step, because that problem is inherent to combining two sources that don't
+share an identifier, not something a code column or ISO table would fix.
+
+**Team identity — a future `Team` model, once club tournaments are in scope.**
+`Match.homeCountryCode`/`awayCountryCode` above (shipped 2026-07-22, see the
+progress doc) is deliberately the *national-team-only* interim: FIFA's
+`IdCountry` exists because international matches are between national
+associations. A club fixture has no `IdCountry` — Real Madrid vs Barcelona
+isn't a country matchup — so the code-column approach caps out exactly where
+this doc's "any tournament" goal would need to stretch to a club competition.
+This doesn't reopen the "no ISO-3166 `Country` table" call above (still
+correct — a country registry is still the wrong vocabulary); it's the next
+step past it: model teams as teams, national or club, not as countries.
+
+Target shape:
+
+```
+Team
+  id, type (NATIONAL | CLUB), name, code (nullable — national teams only),
+  logoUrl, fifaTeamId (nullable, national), externalIds per adapter as
+  new sources are added
+
+Match.homeTeamId, Match.awayTeamId -> Team   (nullable until a bracket slot
+                                              resolves; Match keeps its own
+                                              placeholder-display string in
+                                              the meantime — isPlaceholderTeam
+                                              / mergeTeamName still needed for
+                                              TBD slots, just against a
+                                              nullable FK instead of a
+                                              required string)
+```
+
+Once this lands, `homeCountryCode`/`awayCountryCode` become redundant with
+`Team.code` reached via the FK and can be dropped — they're not wasted work,
+they're the shipped interim this generalizes, not a mistake to undo.
+
+Three forks this raises, **proposed here, not yet confirmed with the user —
+see Decision 5**:
+
+1. **Team identity scope: global vs per-tournament.** Recommend *global* —
+   one "Argentina" row referenced by every tournament it plays in. A
+   per-tournament row just re-fragments identity along a different axis (now
+   split by tournament instead of by table). Cross-source id differences
+   (FIFA's `IdTeam` vs a future club league's own id) become per-adapter
+   external-id fields on `Team` — generalizing the pattern
+   `ChampionCandidate.fifaTeamId` already uses at a smaller scope — not a new
+   `Team` row per source.
+2. **Which tables FK to `Team`.** The ask was `Match` only. But
+   `ChampionCandidate` (`teamName`/`countryCode`/`fifaTeamId`) and
+   `TopScorerCandidate` (`countryName`, plus the still-pending `logo_team`
+   work from 1.3) are the *same* team identity restated a third and fourth
+   way. `Match`-only leaves that fragmentation half-solved — recommend all
+   three FK to `Team`, flagged here as scope beyond what was literally asked,
+   for the user to confirm.
+3. **Placeholder/TBD bracket slots.** Before a knockout slot resolves (e.g.
+   "Winner Group A"), there's no real team yet — `homeTeamId`/`awayTeamId`
+   stay null and `Match` keeps its placeholder text, with
+   `isPlaceholderTeam`/`mergeTeamName` (`src/lib/fifa-sync.ts`) doing the same
+   job they do today, just against a nullable FK instead of a required string.
+
+**Cost, named plainly:** a FK column on `Match` can't be a plain SQLite
+`ADD COLUMN` the way the nullable `homeCountryCode`/`awayCountryCode` were
+(1.2) — it forces the same rebuild-copy-drop-rename migration path Phase 1's
+`tournamentId` FKs needed. `Match` is a cascade parent of `Vote` and
+`Challenge`, so per `CLAUDE.md`'s post-mortem rule, **the fork-test against a
+forked prod DB is mandatory** before this reaches production. Combined with
+backfilling every existing `homeCountry`/`awayCountry`/`countryCode`/
+`countryName` string into `Team` rows first, this is a real data migration,
+not additive plumbing — heavier than anything shipped so far in this plan.
+The payoff is specifically club-tournament capability and one true team
+identity across Match/Champion/TopScorer — not something today's ~40-user,
+single-tournament scale strictly needs yet. Build it when a club tournament
+is actually next in line, not preemptively, per this repo's own "don't build
+for hypothetical scale" principle — tracked as its own phase (Part 4, Phase
+6), not folded into Phase 1's schema plumbing.
+
 Replace the six hardcoded stage-name lookups with structural flags set when a
 tournament's stages are seeded/synced, e.g. `Stage.isFinal: Boolean` and a
 `Tournament.championVoteDeadlineStageId -> Stage` /
@@ -183,7 +328,14 @@ engineering; don't build dynamic adapter discovery/registration.
 Country/team vocabulary (today's hardcoded `FIFA_CODES` + `isKnownCountry()`
 silent filter) becomes the adapter's responsibility, not a global gate — a
 new adapter brings its own team/flag mapping, and unrecognized teams should
-surface as a visible sync warning, not silently vanish from the UI.
+surface as a visible sync warning, not silently vanish from the UI. Concretely,
+per 2.1: `FifaWorldCupAdapter` reads the code straight off its own wire
+response (`IdCountry`/`Abbreviation`) instead of re-deriving it from a name,
+and `VnexpressTopScorerAdapter` reads `logo_team` for its flag image instead
+of routing through FIFA's vocabulary at all — the only place FIFA's vocabulary
+still matters to the vnexpress adapter is the eligibility-matching bridge
+(1.3), which is inherent to cross-source reconciliation, not a gap this
+adapter layer is meant to close.
 
 ### 2.3 UI
 
@@ -239,6 +391,16 @@ param picks the active tournament, consistent with Decision 1. Smaller diff
 than path-scoping every route. Revisit only if concurrent tournaments
 (Decision 1) ever becomes real.
 
+**Decision 5 — `Team` model: build now or when a club tournament is next? →
+Proposed 2026-07-22, not yet confirmed.** Unlike Decisions 1-4, this one
+hasn't been reviewed and confirmed with the user yet — recommendation is to
+defer full implementation until a club (or otherwise non-international)
+tournament is actually queued up, since `Match.homeCountryCode`/
+`awayCountryCode` (2.1) already covers today's national-teams-only need. The
+three sub-forks in 2.1 (identity scope, which tables FK to `Team`, placeholder
+handling) are pre-resolved here as a starting recommendation so a future
+"yes, build it" doesn't have to re-derive them from scratch.
+
 ---
 
 ## Part 4 — Phased rollout
@@ -279,6 +441,18 @@ not disrupting live play.
 5. **Visual modernization** (optional, parallel track). Token the accent
    color, revisit the Champion/Top-Scorer card designs, general polish. Doesn't
    block or depend on phases 1-4.
+6. **Team model normalization** (future, not yet scheduled — see Decision 5).
+   Generalizes Phase 2's country-vocab work (national-team-only) to also
+   cover club tournaments: mint `Team` rows from today's `homeCountry`/
+   `awayCountry`/`countryCode`/`countryName` strings across `Match`/
+   `ChampionCandidate`/`TopScorerCandidate`, add nullable `Match.homeTeamId`/
+   `awayTeamId` FKs (a rebuild-tier migration — `Match` is a cascade parent of
+   `Vote`/`Challenge`, so the fork-test is mandatory), backfill, then drop
+   `homeCountryCode`/`awayCountryCode` once `Team.code` via the FK fully
+   replaces them. Logically depends on Phase 2's adapter layer (adapters are
+   what map external team ids onto `Team` rows) despite being numbered after
+   Phase 5 here. Build only when a club tournament is actually next in line,
+   not preemptively.
 
 Recommended validation for the whole effort: once Phase 1-3 land, **use them to
 onboard a second, smaller test tournament** (even a fake/dummy one) as the real

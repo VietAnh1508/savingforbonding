@@ -138,7 +138,14 @@ export const leaderboardRouter = createTRPCRouter({
         },
       },
       orderBy: { kickoffAt: "asc" },
-      select: { id: true, homeCountry: true, awayCountry: true, kickoffAt: true },
+      select: {
+        id: true,
+        homeCountry: true,
+        awayCountry: true,
+        homeCountryCode: true,
+        awayCountryCode: true,
+        kickoffAt: true,
+      },
     });
     const matches = rawMatches.filter(
       (m) => isKnownCountry(m.homeCountry) && isKnownCountry(m.awayCountry),
