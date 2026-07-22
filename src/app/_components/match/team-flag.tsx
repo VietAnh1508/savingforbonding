@@ -18,14 +18,17 @@ const SIZE_DIMENSIONS = {
 export function TeamFlag({
   country,
   code,
+  imageUrl,
   size = "md",
 }: {
   country: string;
   /** FIFA team/association code, when already known — skips the name lookup entirely. */
   code?: string | null;
+  /** Pre-resolved image URL (e.g. a source-specific team crest) — takes priority over `code`/`country` lookup. */
+  imageUrl?: string | null;
   size?: keyof typeof SIZE_CLASSES;
 }) {
-  const url = code ? getFlagUrlForCode(code) : getFifaFlagUrl(country);
+  const url = imageUrl ?? (code ? getFlagUrlForCode(code) : getFifaFlagUrl(country));
 
   if (!url) {
     return (

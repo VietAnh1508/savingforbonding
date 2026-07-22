@@ -10,7 +10,7 @@ lands — don't let this drift from reality.
 | Phase | Description | Status |
 |---|---|---|
 | 1 | Schema plumbing | In progress — Tournament model + FKs done (dev + prod Turso); `UserTournamentStats`/`totalPoints` migration deferred as a separate task |
-| 2 | Adapter extraction | In progress — `AwardSourceAdapter` + `VnexpressTopScorerAdapter` done; `Match.homeCountryCode`/`awayCountryCode` done (dev Turso only); fixture-side adapter, factory, vnexpress `logoUrl`, `isKnownCountry()` removal still pending |
+| 2 | Adapter extraction | In progress — `AwardSourceAdapter` + `VnexpressTopScorerAdapter` done; `Match.homeCountryCode`/`awayCountryCode` done (dev Turso only); `TopScorerCandidate.logoUrl` done (dev Turso only); fixture-side adapter, factory, `isKnownCountry()` removal still pending |
 | 3 | Stage-name delookup | Not started (partial stopgap landed — see Phase 1 notes) |
 | 4 | UI: tournament awareness | Not started |
 | 5 | Visual modernization (optional, parallel) | Not started |
@@ -157,14 +157,31 @@ Same data, cleaner seams. Validates the Phase 1 schema before UI work builds on 
         `npm run test` (33 tests) both pass; no test fixtures reference `FifaMatchPatch`/
         `buildFifaMatchPatch` so none needed updating. Not yet applied to **prod** Turso —
         pending explicit go-ahead per this repo's migration workflow.
-  - [ ] `TopScorerCandidate.logoUrl` / `NormalizedAwardCandidate.logoUrl` — vnexpress's `logo_team`
-        field (confirmed live, a per-team crest image URL, e.g.
-        `"logo_team":"https://is.vnecdn.net/objects/teams/2.png?v=1"`), not currently typed on
-        `VnexpressTopScorer` (`vnexpress-api.ts:4-10`). Replaces the
-        `countryName -> FIFA_CODES -> flag-CDN` chain the top-scorer UI (`TeamFlag` via
-        `top-scorer-vote-item.tsx:64`) uses today. Works the same for club or national logos, so
-        it doesn't inherit the FIFA-specificity problem below. **Not done in this pass** — scoped
-        as the FIFA-side change only; vnexpress/top-scorer side is still open.
+  - [x] `TopScorerCandidate.logoUrl` / `NormalizedAwardCandidate.logoUrl` — **done 2026-07-22.**
+        vnexpress's `logo_team` field, added to `VnexpressTopScorer` (`vnexpress-api.ts`) and
+        threaded through `NormalizedAwardCandidate.logoUrl` (nullable, since a future non-vnexpress
+        adapter might not have one) → `VnexpressTopScorerAdapter.toNormalizedCandidate` →
+        `upsertTopScorerCandidate` (`sync-fifa-fixtures.ts`, both create and update paths, so
+        existing rows self-backfill on their next sync). Migration
+        `20260722055402_add_topscorer_candidate_logo_url` — one nullable `ADD COLUMN`, no table
+        rebuild (confirmed by reading the generated SQL), so no fork-test was required; applied to
+        dev Turso. `TeamFlag` (`team-flag.tsx`) gained an optional `imageUrl` prop — takes priority
+        over its existing `code`/`country` lookup, so the same shape/sizing/fallback logic serves
+        both a resolved flag URL and a source-specific crest URL. `top-scorer-vote-item.tsx` now
+        calls `<TeamFlag country={candidate.countryName} imageUrl={candidate.logoUrl} size="md" />`
+        instead of duplicating `TeamFlag`'s rendering inline — falls back to the existing
+        `country`-based flag lookup whenever `logoUrl` is null (e.g. a stale candidate row that
+        predates this column and hasn't been touched by a sync since). (Iterated through a circular
+        crest shape and an inline rectangular duplicate before landing here per feedback: match the
+        rest of the app's rectangular flag treatment, and reuse `TeamFlag` rather than re-implement
+        it.) Added `is.vnecdn.net` to `next.config.js`'s image `remotePatterns`. Verified
+        with `vnexpress-top-scorer-adapter.test.ts` (updated for the new field, 6 tests still pass),
+        `npm run typecheck` + `npm run test` (33 tests) clean, a live `npm run sync:fifa` against dev
+        Turso (confirmed via `turso db shell` that current top-scorer candidates now carry a
+        `logo_team` URL), and a browser check of the Top Scorer page — candidates with a synced
+        `logoUrl` show their circular team crest, and one stale pre-existing row (L. Messi, not in
+        vnexpress's current standings so untouched by this sync) correctly falls back to the
+        rectangular flag rendering. Not yet applied to **prod** Turso — pending explicit go-ahead.
   - [x] `NormalizedAwardCandidate.countryCode` stays as-is (still FIFA's 3-letter code via
         `getFifaCountryCode`) — confirmed unchanged. It's not for flag display anymore (once
         `logoUrl` above lands), it's specifically for `syncTopScorerCandidates`'s eligibility
@@ -242,6 +259,24 @@ Doesn't block or depend on Phases 1-4.
 
 Dated entries — what happened, what was decided, what's blocked. Newest first.
 
+- **2026-07-22** — vnexpress side of the country-vocabulary design implemented:
+  `TopScorerCandidate.logoUrl`, sourced from vnexpress's `logo_team` field at ingestion instead of
+  the `countryName -> FIFA_CODES -> flag-CDN` chain the top-scorer UI used before. Schema: migration
+  `20260722055402_add_topscorer_candidate_logo_url` — reviewed the generated SQL first (one nullable
+  `ALTER TABLE ... ADD COLUMN`, no rebuild), so no fork-test was needed; applied to dev Turso only,
+  prod deliberately left untouched pending explicit go-ahead. Code: `vnexpress-api.ts`
+  (`VnexpressTopScorer.logo_team`), `adapters/types.ts` (`NormalizedAwardCandidate.logoUrl`, nullable
+  for future non-vnexpress adapters), `vnexpress-top-scorer-adapter.ts` (maps `logo_team` straight
+  through), `sync-fifa-fixtures.ts` (`upsertTopScorerCandidate` writes `logoUrl` on both create and
+  update, so existing rows self-backfill on next sync rather than needing a script). UI:
+  `top-scorer-vote-item.tsx` renders a circular `next/image` from `candidate.logoUrl`, falling back
+  to the existing `TeamFlag`-by-`countryName` rendering when null. `next.config.js` image
+  `remotePatterns` gained `is.vnecdn.net`. Verified: `vnexpress-top-scorer-adapter.test.ts` updated
+  for the new field (6 tests still pass), `npm run typecheck` + `npm run test` (33 tests) clean, a
+  live `npm run sync:fifa` against dev Turso populated `logoUrl` on the current top-scorer
+  candidates (confirmed via `turso db shell`), and a browser check of the Top Scorer page showed
+  circular team crests rendering for synced candidates and the correct flag fallback for one stale
+  pre-existing row (L. Messi — not in vnexpress's current standings, so untouched by this sync).
 - **2026-07-22** — FIFA side of the country-vocabulary design (previous log entry, same day)
   implemented: `Match.homeCountryCode`/`awayCountryCode`, sourced from FIFA's `IdCountry` at
   ingestion instead of re-derived via `FIFA_CODES`. Schema: migration

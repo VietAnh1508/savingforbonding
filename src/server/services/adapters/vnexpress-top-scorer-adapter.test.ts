@@ -7,6 +7,7 @@ function scorer(
     player_id: number;
     player_name: string;
     nationality: string;
+    logo_team: string;
     goals: number;
     assists: number;
     minutes_played: number;
@@ -16,6 +17,7 @@ function scorer(
     player_id = 1,
     player_name = "Player",
     nationality = "Argentina",
+    logo_team = "https://is.vnecdn.net/objects/teams/1.png?v=1",
     goals = 0,
     assists = 0,
     minutes_played = 0,
@@ -25,6 +27,7 @@ function scorer(
     player_id,
     player_name,
     nationality,
+    logo_team,
     goals: { total: goals, assists },
     games: { minutes_played },
   };
@@ -46,6 +49,7 @@ describe("VnexpressTopScorerAdapter", () => {
         player_id: 10,
         player_name: "Messi",
         nationality: "Argentina",
+        logo_team: "https://is.vnecdn.net/objects/teams/2.png?v=1",
         goals: 8,
         assists: 3,
         minutes_played: 540,
@@ -60,6 +64,7 @@ describe("VnexpressTopScorerAdapter", () => {
         name: "Messi",
         countryName: "Argentina",
         countryCode: "ARG",
+        logoUrl: "https://is.vnecdn.net/objects/teams/2.png?v=1",
         goals: 8,
         assists: 3,
         minutesPlayed: 540,

@@ -61,7 +61,11 @@ export function TopScorerVoteItem({
             : "bg-foreground/5 hover:bg-foreground/10"
         }`}
       >
-        <TeamFlag country={candidate.countryName} size="md" />
+        <TeamFlag
+          country={candidate.countryName}
+          imageUrl={candidate.logoUrl}
+          size="md"
+        />
         <span className="flex-1">{candidate.playerName}</span>
         <span className="flex flex-col items-end gap-0.5">
           <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">

@@ -37,6 +37,10 @@ const config = {
         protocol: "https",
         hostname: "*.r2.dev",
       },
+      {
+        protocol: "https",
+        hostname: "is.vnecdn.net",
+      },
     ],
   },
 };

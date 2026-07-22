@@ -54,6 +54,7 @@ async function upsertTopScorerCandidate(
       tournamentId,
       playerName: candidate.name,
       countryName: candidate.countryName,
+      logoUrl: candidate.logoUrl,
       goals: candidate.goals,
       assists: candidate.assists,
       minutesPlayed: candidate.minutesPlayed,
@@ -61,6 +62,7 @@ async function upsertTopScorerCandidate(
     update: {
       playerName: candidate.name,
       countryName: candidate.countryName,
+      logoUrl: candidate.logoUrl,
       goals: candidate.goals,
       assists: candidate.assists,
       minutesPlayed: candidate.minutesPlayed,
