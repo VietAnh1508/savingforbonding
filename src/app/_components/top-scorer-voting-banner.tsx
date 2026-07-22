@@ -3,7 +3,8 @@
 import Link from "next/link";
 
 import { ChampionVotingCountdown } from "~/app/_components/champion/champion-voting-countdown";
-import { formatMatchDateTime, TOP_SCORER_VOTE_BONUS } from "~/lib/match";
+import { formatDateTime } from "~/lib/datetime";
+import { TOP_SCORER_VOTE_BONUS } from "~/lib/match";
 import { api } from "~/trpc/react";
 
 export function TopScorerVotingBanner({
@@ -26,7 +27,7 @@ export function TopScorerVotingBanner({
     <div className="mt-6 mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-700 dark:text-amber-300">
       <p className="font-semibold">
         ⚽ Top scorer voting closes{" "}
-        {formatMatchDateTime(votingStatus.deadline)} —{" "}
+        {formatDateTime(votingStatus.deadline)} —{" "}
         <ChampionVotingCountdown deadline={votingStatus.deadline} />
       </p>
       <p className="mt-1 text-amber-700/80 dark:text-amber-300/80">

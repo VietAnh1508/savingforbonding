@@ -1,9 +1,6 @@
 import { isKnownCountry } from "~/lib/country-flag";
-import {
-  beersSavedByStarring,
-  MIN_STAR_MULTIPLIER,
-  vnTodayTomorrowRangeUTC,
-} from "~/lib/match";
+import { vnTodayTomorrowRangeUTC } from "~/lib/datetime";
+import { beersSavedByStarring, MIN_STAR_MULTIPLIER } from "~/lib/match";
 import { assignRanks, compareLeaderboardEntries } from "~/lib/rank-history";
 import { resolveUserJoiningDate } from "~/lib/user-joining-date";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";

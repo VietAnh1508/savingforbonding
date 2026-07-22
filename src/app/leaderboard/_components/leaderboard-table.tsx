@@ -7,7 +7,7 @@ import { useToast } from "~/app/_components/toast";
 import { UserAvatar } from "~/app/_components/user-avatar";
 import { FollowConfirmDialog } from "~/app/leaderboard/_components/follow-confirm-dialog";
 import { RankGapBadge } from "~/app/leaderboard/_components/rank-gap-badge";
-import { formatJoiningDate } from "~/lib/match";
+import { formatJoiningDate } from "~/lib/datetime";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 import {

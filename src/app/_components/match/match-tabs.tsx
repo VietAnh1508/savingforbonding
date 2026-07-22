@@ -7,7 +7,12 @@ import { StarIcon } from "~/app/_components/icons/star-icon";
 import { DayPredictModal } from "~/app/_components/match/day-predict-modal";
 import { MatchCard } from "~/app/_components/match/match-card";
 import { MatchDetailModal } from "~/app/_components/match/match-detail-modal";
-import { formatMatchDate, MATCH_DISPLAY_TIMEZONE, toVNDate } from "~/lib/match";
+import {
+  formatMatchDate,
+  formatShortDate,
+  formatShortWeekday,
+  toVNDate,
+} from "~/lib/datetime";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Match = RouterOutputs["match"]["listMatches"][number];
@@ -57,16 +62,7 @@ function groupByStageAndDate(
 
 function formatTabDate(dateKey: string): { weekday: string; date: string } {
   const date = new Date(`${dateKey}T12:00:00+07:00`);
-  const weekday = date.toLocaleDateString("en-GB", {
-    weekday: "short",
-    timeZone: MATCH_DISPLAY_TIMEZONE,
-  });
-  const dayMonth = date.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    timeZone: MATCH_DISPLAY_TIMEZONE,
-  });
-  return { weekday, date: dayMonth };
+  return { weekday: formatShortWeekday(date), date: formatShortDate(date) };
 }
 
 // Where a section must be (from viewport top) to be considered "active"

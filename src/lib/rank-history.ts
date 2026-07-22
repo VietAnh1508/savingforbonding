@@ -1,4 +1,5 @@
-import { allInResolvedPoints, toVNDate } from "~/lib/match";
+import { toVNDate } from "~/lib/datetime";
+import { allInResolvedPoints } from "~/lib/match";
 
 type RankableEntry = {
   beers: number;

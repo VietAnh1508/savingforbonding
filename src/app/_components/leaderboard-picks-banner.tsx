@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { StarBadge } from "~/app/_components/star-picker";
 import { TeamFlag } from "~/app/_components/match/team-flag";
 import { UserAvatar } from "~/app/_components/user-avatar";
-import { formatKickoffTime, outcomeLabel, pickByOutcome } from "~/lib/match";
+import { formatKickoffTime } from "~/lib/datetime";
+import { outcomeLabel, pickByOutcome } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Picks = RouterOutputs["leaderboard"]["bottomThreePicks"];

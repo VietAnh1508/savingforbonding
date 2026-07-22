@@ -1,5 +1,6 @@
 import { StarBadge } from "~/app/_components/star-picker";
 import { MatchScore } from "~/app/_components/match/match-score";
+import { formatShortDate } from "~/lib/datetime";
 import {
   deriveEffectiveResult,
   deriveResult,
@@ -153,10 +154,7 @@ export function RecentPredictions({ items }: { items: LedgerItem[] }) {
                   className="border-t border-foreground/10 even:bg-foreground/[0.03]"
                 >
                   <td className="whitespace-nowrap px-3 py-2 text-foreground/50">
-                    {item.kickoffAt.toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {formatShortDate(item.kickoffAt)}
                   </td>
                   <td className="px-3 py-2 font-medium">
                     <MatchLabel item={item} />

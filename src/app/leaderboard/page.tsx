@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Nav } from "~/app/_components/nav";
 import { LeaderboardTable } from "~/app/leaderboard/_components/leaderboard-table";
-import { MATCH_DISPLAY_TIMEZONE } from "~/lib/match";
+import { formatShortDateTime } from "~/lib/datetime";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -49,14 +49,7 @@ export default async function LeaderboardPage() {
           {global.lastUpdated && (
             <span className="text-foreground/40">
               Last updated:{" "}
-              {global.lastUpdated.toLocaleString("en-GB", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                timeZone: MATCH_DISPLAY_TIMEZONE,
-              })}
+              {formatShortDateTime(global.lastUpdated)}
             </span>
           )}
         </div>
