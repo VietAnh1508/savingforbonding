@@ -418,16 +418,19 @@ export function StagePenaltiesPanel() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold">Stage Penalties</h2>
+        <h2 className="text-lg font-semibold">Stage Penalties &amp; Game Settings</h2>
         <p className="mt-1 text-sm text-foreground/60">
-          Wrong-prediction and no-pick beer penalties, the Star of Hope budget,
-          and the highest multiplier a player can choose, per stage. Correct
+          Per stage: wrong-prediction and no-pick beer penalties, the Star of
+          Hope budget, and the highest multiplier a player can choose. Correct
           predictions always cost {BEER_WIN} beer, unaffected by this table.
+          Below that, global game settings shared across all stages.
         </p>
       </div>
 
-      <ChampionMaxMultiplierControl />
-      <TopScorerMaxMultiplierControl />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <ChampionMaxMultiplierControl />
+        <TopScorerMaxMultiplierControl />
+      </div>
       <BeerAmountSpinToggleControl />
 
       {stages.length === 0 ? (

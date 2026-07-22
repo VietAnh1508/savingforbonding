@@ -75,9 +75,10 @@ export default async function AdminPage({
         href="/admin/stages"
         className="block rounded-xl border border-foreground/10 bg-foreground/5 p-6 transition hover:bg-foreground/10"
       >
-        <h2 className="font-semibold">Stage Penalties</h2>
+        <h2 className="font-semibold">Stage Penalties &amp; Game Settings</h2>
         <p className="mt-1 text-sm text-foreground/60">
-          Tune wrong-prediction and no-pick beer penalties per stage.
+          Tune per-stage beer penalties and star budgets, plus global game
+          settings like champion/top scorer multipliers and beer amount spin.
         </p>
       </Link>
     </div>
