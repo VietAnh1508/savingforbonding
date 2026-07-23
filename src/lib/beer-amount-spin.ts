@@ -3,14 +3,26 @@ export type BeerAmount = (typeof BEER_AMOUNT_OPTIONS)[number];
 
 export const WHEEL_SEGMENT_ANGLE = 360 / BEER_AMOUNT_OPTIONS.length;
 
+/** Spin odds, positionally aligned with BEER_AMOUNT_OPTIONS — must sum to 100. */
+const BEER_AMOUNT_WEIGHT_VALUES = [8, 70, 15, 5, 2] as const;
+
+export const BEER_AMOUNT_WEIGHTS = new Map<BeerAmount, number>(
+  BEER_AMOUNT_OPTIONS.map((amount, i) => [amount, BEER_AMOUNT_WEIGHT_VALUES[i]!]),
+);
+
 export function pickRandomBeerAmount(
   random: () => number = Math.random,
 ): BeerAmount {
-  const index = Math.min(
-    Math.floor(random() * BEER_AMOUNT_OPTIONS.length),
-    BEER_AMOUNT_OPTIONS.length - 1,
+  const totalWeight = BEER_AMOUNT_WEIGHT_VALUES.reduce(
+    (sum, weight) => sum + weight,
+    0,
   );
-  return BEER_AMOUNT_OPTIONS[index]!;
+  let remaining = random() * totalWeight;
+  for (const amount of BEER_AMOUNT_OPTIONS) {
+    remaining -= BEER_AMOUNT_WEIGHTS.get(amount)!;
+    if (remaining < 0) return amount;
+  }
+  return BEER_AMOUNT_OPTIONS[BEER_AMOUNT_OPTIONS.length - 1]!;
 }
 
 /** Angle (degrees, clockwise from the top) of the middle of `amount`'s wedge. */

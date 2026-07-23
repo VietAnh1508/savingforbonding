@@ -21,8 +21,14 @@ describe("pickRandomBeerAmount", () => {
     );
   });
 
-  it("returns a mid option for a mid-range random value", () => {
-    expect(pickRandomBeerAmount(() => 0.5)).toBe(BEER_AMOUNT_OPTIONS[2]);
+  it("picks each option according to its cumulative weight boundary", () => {
+    // Weights: 500:8, 1000:70, 2000:15, 3000:5, 5000:2 (cumulative: 8, 78, 93, 98, 100)
+    expect(pickRandomBeerAmount(() => 0.07)).toBe(500);
+    expect(pickRandomBeerAmount(() => 0.08)).toBe(1000);
+    expect(pickRandomBeerAmount(() => 0.5)).toBe(1000);
+    expect(pickRandomBeerAmount(() => 0.78)).toBe(2000);
+    expect(pickRandomBeerAmount(() => 0.93)).toBe(3000);
+    expect(pickRandomBeerAmount(() => 0.98)).toBe(5000);
   });
 
   it("only ever returns a member of BEER_AMOUNT_OPTIONS", () => {
