@@ -5,8 +5,9 @@ import { useEffect, useRef } from "react";
 import {
   BEER_AMOUNT_OPTIONS,
   formatBeerAmount,
+  segmentAngle,
   segmentMidAngle,
-  WHEEL_SEGMENT_ANGLE,
+  segmentStartAngle,
 } from "~/lib/beer-amount-spin";
 
 // Evenly-spaced hues so the wheel always gets one distinct color per
@@ -19,10 +20,10 @@ const LABEL_RADIUS = 90;
 const SPIN_DURATION_MS = 4000;
 const SPIN_FALLBACK_MS = SPIN_DURATION_MS + 200;
 
-const WHEEL_BACKGROUND = `conic-gradient(${BEER_AMOUNT_OPTIONS.map(
-  (_, i) =>
-    `${SEGMENT_COLORS[i]} ${i * WHEEL_SEGMENT_ANGLE}deg ${(i + 1) * WHEEL_SEGMENT_ANGLE}deg`,
-).join(", ")})`;
+const WHEEL_BACKGROUND = `conic-gradient(${BEER_AMOUNT_OPTIONS.map((amount, i) => {
+  const start = segmentStartAngle(amount);
+  return `${SEGMENT_COLORS[i]} ${start}deg ${start + segmentAngle(amount)}deg`;
+}).join(", ")})`;
 
 interface BeerWheelProps {
   rotation: number;

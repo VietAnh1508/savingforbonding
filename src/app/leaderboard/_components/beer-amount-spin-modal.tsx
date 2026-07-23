@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { flushSync } from "react-dom";
 
 import { BeerWheel } from "~/app/leaderboard/_components/beer-wheel";
 import { CloseIcon } from "~/app/_components/icons/close-icon";
@@ -18,7 +19,9 @@ interface BeerAmountSpinModalProps {
   onClose: () => void;
 }
 
-type Phase = "idle" | "spinning" | "done" | "error";
+type Phase = "idle" | "spinning" | "result" | "done" | "error";
+
+const MAX_SPINS = 2;
 
 /**
  * Only render this when the caller knows the player hasn't spun yet
@@ -35,22 +38,33 @@ export function BeerAmountSpinModal({ onClose }: BeerAmountSpinModalProps) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [rotation, setRotation] = useState(0);
   const [resultAmount, setResultAmount] = useState<number | null>(null);
+  const [spinsUsed, setSpinsUsed] = useState(0);
 
   const canDismiss = phase !== "spinning";
   useModalDismiss(canDismiss ? onClose : () => undefined);
 
   async function handleSpinClick() {
+    // Commit the reset to 0 in its own paint, before "spinning" flips on —
+    // otherwise React batches both updates together and the wheel animates
+    // backward from its previous landing angle instead of snapping to 0. A
+    // re-spin then plays out identically to the first, fresh from 0.
+    flushSync(() => setRotation(0));
     setPhase("spinning");
     try {
       const result = await spinMut.mutateAsync();
       setResultAmount(result.amount);
       setRotation(rotationForAmount(result.amount as BeerAmount));
+      setSpinsUsed((n) => n + 1);
     } catch {
       setPhase("error");
     }
   }
 
-  async function handleSpinComplete() {
+  function handleSpinComplete() {
+    setPhase("result");
+  }
+
+  async function handleSave() {
     setPhase("done");
     toast.success("You've picked your beer price!");
     await utils.beerAmountSpin.getMySpin.invalidate();
@@ -93,8 +107,8 @@ export function BeerAmountSpinModal({ onClose }: BeerAmountSpinModalProps) {
         {phase === "idle" && (
           <>
             <p className="mt-4 text-xs text-foreground/50">
-              Once you spin, you&apos;re locked into this amount — there&apos;s
-              no retry.
+              You get up to {MAX_SPINS} spins — save the result or spin again
+              once before it locks in.
             </p>
             <button
               type="button"
@@ -108,6 +122,36 @@ export function BeerAmountSpinModal({ onClose }: BeerAmountSpinModalProps) {
 
         {phase === "spinning" && (
           <p className="mt-4 text-sm text-foreground/60">Spinning...</p>
+        )}
+
+        {phase === "result" && (
+          <>
+            <p className="mt-4 text-lg">
+              You&apos;ll pay{" "}
+              <span className="font-bold text-amber-600 dark:text-amber-400">
+                {resultAmount !== null && formatBeerAmount(resultAmount)}
+              </span>{" "}
+              per beer.
+            </p>
+            <div className="mt-4 flex justify-center gap-2">
+              {spinsUsed < MAX_SPINS && (
+                <button
+                  type="button"
+                  onClick={handleSpinClick}
+                  className="cursor-pointer rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10 hover:text-foreground"
+                >
+                  Spin again
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleSave}
+                className="cursor-pointer rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-600"
+              >
+                Save
+              </button>
+            </div>
+          </>
         )}
 
         {phase === "done" && (
