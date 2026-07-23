@@ -1,10 +1,13 @@
 export const BEER_AMOUNT_OPTIONS = [500, 1000, 2000, 3000, 5000] as const;
 export type BeerAmount = (typeof BEER_AMOUNT_OPTIONS)[number];
 
-export const WHEEL_SEGMENT_ANGLE = 360 / BEER_AMOUNT_OPTIONS.length;
-
 /** Spin odds, positionally aligned with BEER_AMOUNT_OPTIONS — must sum to 100. */
 const BEER_AMOUNT_WEIGHT_VALUES = [8, 70, 15, 5, 2] as const;
+
+const TOTAL_WEIGHT = BEER_AMOUNT_WEIGHT_VALUES.reduce(
+  (sum, weight) => sum + weight,
+  0,
+);
 
 export const BEER_AMOUNT_WEIGHTS = new Map<BeerAmount, number>(
   BEER_AMOUNT_OPTIONS.map((amount, i) => [amount, BEER_AMOUNT_WEIGHT_VALUES[i]!]),
@@ -13,11 +16,7 @@ export const BEER_AMOUNT_WEIGHTS = new Map<BeerAmount, number>(
 export function pickRandomBeerAmount(
   random: () => number = Math.random,
 ): BeerAmount {
-  const totalWeight = BEER_AMOUNT_WEIGHT_VALUES.reduce(
-    (sum, weight) => sum + weight,
-    0,
-  );
-  let remaining = random() * totalWeight;
+  let remaining = random() * TOTAL_WEIGHT;
   for (const amount of BEER_AMOUNT_OPTIONS) {
     remaining -= BEER_AMOUNT_WEIGHTS.get(amount)!;
     if (remaining < 0) return amount;
@@ -25,10 +24,27 @@ export function pickRandomBeerAmount(
   return BEER_AMOUNT_OPTIONS[BEER_AMOUNT_OPTIONS.length - 1]!;
 }
 
+/**
+ * Angular width (degrees) of `amount`'s wedge on the wheel — proportional to
+ * its odds, so a 70%-weighted amount gets a much wider slice than a 2% one.
+ */
+export function segmentAngle(amount: BeerAmount): number {
+  return (BEER_AMOUNT_WEIGHTS.get(amount)! / TOTAL_WEIGHT) * 360;
+}
+
+/** Angle (degrees, clockwise from the top) where `amount`'s wedge starts. */
+export function segmentStartAngle(amount: BeerAmount): number {
+  const index = BEER_AMOUNT_OPTIONS.indexOf(amount);
+  const weightBefore = BEER_AMOUNT_WEIGHT_VALUES.slice(0, index).reduce(
+    (sum, weight) => sum + weight,
+    0,
+  );
+  return (weightBefore / TOTAL_WEIGHT) * 360;
+}
+
 /** Angle (degrees, clockwise from the top) of the middle of `amount`'s wedge. */
 export function segmentMidAngle(amount: BeerAmount): number {
-  const index = BEER_AMOUNT_OPTIONS.indexOf(amount);
-  return index * WHEEL_SEGMENT_ANGLE + WHEEL_SEGMENT_ANGLE / 2;
+  return segmentStartAngle(amount) + segmentAngle(amount) / 2;
 }
 
 const WHEEL_FULL_SPINS = 5;
@@ -42,7 +58,7 @@ export function rotationForAmount(
   random: () => number = Math.random,
 ): number {
   const midAngle = segmentMidAngle(amount);
-  const jitter = (random() - 0.5) * (WHEEL_SEGMENT_ANGLE * 0.4);
+  const jitter = (random() - 0.5) * (segmentAngle(amount) * 0.4);
   return WHEEL_FULL_SPINS * 360 + (360 - midAngle) + jitter;
 }
 

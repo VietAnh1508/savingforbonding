@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   BEER_AMOUNT_OPTIONS,
+  BEER_AMOUNT_WEIGHTS,
   computeBeerPoolAmount,
   formatBeerAmount,
   pickRandomBeerAmount,
   rotationForAmount,
+  segmentAngle,
   segmentMidAngle,
-  WHEEL_SEGMENT_ANGLE,
 } from "~/lib/beer-amount-spin";
 
 describe("pickRandomBeerAmount", () => {
@@ -81,13 +82,35 @@ describe("formatBeerAmount", () => {
   });
 });
 
-describe("segmentMidAngle", () => {
-  it("returns the middle of each option's wedge in wheel order", () => {
-    BEER_AMOUNT_OPTIONS.forEach((amount, i) => {
-      expect(segmentMidAngle(amount)).toBeCloseTo(
-        i * WHEEL_SEGMENT_ANGLE + WHEEL_SEGMENT_ANGLE / 2,
-      );
+describe("segmentAngle", () => {
+  it("is proportional to each option's weight out of the total", () => {
+    const totalWeight = BEER_AMOUNT_OPTIONS.reduce(
+      (sum, amount) => sum + BEER_AMOUNT_WEIGHTS.get(amount)!,
+      0,
+    );
+    BEER_AMOUNT_OPTIONS.forEach((amount) => {
+      const weight = BEER_AMOUNT_WEIGHTS.get(amount)!;
+      expect(segmentAngle(amount)).toBeCloseTo((weight / totalWeight) * 360);
     });
+  });
+
+  it("sums to a full circle across all options", () => {
+    const total = BEER_AMOUNT_OPTIONS.reduce(
+      (sum, amount) => sum + segmentAngle(amount),
+      0,
+    );
+    expect(total).toBeCloseTo(360);
+  });
+});
+
+describe("segmentMidAngle", () => {
+  it("places each wedge's middle halfway through its own angle, back to back in wheel order", () => {
+    let expectedStart = 0;
+    for (const amount of BEER_AMOUNT_OPTIONS) {
+      const angle = segmentAngle(amount);
+      expect(segmentMidAngle(amount)).toBeCloseTo(expectedStart + angle / 2);
+      expectedStart += angle;
+    }
   });
 });
 
@@ -115,7 +138,7 @@ describe("rotationForAmount", () => {
           finalAngle - ((360 - segmentMidAngle(amount)) % 360);
         // Tiny epsilon for floating-point rounding through the `%` above.
         expect(Math.abs(jitter)).toBeLessThanOrEqual(
-          WHEEL_SEGMENT_ANGLE * 0.2 + 1e-9,
+          segmentAngle(amount) * 0.2 + 1e-9,
         );
       }
     }
