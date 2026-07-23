@@ -7,7 +7,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
-import { Prisma, type PrismaClient } from "../../../../generated/prisma";
+import { type PrismaClient } from "../../../../generated/prisma";
 
 async function isSpinEnabled(db: PrismaClient, tournamentId: string) {
   const settings = await db.gameSettings.findUnique({
@@ -45,25 +45,14 @@ export const beerAmountSpinRouter = createTRPCRouter({
 
     const amount = pickRandomBeerAmount();
 
-    // No pre-check for an existing spin — the @@unique constraint on
-    // [userId, tournamentId] is the actual guard (also closes the race
-    // between two concurrent requests a separate pre-check wouldn't), so
-    // just attempt the create and translate a P2002 into a clean CONFLICT.
-    try {
-      return await ctx.db.beerAmountSpin.create({
-        data: { userId, tournamentId, amount },
-      });
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002"
-      ) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: "You've already spun.",
-        });
-      }
-      throw error;
-    }
+    // Upsert rather than create-only: the modal lets a player re-spin once
+    // before locking in, which just overwrites this row with the latest
+    // roll. The @@unique constraint on [userId, tournamentId] still caps
+    // it at one row per player per tournament.
+    return ctx.db.beerAmountSpin.upsert({
+      where: { userId_tournamentId: { userId, tournamentId } },
+      create: { userId, tournamentId, amount },
+      update: { amount },
+    });
   }),
 });
