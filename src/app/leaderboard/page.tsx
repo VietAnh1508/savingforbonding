@@ -24,6 +24,15 @@ export default async function LeaderboardPage() {
     ]);
   }
 
+  // Real beer-pool total: sum of each spinner's own beers × their own spun
+  // amount, not the pool's average amount applied across every player —
+  // non-spinners (amount === null) don't have a priced amount to include.
+  const beerTotal = global.entries.reduce(
+    (sum, entry) =>
+      entry.amount !== null ? sum + entry.beers * entry.amount : sum,
+    0,
+  );
+
   return (
     <HydrateClient>
       <Nav />
@@ -46,14 +55,22 @@ export default async function LeaderboardPage() {
 
           {spinStatus.enabled &&
             (beerPool.spinnerCount > 0 ? (
-              <p className="mt-2 text-sm text-foreground/60">
-                Avg. {formatBeerAmount(beerPool.averageAmount!)}/beer
-                across {beerPool.spinnerCount} spinner
-                {beerPool.spinnerCount === 1 ? "" : "s"} →{" "}
-                <span className="font-semibold text-foreground">
-                  {formatBeerAmount(beerPool.finalAmount!)} total
-                </span>
-              </p>
+              <div className="mt-2 space-y-1 text-sm text-foreground/60">
+                <p>
+                  Avg. {formatBeerAmount(beerPool.averageAmount!)}/beer across{" "}
+                  {beerPool.spinnerCount} spinner
+                  {beerPool.spinnerCount === 1 ? "" : "s"} →{" "}
+                  <span className="font-semibold text-foreground">
+                    {formatBeerAmount(beerPool.finalAmount!)} total
+                  </span>
+                </p>
+                <p>
+                  Absolute amount (beers × individual price) →{" "}
+                  <span className="font-semibold text-foreground">
+                    {formatBeerAmount(beerTotal)} total
+                  </span>
+                </p>
+              </div>
             ) : (
               <p className="mt-2 text-sm text-foreground/40">
                 No one has spun the wheel yet — amount TBD.
