@@ -10,6 +10,7 @@ import {
 import { MatchStatus } from "../../../../generated/prisma";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { getActiveTournamentId } from "~/server/services/active-tournament";
 import {
   emptyMatchVoteCounts,
   getVoteCountsByMatchId,
@@ -149,4 +150,12 @@ export const matchRouter = createTRPCRouter({
         voters,
       };
     }),
+
+  getActiveTournament: publicProcedure.query(async ({ ctx }) => {
+    const tournamentId = await getActiveTournamentId(ctx.db);
+    return ctx.db.tournament.findUniqueOrThrow({
+      where: { id: tournamentId },
+      select: { endDate: true },
+    });
+  }),
 });

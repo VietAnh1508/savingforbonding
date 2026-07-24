@@ -123,6 +123,12 @@ First phase where the UI visibly changes.
       tabs, rules page, etc.)
 - [ ] Rules page: replace the hardcoded 7-stage beer-penalty table with something data-driven off
       the active tournament's actual stages
+- [x] Upcoming tab empty state: distinguish "tournament finished" from "no matches yet" — checked
+      against the active tournament's `endDate` (new `match.getActiveTournament` query) rather than
+      inferring from `completed.length`, so a sync outage that empties the upcoming list mid-tournament
+      doesn't get misreported as "finished". `Tournament.status` still has no writer to flip it to
+      `COMPLETED`, so it wasn't usable as the source of truth here — revisit once Phase 4's tournament
+      CRUD actually maintains that field.
 
 ## Phase 5 — Visual modernization (optional, parallel track)
 
@@ -153,6 +159,12 @@ Doesn't block or depend on Phases 1-4.
 Dated entries — major milestones only, newest first. Implementation detail lives in the checklist
 above and in git history, not here.
 
+- **2026-07-24** — Matches page "Upcoming" tab now shows "The tournament has finished..." instead of
+  "No upcoming matches found." once `now > Tournament.endDate`, fixing a confusing empty state once
+  the World Cup itself wrapped. First cut inferred this from `completed.length > 0`, but that's wrong
+  if a sync failure empties the upcoming list mid-tournament — switched to comparing against
+  `endDate` via a new `match.getActiveTournament` query instead. Small, standalone fix — not gated on
+  any other Phase 4 item.
 - **2026-07-22** — `TeamFlag` gained an `imageUrl` prop so the top-scorer UI reuses it instead of
   duplicating flag-rendering logic. Committed `bfdbfa7`, pushed to `origin/develop`. Applied both
   pending country-vocabulary migrations (`add_match_country_codes`, `add_topscorer_candidate_logo_url`)
