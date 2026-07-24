@@ -132,12 +132,38 @@ First phase where the UI visibly changes.
 
 ## Phase 5 — Visual modernization (optional, parallel track)
 
-Doesn't block or depend on Phases 1-4.
+Doesn't block or depend on Phases 1-4. Today there's no shared UI component
+library at all — every card/button (`match-card.tsx`, `submit-button.tsx`,
+`champion-vote-card.tsx`, `top-scorer-vote-card.tsx`, admin's `match-card.tsx`/
+`user-card.tsx`, `challenge-card.tsx`, ...) is hand-rolled Tailwind, and raw
+`emerald-400/500/600` classes are scattered across 46 files. Adopting
+shadcn/ui is the vehicle for this phase's work, not a separate effort bolted
+on top of it.
 
-- [ ] Tokenize the accent color (`--color-brand` or similar) — currently raw
-      `emerald-400/500/600` scattered across components
-- [ ] Revisit Champion/Top-Scorer card designs
+- [x] Decisions locked (rationale in the 2026-07-25 log entry): Base UI over
+      Radix; `--fg`/`--card-bg` renamed to shadcn's `--foreground`/`--card`,
+      `--bg-from`/`--bg-to`/`--toast-bg` stay app-specific.
+- [ ] Run `npx shadcn init` for real (no `--base radix`)
+- [ ] In `globals.css`, rename `--fg` → `--foreground` and `--card-bg` →
+      `--card` everywhere (`:root`, `html:not(.dark)`, `@theme inline`
+      mappings); leave `--bg-from`/`--bg-to`/`--toast-bg` as-is
+- [ ] Point `--primary` at the app's accent color (this is the seam Phase 4's
+      per-tournament branding will hang off later)
+- [ ] Install shadcn primitives on demand, per component being migrated — not
+      a speculative up-front `button`/`card`/`badge`/`dialog` install
+- [ ] Migrate hand-rolled components to shadcn primitives, highest-duplication
+      first: `SubmitButton` + other ad hoc buttons → card components
+      (`match-card.tsx`, `champion-vote-card.tsx`, `top-scorer-vote-card.tsx`,
+      admin cards, `challenge-card.tsx`) → badges (`MatchStatusBadge`,
+      `StarBadge`). No functional behavior change — star-picker, all-in
+      checkbox, quick-vote button, etc. must keep working identically.
+- [ ] Revisit Champion/Top-Scorer card designs, once the `Card` primitive is
+      in place
 - [ ] General polish pass
+- [ ] Verify: `npm run typecheck` passes; cold-load the app in both light and
+      dark mode and confirm no flash-of-wrong-theme; manually re-check the
+      interactive bits of every migrated component (star-picker, all-in,
+      quick-vote, admin card actions) still behave the same as before.
 
 ---
 
@@ -159,6 +185,11 @@ Doesn't block or depend on Phases 1-4.
 Dated entries — major milestones only, newest first. Implementation detail lives in the checklist
 above and in git history, not here.
 
+- **2026-07-25** — Phase 5 planned around adopting shadcn/ui. A throwaway-branch `init` dry run
+  confirmed no CSS variable collisions with the existing `globals.css`. Two decisions resolved:
+  **Base UI** over Radix as the primitive library, and a partial token rename (`--fg`/`--card-bg`
+  → shadcn's `--foreground`/`--card`; gradient and toast tokens stay app-specific, no shadcn
+  equivalent).
 - **2026-07-24** — Matches page "Upcoming" tab now shows "The tournament has finished..." instead of
   "No upcoming matches found." once `now > Tournament.endDate`, fixing a confusing empty state once
   the World Cup itself wrapped. First cut inferred this from `completed.length > 0`, but that's wrong
