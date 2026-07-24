@@ -4,13 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This App Does
 
-SavingForBonding is a FIFA World Cup football prediction game. Users predict match outcomes and accrue beer "debts" for wrong picks (tracked as points on a leaderboard). The app is a T3 Stack project: Next.js 15 (App Router), tRPC, Prisma, NextAuth, and Tailwind CSS v4.
+SavingForBonding started as a FIFA World Cup football prediction game: users predict match outcomes and accrue beer "debts" for wrong picks (tracked as points on a leaderboard). The 2026 World Cup has now finished, and the app is being generalized into a platform that can run future tournaments — not just future FIFA World Cups, but different sports/competitions entirely (see "Project Context & Engineering Principles" below and `docs/MULTI_TOURNAMENT_PLATFORM_PLAN.md`). The app is a T3 Stack project: Next.js 15 (App Router), tRPC, Prisma, NextAuth, and Tailwind CSS v4.
 
 ## Project Context & Engineering Principles
 
-This is an internal app shared among a group of friends — at most ~40 users. It runs for the duration of the 2026 FIFA World Cup (through end of July 2026), roughly one month.
+This is an internal app shared among a group of friends — usually ~40 users, up to ~100 at most. It's never a public-facing product, and that doesn't change with multi-tournament support.
 
-**Keep it simple.** This is not a public-facing product. Do not over-engineer: no need for rate limiting, complex caching strategies, multi-tenancy, advanced security hardening, or abstractions built for hypothetical scale. A solution that works cleanly for 40 users is the right solution.
+**Scope: design for real tournament variety, not hypothetical scale.** Running future tournaments is now a concrete, near-term requirement, not speculation — and "tournament" is deliberately broad: non-FIFA competitions, club-level tournaments, brackets with no group stage (straight knockout), round-robin/league formats with no bracket at all, different data sources per tournament. It's fine (and expected) to pay for real flexibility here:
+
+- A first-class `Tournament` model — nothing tournament-scoped should be a hardcoded singleton or free-text field.
+- Adapters for fixture/award data sources, so a new tournament or provider is a new adapter/config, not a rewrite of sync or business logic (open-closed principle: extend via a new adapter, don't modify existing sync/scoring code per source).
+- Stage-name-agnostic bracket logic — no hardcoded "Final"/"Third Place Playoff"/group-stage string matching driving voting deadlines or eligibility.
+
+**Keep it simple everywhere else.** The above is where flexibility is worth the cost — it isn't a license to generalize the whole app. Still no rate limiting, complex caching, advanced security hardening, or abstractions with no concrete second use case. Concurrent/simultaneous tournaments, a generic multi-award model, and dynamic/plugin-based adapter loading are explicitly out of scope — see the "Out of scope" section of `docs/MULTI_TOURNAMENT_PLATFORM_PROGRESS.md`. When in doubt whether something is "real flexibility" or "hypothetical scale," check whether `docs/MULTI_TOURNAMENT_PLATFORM_PLAN.md` already made that call before inventing a new abstraction.
 
 **Keep it clean.** Simple does not mean hacky. Code should be readable, maintainable, and structured so new features or bug fixes are easy to add. Avoid shortcuts that create technical debt or make the codebase harder to reason about. Prefer straightforward patterns over clever ones.
 
