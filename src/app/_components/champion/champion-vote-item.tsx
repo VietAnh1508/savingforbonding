@@ -3,6 +3,8 @@
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
 import { TeamFlag } from "~/app/_components/match/team-flag";
 import { StarBadge, StarPicker } from "~/app/_components/star-picker";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
 import { voterLabel } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
@@ -64,9 +66,9 @@ export function ChampionVoteItem({
         <TeamFlag country={candidate.teamName} code={candidate.countryCode} size="md" />
         <span className="flex-1">{candidate.teamName}</span>
         {eliminated && (
-          <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-red-600 dark:text-red-400">
+          <Badge className="bg-red-500/15 font-semibold text-red-600 dark:text-red-400">
             OUT
-          </span>
+          </Badge>
         )}
         <span className="text-sm font-normal text-foreground/50">
           {voterLabel(count)}
@@ -86,23 +88,24 @@ export function ChampionVoteItem({
           />
         </svg>
         {isSignedIn && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
             disabled={!votingOpen || isCastPending || eliminated || selected}
             onClick={(e) => {
               e.stopPropagation();
               onVote();
             }}
             aria-label={`Pick ${candidate.teamName} as champion`}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 ${
+            className={`h-auto gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm ${
               selected
-                ? "border border-emerald-500/50 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/30"
+                ? "border border-emerald-500/50 bg-emerald-500/20 text-emerald-700 hover:bg-emerald-500/30 dark:text-emerald-300"
                 : "bg-foreground/10 hover:bg-foreground/20"
             }`}
           >
             {isVotingForThis && <SpinnerIcon className="h-3 w-3" />}
             {selected ? "Picked" : "Pick"}
-          </button>
+          </Button>
         )}
         {isSignedIn && selected && (
           <StarPicker

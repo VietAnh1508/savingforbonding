@@ -8,7 +8,7 @@ export function Tooltip({ label, children }: TooltipProps) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
 
   return (
-    <div
+    <span
       className="inline-flex"
       onMouseEnter={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
@@ -30,6 +30,6 @@ export function Tooltip({ label, children }: TooltipProps) {
           {label}
         </span>
       )}
-    </div>
+    </span>
   );
 }

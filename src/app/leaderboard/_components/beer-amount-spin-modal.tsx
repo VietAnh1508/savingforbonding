@@ -6,8 +6,14 @@ import { flushSync } from "react-dom";
 
 import { BeerWheel } from "~/app/leaderboard/_components/beer-wheel";
 import { CloseIcon } from "~/app/_components/icons/close-icon";
-import { useModalDismiss } from "~/app/hooks/use-modal-dismiss";
 import { useToast } from "~/app/_components/toast";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
 import {
   formatBeerAmount,
   rotationForAmount,
@@ -41,7 +47,6 @@ export function BeerAmountSpinModal({ onClose }: BeerAmountSpinModalProps) {
   const [spinsUsed, setSpinsUsed] = useState(0);
 
   const canDismiss = phase !== "spinning";
-  useModalDismiss(canDismiss ? onClose : () => undefined);
 
   async function handleSpinClick() {
     // Commit the reset to 0 in its own paint, before "spinning" flips on —
@@ -77,26 +82,31 @@ export function BeerAmountSpinModal({ onClose }: BeerAmountSpinModalProps) {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm dark:bg-black/60"
-      onClick={canDismiss ? onClose : undefined}
+    <Dialog
+      open
+      onOpenChange={(next) => {
+        if (!canDismiss) return;
+        if (!next) onClose();
+      }}
     >
-      <div
-        className="w-full max-w-sm rounded-2xl border border-foreground/10 bg-card p-6 text-center shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-base font-semibold">Settle your beer price</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={!canDismiss}
-            aria-label="Close"
-            className="cursor-pointer rounded-lg p-1 text-foreground/50 transition hover:bg-foreground/10 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+      <DialogContent showCloseButton={false} className="text-center sm:max-w-sm">
+        <DialogHeader className="flex-row items-center justify-between">
+          <DialogTitle className="font-semibold">
+            Settle your beer price
+          </DialogTitle>
+          <DialogClose
+            render={
+              <button
+                type="button"
+                disabled={!canDismiss}
+                aria-label="Close"
+                className="cursor-pointer rounded-lg p-1 text-foreground/50 transition hover:bg-foreground/10 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+              />
+            }
           >
             <CloseIcon className="h-4 w-4" />
-          </button>
-        </div>
+          </DialogClose>
+        </DialogHeader>
 
         <BeerWheel
           rotation={rotation}
@@ -196,7 +206,7 @@ export function BeerAmountSpinModal({ onClose }: BeerAmountSpinModalProps) {
             </div>
           </>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

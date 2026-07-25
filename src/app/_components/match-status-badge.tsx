@@ -1,3 +1,5 @@
+import { Badge } from "~/components/ui/badge";
+
 type MatchStatus = "SCHEDULED" | "LIVE" | "COMPLETED" | "POSTPONED" | "CANCELLED";
 
 const STYLES: Record<MatchStatus, string> = {
@@ -17,11 +19,5 @@ const LABELS: Record<MatchStatus, string> = {
 };
 
 export function MatchStatusBadge({ status }: { status: MatchStatus }) {
-  return (
-    <span
-      className={`rounded-full px-2 py-0.5 text-xs font-medium ${STYLES[status]}`}
-    >
-      {LABELS[status]}
-    </span>
-  );
+  return <Badge className={STYLES[status]}>{LABELS[status]}</Badge>;
 }

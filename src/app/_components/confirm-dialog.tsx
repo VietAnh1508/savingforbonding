@@ -1,6 +1,14 @@
 "use client";
 
 import { SpinnerIcon } from "./icons/spinner-icon";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -25,20 +33,14 @@ export function ConfirmDialog({
   dangerous = false,
   loading = false,
 }: ConfirmDialogProps) {
-  if (!open) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm dark:bg-black/60"
-      onClick={onCancel}
-    >
-      <div
-        className="w-full max-w-sm rounded-2xl border border-foreground/10 bg-card p-6 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="mb-2 text-base font-semibold">{title}</h3>
-        <p className="mb-6 text-sm text-foreground/60">{description}</p>
-        <div className="flex justify-end gap-2">
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onCancel(); }}>
+      <DialogContent showCloseButton={false} className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="font-semibold">{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="mx-0 mb-0 flex-row justify-end rounded-none border-t-0 bg-transparent p-0">
           <button
             type="button"
             onClick={onCancel}
@@ -60,8 +62,8 @@ export function ConfirmDialog({
             {loading && <SpinnerIcon className="h-3.5 w-3.5" />}
             {confirmLabel}
           </button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

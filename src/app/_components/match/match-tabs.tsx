@@ -237,6 +237,10 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
 
   const utils = api.useUtils();
   const { data: allMatches = [] } = api.match.listMatches.useQuery({});
+  const { data: activeTournament } = api.match.getActiveTournament.useQuery();
+  const tournamentFinished = activeTournament
+    ? new Date() > new Date(activeTournament.endDate)
+    : false;
 
   const upcoming = useMemo(
     () =>
@@ -482,7 +486,9 @@ export function MatchTabs({ isSignedIn }: { isSignedIn: boolean }) {
           stageGroups={stageGroups}
           emptyMessage={
             activeTab === "upcoming"
-              ? "No upcoming matches found."
+              ? tournamentFinished
+                ? "The tournament has finished — check the Completed tab to see how everyone did."
+                : "No upcoming matches found."
               : "No completed matches yet."
           }
           isSignedIn={isSignedIn}

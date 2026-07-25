@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AllInIcon } from "~/app/_components/icons/all-in-icon";
 import { MatchStatusBadge } from "~/app/_components/match-status-badge";
+import { Card } from "~/components/ui/card";
 import { MatchScore } from "~/app/_components/match/match-score";
 import { MatchVoteCounts } from "~/app/_components/match/match-vote-counts";
 import { RatioDisplay } from "~/app/_components/match/ratio-display";
@@ -192,7 +193,7 @@ export function MatchCard({
   });
 
   return (
-    <div
+    <Card
       role="button"
       tabIndex={0}
       onClick={() => onOpen(match.id)}
@@ -202,7 +203,7 @@ export function MatchCard({
           onOpen(match.id);
         }
       }}
-      className="block cursor-pointer rounded-xl border border-foreground/10 bg-foreground/5 p-4 transition hover:border-emerald-500/30 hover:bg-foreground/10"
+      className="block cursor-pointer rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-4 text-base text-foreground ring-0 transition hover:border-emerald-500/30 hover:bg-foreground/10"
     >
       <div className="mb-3 flex items-center justify-between">
         <MatchStatusBadge status={match.status} />
@@ -308,6 +309,6 @@ export function MatchCard({
           stageNoVotePenalty={match.stageNoVotePenalty}
         />
       </div>
-    </div>
+    </Card>
   );
 }
