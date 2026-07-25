@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 
 import { CloseIcon } from "~/app/_components/icons/close-icon";
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
@@ -8,8 +9,13 @@ import { OutcomePicker } from "~/app/_components/match/outcome-picker";
 import { RatioDisplay } from "~/app/_components/match/ratio-display";
 import { StarPicker } from "~/app/_components/star-picker";
 import { useToast } from "~/app/_components/toast";
-import { useModalDismiss } from "~/app/hooks/use-modal-dismiss";
 import { useSetStar } from "~/app/hooks/use-set-star";
+import {
+  Dialog,
+  DialogClose,
+  DialogOverlay,
+  DialogPortal,
+} from "~/components/ui/dialog";
 import { formatKickoffTime } from "~/lib/datetime";
 import { voterLabel } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
@@ -68,8 +74,6 @@ export function DayPredictModal({
     },
   });
 
-  useModalDismiss(onClose);
-
   const castBatch = api.vote.castBatch.useMutation({
     onSuccess: ({ saved }) => {
       void utils.match.listMatches.invalidate();
@@ -109,150 +113,149 @@ export function DayPredictModal({
   ).length;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-
-      {/* Panel */}
-      <div className="relative z-10 w-full max-w-lg rounded-t-2xl border border-foreground/10 bg-card shadow-2xl sm:rounded-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-foreground/10 px-6 py-4">
-          <div>
-            <h2 className="text-lg font-semibold">Predictions</h2>
-            <p className="text-sm text-foreground/50">{dateLabel}</p>
+    <Dialog open onOpenChange={(next) => { if (!next) onClose(); }}>
+      <DialogPortal>
+        <DialogOverlay />
+        <DialogPrimitive.Popup className="fixed inset-x-0 bottom-0 z-50 flex max-h-[90vh] w-full flex-col gap-0 overflow-hidden rounded-t-2xl border border-foreground/10 bg-card shadow-2xl outline-none duration-150 data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-bottom sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-foreground/10 px-6 py-4">
+            <div>
+              <h2 className="text-lg font-semibold">Predictions</h2>
+              <p className="text-sm text-foreground/50">{dateLabel}</p>
+            </div>
+            <DialogClose
+              render={
+                <button
+                  type="button"
+                  className="rounded-lg p-1.5 text-foreground/50 transition hover:bg-foreground/10 hover:text-foreground"
+                />
+              }
+            >
+              <CloseIcon />
+            </DialogClose>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-foreground/50 transition hover:bg-foreground/10 hover:text-foreground"
-          >
-            <CloseIcon />
-          </button>
-        </div>
 
-        {/* Match rows */}
-        <div className="max-h-[60vh] overflow-y-auto px-6 py-4 space-y-4">
-          {matches.map((match) => {
-            const locked = !match.votingOpen;
-            const selected = selections[match.id];
+          {/* Match rows */}
+          <div className="max-h-[60vh] overflow-y-auto px-6 py-4 space-y-4">
+            {matches.map((match) => {
+              const locked = !match.votingOpen;
+              const selected = selections[match.id];
 
-            const starsAllocated = match.stageStarsAllocated;
-            const hasExistingVote = match.userVoteOutcome !== null;
-            const currentMultiplier =
-              match.id in starOverrides
-                ? (starOverrides[match.id] ?? null)
-                : (match.userVoteResult?.starMultiplier ?? null);
-            const isStarred = currentMultiplier != null;
-            const stageAllotment = starAllotments?.find(
-              (a) => a.stage === match.stage,
-            );
-            // Adjust the server's remaining count for this session's pending
-            // overrides — only a null→multiplier change spends a star and only
-            // a multiplier→null change frees one; changing the multiplier on
-            // an already-starred vote is net zero.
-            const stageDelta = matches
-              .filter((m) => m.stage === match.stage && m.id in starOverrides)
-              .reduce((sum, m) => {
-                const original = m.userVoteResult?.starMultiplier ?? null;
-                const effective = starOverrides[m.id] ?? null;
-                if (original == null && effective != null) return sum + 1;
-                if (original != null && effective == null) return sum - 1;
-                return sum;
-              }, 0);
-            const serverRemaining = stageAllotment?.remaining ?? starsAllocated;
-            const starsRemaining = Math.max(0, serverRemaining - stageDelta);
-            // Whether a NEW star (either tier) can be placed on this vote
-            const canStar =
-              starsAllocated > 0 &&
-              hasExistingVote &&
-              !locked &&
-              (isStarred || starsRemaining > 0);
+              const starsAllocated = match.stageStarsAllocated;
+              const hasExistingVote = match.userVoteOutcome !== null;
+              const currentMultiplier =
+                match.id in starOverrides
+                  ? (starOverrides[match.id] ?? null)
+                  : (match.userVoteResult?.starMultiplier ?? null);
+              const isStarred = currentMultiplier != null;
+              const stageAllotment = starAllotments?.find(
+                (a) => a.stage === match.stage,
+              );
+              // Adjust the server's remaining count for this session's pending
+              // overrides — only a null→multiplier change spends a star and only
+              // a multiplier→null change frees one; changing the multiplier on
+              // an already-starred vote is net zero.
+              const stageDelta = matches
+                .filter((m) => m.stage === match.stage && m.id in starOverrides)
+                .reduce((sum, m) => {
+                  const original = m.userVoteResult?.starMultiplier ?? null;
+                  const effective = starOverrides[m.id] ?? null;
+                  if (original == null && effective != null) return sum + 1;
+                  if (original != null && effective == null) return sum - 1;
+                  return sum;
+                }, 0);
+              const serverRemaining = stageAllotment?.remaining ?? starsAllocated;
+              const starsRemaining = Math.max(0, serverRemaining - stageDelta);
+              // Whether a NEW star (either tier) can be placed on this vote
+              const canStar =
+                starsAllocated > 0 &&
+                hasExistingVote &&
+                !locked &&
+                (isStarred || starsRemaining > 0);
 
-            return (
-              <div key={match.id} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span
-                    className={
-                      locked
-                        ? "font-medium text-red-500 dark:text-red-400"
-                        : "text-foreground/40"
-                    }
-                  >
-                    {locked
-                      ? "🔒 Voting closed"
-                      : formatKickoffTime(match.kickoffAt)}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {starsAllocated > 0 && hasExistingVote && (
-                      <StarPicker
-                        multiplier={currentMultiplier}
-                        maxMultiplier={match.stageMaxStarMultiplier}
-                        disabled={setStar.isPending || locked || (!isStarred && !canStar)}
-                        onSelect={(multiplier) =>
-                          setStar.mutate({ matchId: match.id, multiplier })
-                        }
-                        starClassName="h-3.5 w-3.5"
+              return (
+                <div key={match.id} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span
+                      className={
+                        locked
+                          ? "font-medium text-red-500 dark:text-red-400"
+                          : "text-foreground/40"
+                      }
+                    >
+                      {locked
+                        ? "🔒 Voting closed"
+                        : formatKickoffTime(match.kickoffAt)}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {starsAllocated > 0 && hasExistingVote && (
+                        <StarPicker
+                          multiplier={currentMultiplier}
+                          maxMultiplier={match.stageMaxStarMultiplier}
+                          disabled={setStar.isPending || locked || (!isStarred && !canStar)}
+                          onSelect={(multiplier) =>
+                            setStar.mutate({ matchId: match.id, multiplier })
+                          }
+                          starClassName="h-3.5 w-3.5"
+                        />
+                      )}
+                      <RatioDisplay
+                        homeRatio={match.homeRatio}
+                        awayRatio={match.awayRatio}
                       />
-                    )}
-                    <RatioDisplay
-                      homeRatio={match.homeRatio}
-                      awayRatio={match.awayRatio}
-                    />
+                    </div>
+                  </div>
+
+                  <OutcomePicker
+                    homeCountry={match.homeCountry}
+                    awayCountry={match.awayCountry}
+                    homeCountryCode={match.homeCountryCode}
+                    awayCountryCode={match.awayCountryCode}
+                    selectedOutcome={selected}
+                    onSelect={(outcome) => select(match.id, outcome)}
+                    disabled={locked || castBatch.isPending}
+                    size="compact"
+                    showFlags
+                  />
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs text-foreground/40">
+                    <span>{voterLabel(match.voteCounts.home)}</span>
+                    <span>{voterLabel(match.voteCounts.draw)}</span>
+                    <span>{voterLabel(match.voteCounts.away)}</span>
                   </div>
                 </div>
-
-                <OutcomePicker
-                  homeCountry={match.homeCountry}
-                  awayCountry={match.awayCountry}
-                  homeCountryCode={match.homeCountryCode}
-                  awayCountryCode={match.awayCountryCode}
-                  selectedOutcome={selected}
-                  onSelect={(outcome) => select(match.id, outcome)}
-                  disabled={locked || castBatch.isPending}
-                  size="compact"
-                  showFlags
-                />
-                <div className="grid grid-cols-3 gap-2 text-center text-xs text-foreground/40">
-                  <span>{voterLabel(match.voteCounts.home)}</span>
-                  <span>{voterLabel(match.voteCounts.draw)}</span>
-                  <span>{voterLabel(match.voteCounts.away)}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between border-t border-foreground/10 px-6 py-4">
-          <span className="text-sm text-foreground/50">
-            {selectedCount}/{votableCount} selected
-          </span>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={castBatch.isPending || selectedCount === 0}
-              className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {castBatch.isPending && <SpinnerIcon className="h-4 w-4" />}
-              Save predictions
-            </button>
+              );
+            })}
           </div>
-        </div>
-      </div>
-    </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between border-t border-foreground/10 px-6 py-4">
+            <span className="text-sm text-foreground/50">
+              {selectedCount}/{votableCount} selected
+            </span>
+            <div className="flex gap-3">
+              <DialogClose
+                render={
+                  <button
+                    type="button"
+                    className="rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10"
+                  />
+                }
+              >
+                Cancel
+              </DialogClose>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={castBatch.isPending || selectedCount === 0}
+                className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {castBatch.isPending && <SpinnerIcon className="h-4 w-4" />}
+                Save predictions
+              </button>
+            </div>
+          </div>
+        </DialogPrimitive.Popup>
+      </DialogPortal>
+    </Dialog>
   );
 }
-

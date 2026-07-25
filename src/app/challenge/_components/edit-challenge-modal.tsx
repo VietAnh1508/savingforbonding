@@ -5,7 +5,14 @@ import { useState } from "react";
 import { CloseIcon } from "~/app/_components/icons/close-icon";
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
 import { useToast } from "~/app/_components/toast";
-import { useModalDismiss } from "~/app/hooks/use-modal-dismiss";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
 import { maxStakeBeers } from "~/lib/challenge";
 import { formatBeers } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
@@ -19,7 +26,6 @@ export function EditChallengeModal({
   challenge: Challenge;
   onClose: () => void;
 }) {
-  useModalDismiss(onClose);
   const toast = useToast();
   const utils = api.useUtils();
 
@@ -57,22 +63,28 @@ export function EditChallengeModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-
-      <div className="relative z-10 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-foreground/10 bg-card shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-foreground/10 bg-card px-6 py-4">
-          <h2 className="text-lg font-semibold">Edit challenge</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-foreground/50 transition hover:bg-foreground/10 hover:text-foreground"
+    <Dialog open onOpenChange={(next) => { if (!next) onClose(); }}>
+      <DialogContent
+        showCloseButton={false}
+        className="flex max-h-[calc(100vh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg"
+      >
+        <DialogHeader className="flex-row items-center justify-between border-b border-foreground/10 px-6 py-4">
+          <DialogTitle className="text-lg font-semibold">
+            Edit challenge
+          </DialogTitle>
+          <DialogClose
+            render={
+              <button
+                type="button"
+                className="rounded-lg p-1.5 text-foreground/50 transition hover:bg-foreground/10 hover:text-foreground"
+              />
+            }
           >
             <CloseIcon />
-          </button>
-        </div>
+          </DialogClose>
+        </DialogHeader>
 
-        <div className="space-y-6 px-6 py-4">
+        <div className="space-y-6 overflow-y-auto px-6 py-4">
           {isLoading && (
             <div className="flex justify-center py-12">
               <SpinnerIcon className="h-6 w-6 text-foreground/40" />
@@ -123,14 +135,17 @@ export function EditChallengeModal({
           )}
         </div>
 
-        <div className="sticky bottom-0 flex justify-end gap-2 border-t border-foreground/10 bg-card px-6 py-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10"
+        <DialogFooter className="mx-0 mb-0 flex-row justify-end rounded-none border-t border-foreground/10 bg-card p-4">
+          <DialogClose
+            render={
+              <button
+                type="button"
+                className="rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10"
+              />
+            }
           >
             Cancel
-          </button>
+          </DialogClose>
           <button
             type="button"
             disabled={!canSubmit || updateMut.isPending}
@@ -140,8 +155,8 @@ export function EditChallengeModal({
             {updateMut.isPending && <SpinnerIcon className="h-3.5 w-3.5" />}
             Save changes
           </button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

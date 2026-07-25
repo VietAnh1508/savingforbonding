@@ -10,7 +10,13 @@ import { VoteForm } from "~/app/_components/match/vote-form";
 import { VoterList } from "~/app/_components/match/voter-list";
 import { VotingRatios } from "~/app/_components/match/voting-ratios";
 import { SignInPrompt } from "~/app/_components/sign-in-prompt";
-import { useModalDismiss } from "~/app/hooks/use-modal-dismiss";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
 import { formatDateTime } from "~/lib/datetime";
 import { api } from "~/trpc/react";
 
@@ -29,33 +35,29 @@ export function MatchDetailModal({
     error,
   } = api.match.getById.useQuery({ id: matchId });
 
-  useModalDismiss(onClose);
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-
-      {/* Panel */}
-      <div className="relative z-10 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-foreground/10 bg-card shadow-2xl">
-        {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-foreground/10 bg-card px-6 py-4">
-          <h2 className="text-lg font-semibold">Match details</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-foreground/50 transition hover:bg-foreground/10 hover:text-foreground"
+    <Dialog open onOpenChange={(next) => { if (!next) onClose(); }}>
+      <DialogContent
+        showCloseButton={false}
+        className="flex max-h-[calc(100vh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg"
+      >
+        <DialogHeader className="flex-row items-center justify-between border-b border-foreground/10 px-6 py-4">
+          <DialogTitle className="text-lg font-semibold">
+            Match details
+          </DialogTitle>
+          <DialogClose
+            render={
+              <button
+                type="button"
+                className="rounded-lg p-1.5 text-foreground/50 transition hover:bg-foreground/10 hover:text-foreground"
+              />
+            }
           >
             <CloseIcon />
-          </button>
-        </div>
+          </DialogClose>
+        </DialogHeader>
 
-        <div className="px-6 py-4">
+        <div className="overflow-y-auto px-6 py-4">
           {isLoading && (
             <div className="flex justify-center py-12">
               <SpinnerIcon className="h-6 w-6 text-foreground/40" />
@@ -147,17 +149,19 @@ export function MatchDetailModal({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="sticky bottom-0 border-t border-foreground/10 bg-card px-6 py-4 text-right">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10"
+        <div className="flex justify-end border-t border-foreground/10 px-6 py-4">
+          <DialogClose
+            render={
+              <button
+                type="button"
+                className="rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10"
+              />
+            }
           >
             Close
-          </button>
+          </DialogClose>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,13 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ReactDOM from "react-dom";
 import { usePathname } from "next/navigation";
 
 import { Footer } from "~/app/_components/footer";
 import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
 import { useToast } from "~/app/_components/toast";
-import { useModalDismiss } from "~/app/hooks/use-modal-dismiss";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
 import { termsClosing, termsIntro, termsRules, termsTitle } from "~/lib/terms-content";
 import { api } from "~/trpc/react";
 
@@ -57,7 +63,6 @@ function TermsModal({
   onClose: () => void;
 }) {
   const toast = useToast();
-  useModalDismiss(dismissible ? onClose : () => undefined);
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [readTooFastWarning, setReadTooFastWarning] = useState<string | null>(
@@ -94,27 +99,32 @@ function TermsModal({
     acceptMut.mutate();
   };
 
-  return ReactDOM.createPortal(
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={dismissible ? onClose : undefined}
-      />
-
-      <div
-        className="relative z-10 w-full max-w-lg rounded-2xl border border-foreground/10 bg-card p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="mb-4 text-lg font-semibold">{termsTitle}</h2>
+  return (
+    <Dialog
+      open
+      onOpenChange={(next, eventDetails) => {
+        if (!dismissible) {
+          eventDetails.cancel();
+          return;
+        }
+        if (!next) onClose();
+      }}
+    >
+      <DialogContent showCloseButton={false} className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold">
+            {termsTitle}
+          </DialogTitle>
+        </DialogHeader>
 
         {!dismissible && updated && (
-          <p className="mb-4 rounded-lg bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-600 dark:text-amber-400">
+          <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-600 dark:text-amber-400">
             We&apos;ve updated our Terms &amp; Conditions since you last
             accepted — please review and accept again.
           </p>
         )}
 
-        <div className="mb-6 max-h-[65vh] space-y-4 overflow-y-auto text-sm text-foreground/70">
+        <div className="max-h-[65vh] space-y-4 overflow-y-auto text-sm text-foreground/70">
           <p>{termsIntro}</p>
 
           <ol className="list-decimal space-y-3 pl-5">
@@ -141,20 +151,23 @@ function TermsModal({
         </div>
 
         {readTooFastWarning && (
-          <p className="mb-4 text-sm font-medium text-red-500">
+          <p className="text-sm font-medium text-red-500">
             {readTooFastWarning}
           </p>
         )}
 
-        <div className="flex justify-end">
+        <DialogFooter className="mx-0 mb-0 flex-row justify-end rounded-none border-t-0 bg-transparent p-0">
           {dismissible ? (
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10"
+            <DialogClose
+              render={
+                <button
+                  type="button"
+                  className="rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10"
+                />
+              }
             >
               Close
-            </button>
+            </DialogClose>
           ) : (
             <button
               type="button"
@@ -166,9 +179,8 @@ function TermsModal({
               Accept
             </button>
           )}
-        </div>
-      </div>
-    </div>,
-    document.body,
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

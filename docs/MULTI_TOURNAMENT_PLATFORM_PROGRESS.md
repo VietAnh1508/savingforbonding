@@ -13,7 +13,7 @@ from reality.
 | 2 | Adapter extraction | In progress — `AwardSourceAdapter` + `VnexpressTopScorerAdapter` done; country/flag vocabulary done (dev + prod Turso); fixture-side adapter, factory, `isKnownCountry()` removal still pending |
 | 3 | Stage-name delookup | Not started (partial stopgap landed — see Phase 1 notes) |
 | 4 | UI: tournament awareness | Not started |
-| 5 | Visual modernization (optional, parallel) | In progress — shadcn/ui initialized (Base UI), CSS tokens reconciled, `--primary` set to emerald; `SubmitButton` plus all card/button/badge components in Phase 5's list migrated to shadcn primitives (`Card`, `Button`, `Badge`) |
+| 5 | Visual modernization (optional, parallel) | In progress — shadcn/ui initialized (Base UI), CSS tokens reconciled, `--primary` set to emerald; `SubmitButton` plus all card/button/badge components in Phase 5's list migrated to shadcn primitives (`Card`, `Button`, `Badge`); all seven hand-rolled modals migrated to shadcn `Dialog`, `useModalDismiss` deleted |
 
 Status values: `Not started` / `In progress` / `Blocked` / `Done`.
 
@@ -234,14 +234,56 @@ on top of it.
       when shadcn has an equivalent, remove the hand-rolled component
       entirely and use shadcn's directly — don't keep the custom one as a
       wrapper around it.
-  - [ ] Replace the hand-rolled modal shape (fixed backdrop + centered panel
+  - [x] Replaced the hand-rolled modal shape (fixed backdrop + centered panel
         + the shared `useModalDismiss` hook) with shadcn `Dialog` in all six
-        places it's duplicated: `confirm-dialog.tsx`, `terms-gate.tsx`'s
-        `TermsModal`, `match/match-detail-modal.tsx`,
-        `match/day-predict-modal.tsx`, `challenge/create-challenge-modal.tsx`,
-        `challenge/edit-challenge-modal.tsx`. Highest-value item on this
-        list — real 6x duplication, and `useModalDismiss` itself should be
-        deletable once `Dialog` owns escape/outside-click.
+        named places (`confirm-dialog.tsx`, `terms-gate.tsx`'s `TermsModal`,
+        `match/match-detail-modal.tsx`, `match/day-predict-modal.tsx`,
+        `challenge/create-challenge-modal.tsx`, `challenge/edit-challenge-modal.tsx`)
+        plus a 7th, structurally-identical consumer found during the sweep
+        (`leaderboard/beer-amount-spin-modal.tsx`) — needed too, since leaving
+        it hand-rolled would have kept `useModalDismiss` alive. `useModalDismiss`
+        is deleted. `follow-confirm-dialog.tsx` (doesn't use the hook) was left
+        alone and added as a new item below instead of folded into this pass.
+        `dialog.tsx`'s generated `bg-popover`/`text-popover-foreground` swapped
+        for `bg-card`/`text-card-foreground` app-wide (same reasoning as the
+        Card pass: reuse the app's one surface token instead of introducing a
+        second), and the overlay darkened from the CLI default (`bg-black/10`,
+        barely visible) to `bg-black/50` to match every original modal's
+        backdrop. `match/day-predict-modal.tsx` (the one bottom-sheet-on-mobile
+        layout) bypasses `DialogContent` and composes `DialogPortal`/
+        `DialogOverlay`/`DialogPrimitive.Popup` directly — `DialogContent`'s
+        baked-in centered-dialog positioning classes (`top-1/2 left-1/2
+        -translate-x/y-1/2`) would have fought a custom mobile-bottom/
+        desktop-centered className rather than composing cleanly with twMerge.
+        Two small, intentional behavior changes (all seven dialogs now also
+        gain a real focus trap, which none had before):
+        `create-challenge-modal.tsx`/`edit-challenge-modal.tsx` gain
+        backdrop-click-to-close (their backdrop `<div>`s had no `onClick`
+        before); `confirm-dialog.tsx` gains Escape-to-close and body-scroll-lock
+        (it had neither). `TermsModal`'s non-dismissible gate mode (required
+        terms not yet accepted) cancels every `onOpenChange` attempt
+        (`eventDetails.cancel()`) rather than only Escape/backdrop, per Base UI
+        v1.6's dismissal API — verified against Context7 docs before writing it,
+        since a wrong guess there fails silently (no typecheck/test signal).
+        Verified: `npm run typecheck` + `npm run test` pass; LSP
+        `findReferences` confirms no orphaned imports across all 7 files; a
+        live Chrome pass exercised `MatchDetailModal`, `ConfirmDialog` (via
+        admin delete-user), `CreateChallengeModal`, and `TermsModal`'s
+        dismissible path — Escape, backdrop-click, and the X/Close buttons all
+        close correctly and don't fire real mutations. `DayPredictModal`'s
+        mobile bottom-sheet layout was **not** live-verified — the Upcoming tab
+        gates on the active tournament's `endDate` regardless of match data, so
+        triggering it live would have required editing that field beyond a
+        disposable test match; verified via code review + LSP instead.
+        `BeerAmountSpinModal`'s spinning-lock dismissal-block and
+        `TermsModal`'s non-dismissible path were verified by API/code review
+        only (both require a fresh, not-yet-acted-on user state the current
+        seeded data doesn't have).
+  - [ ] `leaderboard/follow-confirm-dialog.tsx` still uses the old hand-rolled
+        modal shape — it doesn't use `useModalDismiss` (no Escape/scroll-lock
+        today), so it wasn't required for that hook's removal, but it's the
+        same shape as `confirm-dialog.tsx` and should get the same `Dialog`
+        treatment for consistency.
   - [ ] Replace the hand-rolled dropdown (manual click-outside/escape effect
         + absolutely-positioned panel) with shadcn `DropdownMenu` in
         `nav-client.tsx`'s account menu and `match/quick-vote-button.tsx` —
@@ -303,6 +345,12 @@ and the one key decision/gotcha worth remembering, not the full reasoning chain 
 blow-by-blow. The checklist items above (and git history / commit messages) are the source of
 truth for detail; if an entry needs a third line, that detail probably belongs up there instead.
 
+- **2026-07-25** — Migrated all seven hand-rolled modals to shadcn `Dialog`, deleted
+  `useModalDismiss`. `day-predict-modal.tsx` bypasses `DialogContent` (bottom-sheet layout
+  fights its centered-dialog defaults); `dialog.tsx` repointed to `bg-card` and a darker overlay
+  to match the app's existing convention. Two small behavior gains (backdrop-click on the
+  challenge modals, Escape/scroll-lock on `ConfirmDialog`) plus a focus trap everywhere — see
+  checklist entry for the full verification breakdown.
 - **2026-07-25** — Fixed `tooltip.tsx` hydration bug: wrapper `div` → `span`, since a `div` isn't
   valid inside `MatchCardFooter`'s `<p>`. The shadcn `Tooltip` replacement is still a separate,
   not-started item below.
