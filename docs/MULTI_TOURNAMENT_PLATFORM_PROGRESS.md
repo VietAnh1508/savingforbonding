@@ -13,7 +13,7 @@ from reality.
 | 2 | Adapter extraction | In progress — `AwardSourceAdapter` + `VnexpressTopScorerAdapter` done; country/flag vocabulary done (dev + prod Turso); fixture-side adapter, factory, `isKnownCountry()` removal still pending |
 | 3 | Stage-name delookup | Not started (partial stopgap landed — see Phase 1 notes) |
 | 4 | UI: tournament awareness | Not started |
-| 5 | Visual modernization (optional, parallel) | Not started |
+| 5 | Visual modernization (optional, parallel) | In progress — shadcn/ui initialized (Base UI), CSS tokens reconciled, `--primary` set to emerald, `SubmitButton` migrated as proof-of-concept; remaining components not started |
 
 Status values: `Not started` / `In progress` / `Blocked` / `Done`.
 
@@ -143,20 +143,47 @@ on top of it.
 - [x] Decisions locked (rationale in the 2026-07-25 log entry): Base UI over
       Radix; `--fg`/`--card-bg` renamed to shadcn's `--foreground`/`--card`,
       `--bg-from`/`--bg-to`/`--toast-bg` stay app-specific.
-- [ ] Run `npx shadcn init` for real (no `--base radix`)
-- [ ] In `globals.css`, rename `--fg` → `--foreground` and `--card-bg` →
+- [x] Run `npx shadcn init` for real (no `--base radix`) — ran
+      `shadcn@latest init --base base --defaults`. Aliases in
+      `components.json` resolved to `~/*` correctly on their own; `hooks`
+      alias hand-corrected from the CLI's default `~/hooks` to `~/app/hooks`
+      to match this repo's existing `src/app/hooks/` convention.
+- [x] In `globals.css`, rename `--fg` → `--foreground` and `--card-bg` →
       `--card` everywhere (`:root`, `html:not(.dark)`, `@theme inline`
-      mappings); leave `--bg-from`/`--bg-to`/`--toast-bg` as-is
-- [ ] Point `--primary` at the app's accent color (this is the seam Phase 4's
-      per-tournament branding will hang off later)
-- [ ] Install shadcn primitives on demand, per component being migrated — not
-      a speculative up-front `button`/`card`/`badge`/`dialog` install
+      mappings); leave `--bg-from`/`--bg-to`/`--toast-bg` as-is. Also had to
+      reconcile a layout mismatch the CLI introduced: shadcn's init wrote its
+      light preset into `:root` and dark preset into `.dark` (its usual
+      convention), but this app's `:root` is the *dark* default (avoids
+      flash-of-wrong-theme before hydration) with `html:not(.dark)` as the
+      light override — the opposite selector layout. Swapped the two preset
+      blocks into the app's existing layout and deleted the now-redundant
+      `.dark` selector block.
+- [x] Point `--primary` at the app's accent color — set to `#10b981`
+      (emerald-500) in both `:root` and `html:not(.dark)`, `--primary-foreground`
+      to white. Left semantic success/error/warning colors (the `emerald-600`/
+      `red-600`/`amber-600` used for "Correct"/"Wrong"/"No pick" states) alone —
+      those are a different role (status color) than the primary action-surface
+      color and shouldn't collapse into the same token.
+- [x] Install shadcn primitives on demand, per component being migrated — not
+      a speculative up-front `button`/`card`/`badge`/`dialog` install.
+      `button` installed (came free with `init --defaults`).
 - [ ] Migrate hand-rolled components to shadcn primitives, highest-duplication
       first: `SubmitButton` + other ad hoc buttons → card components
       (`match-card.tsx`, `champion-vote-card.tsx`, `top-scorer-vote-card.tsx`,
       admin cards, `challenge-card.tsx`) → badges (`MatchStatusBadge`,
       `StarBadge`). No functional behavior change — star-picker, all-in
       checkbox, quick-vote button, etc. must keep working identically.
+  - [x] `SubmitButton` → shadcn `Button` (`default` variant), original
+        per-size padding/rounding preserved via override classes. Verified
+        visually equivalent at rest in both themes on `/auth/change-password`;
+        two intentional deltas from shadcn's own defaults, not chased for
+        exact parity: `disabled:opacity-50` (was `-60`) and hover via
+        `bg-primary/80` (opacity-based) rather than a solid `emerald-600` —
+        both are shadcn's own convention, acceptable for a phase whose point
+        is visual modernization.
+  - [ ] Other ad hoc buttons, `match-card.tsx` family, `champion-vote-card.tsx`,
+        `top-scorer-vote-card.tsx`, admin cards, `challenge-card.tsx`,
+        `MatchStatusBadge`, `StarBadge` — not started
 - [ ] Revisit Champion/Top-Scorer card designs, once the `Card` primitive is
       in place
 - [ ] General polish pass
@@ -185,6 +212,22 @@ on top of it.
 Dated entries — major milestones only, newest first. Implementation detail lives in the checklist
 above and in git history, not here.
 
+- **2026-07-25** — Phase 5 foundation landed: `shadcn@latest init --base base --defaults`, then
+  reconciled `globals.css` by hand — the CLI's light/dark preset blocks came out inverted relative
+  to this app's existing dark-default `:root` / light-override `html:not(.dark)` layout (the app
+  avoids flash-of-wrong-theme by putting dark values in `:root`; shadcn's own convention assumes
+  the opposite), so the presets were swapped into the app's layout and the leftover `.dark` block
+  removed. Also caught and fixed a font regression the CLI's merge introduced: its `@theme inline`
+  block added `--font-sans: var(--font-sans);` (self-referential) plus an unused `--font-heading`
+  mapping, which silently cancelled the app's real Geist font-stack variable — every page was
+  rendering in the browser's serif fallback until this was found via computed-style inspection and
+  removed. `--primary` set to emerald (`#10b981`) in both themes; semantic status colors
+  (correct/wrong/no-pick) deliberately left alone as a separate concern from the primary action
+  color. `SubmitButton` migrated to shadcn's `Button` as the first proof-of-concept — verified
+  visually equivalent at rest in both themes via Playwright screenshots on `/auth/change-password`;
+  confirmed dark renders correctly on a true cold load (cleared `localStorage`, no stored theme
+  preference); `npm run typecheck` + `npm run test` pass. Remaining component migrations
+  (match/champion/top-scorer/admin/challenge cards, badges) not started.
 - **2026-07-25** — Phase 5 planned around adopting shadcn/ui. A throwaway-branch `init` dry run
   confirmed no CSS variable collisions with the existing `globals.css`. Two decisions resolved:
   **Base UI** over Radix as the primitive library, and a partial token rename (`--fg`/`--card-bg`
