@@ -3,6 +3,8 @@
 import { useState } from "react";
 
 import { MatchStatusBadge } from "~/app/_components/match-status-badge";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
 import { formatDateTime } from "~/lib/datetime";
 import { isMatchEditable } from "~/lib/match";
 import { api, type RouterOutputs } from "~/trpc/react";
@@ -28,7 +30,7 @@ export function MatchCard({ match, onEdit }: Props) {
   const editable = isMatchEditable(match.status);
 
   return (
-    <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4">
+    <Card className="block rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-4 ring-0">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="font-semibold">
@@ -52,24 +54,26 @@ export function MatchCard({ match, onEdit }: Props) {
 
         {editable && (
           <div className="flex flex-wrap gap-2">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => onEdit(match)}
-              className="rounded-lg border border-foreground/10 px-3 py-1 text-sm hover:bg-foreground/10"
+              className="h-auto rounded-lg px-3 py-1 text-sm"
             >
               Edit
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="destructive"
               onClick={() => {
                 if (confirm("Delete this match?")) {
                   deleteMatch.mutate({ id: match.id });
                 }
               }}
-              className="rounded-lg border border-red-500/30 px-3 py-1 text-sm text-red-600 dark:text-red-300 hover:bg-red-500/10"
+              className="h-auto rounded-lg px-3 py-1 text-sm"
             >
               Delete
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -96,8 +100,9 @@ export function MatchCard({ match, onEdit }: Props) {
               className="w-20 rounded-lg border border-foreground/10 bg-foreground/10 px-2 py-1"
             />
           </label>
-          <button
+          <Button
             type="button"
+            variant="secondary"
             disabled={completeMatch.isPending}
             onClick={() => {
               const home = parseInt(scores.home, 10);
@@ -111,10 +116,10 @@ export function MatchCard({ match, onEdit }: Props) {
                 return;
               completeMatch.mutate({ id: match.id, homeScore: home, awayScore: away });
             }}
-            className="rounded-lg bg-amber-500/20 px-3 py-1.5 text-sm font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-500/30"
+            className="h-auto rounded-lg bg-amber-500/20 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-500/30 dark:text-amber-300"
           >
             Complete Match
-          </button>
+          </Button>
         </div>
       )}
 
@@ -123,6 +128,6 @@ export function MatchCard({ match, onEdit }: Props) {
           Completed — locked, cannot be modified
         </p>
       )}
-    </div>
+    </Card>
   );
 }

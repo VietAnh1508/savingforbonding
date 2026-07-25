@@ -13,7 +13,7 @@ from reality.
 | 2 | Adapter extraction | In progress — `AwardSourceAdapter` + `VnexpressTopScorerAdapter` done; country/flag vocabulary done (dev + prod Turso); fixture-side adapter, factory, `isKnownCountry()` removal still pending |
 | 3 | Stage-name delookup | Not started (partial stopgap landed — see Phase 1 notes) |
 | 4 | UI: tournament awareness | Not started |
-| 5 | Visual modernization (optional, parallel) | In progress — shadcn/ui initialized (Base UI), CSS tokens reconciled, `--primary` set to emerald, `SubmitButton` migrated as proof-of-concept; remaining components not started |
+| 5 | Visual modernization (optional, parallel) | In progress — shadcn/ui initialized (Base UI), CSS tokens reconciled, `--primary` set to emerald; `SubmitButton` plus all card/button/badge components in Phase 5's list migrated to shadcn primitives (`Card`, `Button`, `Badge`) |
 
 Status values: `Not started` / `In progress` / `Blocked` / `Done`.
 
@@ -167,12 +167,14 @@ on top of it.
 - [x] Install shadcn primitives on demand, per component being migrated — not
       a speculative up-front `button`/`card`/`badge`/`dialog` install.
       `button` installed (came free with `init --defaults`).
-- [ ] Migrate hand-rolled components to shadcn primitives, highest-duplication
+- [x] Migrate hand-rolled components to shadcn primitives, highest-duplication
       first: `SubmitButton` + other ad hoc buttons → card components
       (`match-card.tsx`, `champion-vote-card.tsx`, `top-scorer-vote-card.tsx`,
       admin cards, `challenge-card.tsx`) → badges (`MatchStatusBadge`,
       `StarBadge`). No functional behavior change — star-picker, all-in
-      checkbox, quick-vote button, etc. must keep working identically.
+      checkbox, quick-vote button, etc. keep working identically (confirmed
+      via typecheck, vitest, and a Playwright pass over Matches/Champion/
+      Top Scorer/Challenge/Admin in both themes).
   - [x] `SubmitButton` → shadcn `Button` (`default` variant), original
         per-size padding/rounding preserved via override classes. Verified
         visually equivalent at rest in both themes on `/auth/change-password`;
@@ -181,11 +183,98 @@ on top of it.
         `bg-primary/80` (opacity-based) rather than a solid `emerald-600` —
         both are shadcn's own convention, acceptable for a phase whose point
         is visual modernization.
-  - [ ] Other ad hoc buttons, `match-card.tsx` family, `champion-vote-card.tsx`,
-        `top-scorer-vote-card.tsx`, admin cards, `challenge-card.tsx`,
-        `MatchStatusBadge`, `StarBadge` — not started
-- [ ] Revisit Champion/Top-Scorer card designs, once the `Card` primitive is
-      in place
+  - [x] Installed shadcn `Card` and `Badge` primitives (`components/ui/card.tsx`,
+        `components/ui/badge.tsx`). Converted every bordered content box in
+        the listed files to `Card` (`match-card.tsx`, both vote cards' stakes
+        banners/status boxes, admin's `match-card.tsx`/`user-card.tsx`,
+        `challenge-card.tsx`), keeping the app's translucent `bg-foreground/5`
+        surface (not shadcn's opaque `bg-card`) so the gradient background
+        still shows through — the one thing decided *not* to let drift per
+        the 2026-07-25 flexibility call below.
+  - [x] Converted all ad hoc `<button>`s in those same files (plus the
+        champion/top-scorer vote *item* rows, which live one level below the
+        cards and own the "Pick"/"Picked" toggle) to shadcn `Button`, picking
+        the closest semantic variant (`outline`/`destructive`/`default`/
+        `ghost`/`secondary`) and overriding size via `h-auto` + explicit
+        padding, same recipe as `SubmitButton`. Where a variant's own
+        convention was a reasonable fit (e.g. challenge card's Accept →
+        `default`, Reject → `destructive`'s softer tint instead of the old
+        solid red/white), it was adopted as-is rather than chasing pixel
+        parity — the user explicitly OK'd this mid-migration ("ok to tweak
+        the UI a bit for shadcn, no need to keep the existing style exactly
+        like before").
+  - [x] `MatchStatusBadge` and the ad hoc status/count pills (challenge
+        status + "Yours", champion "OUT", top-scorer goals count) → shadcn
+        `Badge`, colors passed through as `className` overrides (Badge's own
+        variants don't cover this app's per-status color set).
+  - [x] `StarBadge` (in `star-picker.tsx`) deliberately left unchanged — it's
+        a tooltip-wrapped star icon with no pill background, so wrapping it
+        in `Badge` would add a pill and be a regression, not modernization.
+  - Scope note: this pass covered exactly the files Phase 5 named above (plus
+        the vote-item rows, which are those cards' own list-item template).
+        Not touched: `quick-vote-button.tsx`, `vote-form.tsx`,
+        `outcome-picker.tsx`, `day-predict-modal.tsx`, `confirm-dialog.tsx`,
+        and the rest of the 46 files with raw `emerald-*` classes — those
+        still use the app's original hand-rolled styling.
+- [x] Revisit Champion/Top-Scorer card designs, once the `Card` primitive is
+      in place — decided 2026-07-25: no further change. The stakes banner and
+      the locked/eliminated status boxes already migrated to `Card` in the
+      pass above. The candidate list itself (the `divide-y` container in
+      `champion-vote-card.tsx`/`top-scorer-vote-card.tsx` and each
+      `ChampionVoteItem`/`TopScorerVoteItem` row) stays a flush divided list
+      on purpose, not a gap — `Card`'s own `flex flex-col gap-4` would break
+      the flush divider styling, and a list is a genuinely different pattern
+      from a card grid, not an unfinished migration. Turning each candidate
+      row into its own elevated `Card` was considered and explicitly declined
+      (top-scorer alone can have 7+ rows; that reads as noticeably more
+      vertical space/scroll for no real gain over the current compact list).
+- [ ] Further shadcn replacements identified by a 2026-07-25 scan of
+      `_components/` (not started — scoped here so the work isn't lost, but
+      deliberately not begun this pass). **Guiding rule for all of these:**
+      when shadcn has an equivalent, remove the hand-rolled component
+      entirely and use shadcn's directly — don't keep the custom one as a
+      wrapper around it.
+  - [ ] Replace the hand-rolled modal shape (fixed backdrop + centered panel
+        + the shared `useModalDismiss` hook) with shadcn `Dialog` in all six
+        places it's duplicated: `confirm-dialog.tsx`, `terms-gate.tsx`'s
+        `TermsModal`, `match/match-detail-modal.tsx`,
+        `match/day-predict-modal.tsx`, `challenge/create-challenge-modal.tsx`,
+        `challenge/edit-challenge-modal.tsx`. Highest-value item on this
+        list — real 6x duplication, and `useModalDismiss` itself should be
+        deletable once `Dialog` owns escape/outside-click.
+  - [ ] Replace the hand-rolled dropdown (manual click-outside/escape effect
+        + absolutely-positioned panel) with shadcn `DropdownMenu` in
+        `nav-client.tsx`'s account menu and `match/quick-vote-button.tsx` —
+        two independent reimplementations of the same interaction.
+  - [ ] Migrate the remaining `rounded-xl border-{color}/20 bg-{color}/5 p-4`
+        info-banner boxes to `Card` (same pattern already applied everywhere
+        Phase 5 named, just not yet in these files): `champion-voting-banner.tsx`,
+        `top-scorer-voting-banner.tsx`, `beer-stakes.tsx`,
+        `leaderboard-picks-banner.tsx`, `sign-in-prompt.tsx`, and the inline
+        status boxes in `match/vote-form.tsx`.
+  - [ ] Replace `tooltip.tsx` (hand-rolled `<div>` with manual
+        `getBoundingClientRect` positioning) with shadcn `Tooltip`. Used by
+        `StarBadge`, `AllInCheckbox`, admin `user-card`, and the top-scorer
+        info icon. Likely fixes the pre-existing hydration bug noted above
+        (`<p>` containing this tooltip's `<div>`) as a side effect, since
+        shadcn's `Tooltip` renders via portal.
+  - [ ] Replace `theme-toggle.tsx` and `match/outcome-picker.tsx` with shadcn
+        `ToggleGroup` — both are textbook single-select segmented controls.
+  - [ ] Replace `nav-client.tsx`'s `NavBadge` (challenge-count pill) with
+        shadcn `Badge` — same small pill shape as the badges already
+        migrated.
+  - [ ] Replace the raw `<input type="checkbox">`s (all-in checkbox in
+        `match/vote-form.tsx`, "show all candidates" in
+        `champion-vote-card.tsx`) with shadcn `Checkbox`.
+  - Explicitly declined, not planned: `toast.tsx` (a full custom toast
+        system with its own state/portal/timers — swapping it is an
+        infrastructure change, not a reskin); `match/match-tabs.tsx`'s sticky
+        header/date-pill bar (scroll-spy, edge-fade overflow masks, deep-link
+        sync are genuinely custom — a `Tabs` primitive wouldn't reduce real
+        complexity here); `footer.tsx`/`back-link.tsx` (trivial, no
+        duplication to justify it); presentational-only components
+        (`team-flag.tsx`, `ratio-display.tsx`, icons, `user-avatar.tsx`, etc.)
+        — nothing shadcn addresses there.
 - [ ] General polish pass
 - [ ] Verify: `npm run typecheck` passes; cold-load the app in both light and
       dark mode and confirm no flash-of-wrong-theme; manually re-check the
@@ -209,50 +298,40 @@ on top of it.
 
 ## Log
 
-Dated entries — major milestones only, newest first. Implementation detail lives in the checklist
-above and in git history, not here.
+Dated entries, newest first. **Convention: keep each entry to 1-2 lines** — state what changed
+and the one key decision/gotcha worth remembering, not the full reasoning chain or file-by-file
+blow-by-blow. The checklist items above (and git history / commit messages) are the source of
+truth for detail; if an entry needs a third line, that detail probably belongs up there instead.
 
-- **2026-07-25** — Phase 5 foundation landed: `shadcn@latest init --base base --defaults`, then
-  reconciled `globals.css` by hand — the CLI's light/dark preset blocks came out inverted relative
-  to this app's existing dark-default `:root` / light-override `html:not(.dark)` layout (the app
-  avoids flash-of-wrong-theme by putting dark values in `:root`; shadcn's own convention assumes
-  the opposite), so the presets were swapped into the app's layout and the leftover `.dark` block
-  removed. Also caught and fixed a font regression the CLI's merge introduced: its `@theme inline`
-  block added `--font-sans: var(--font-sans);` (self-referential) plus an unused `--font-heading`
-  mapping, which silently cancelled the app's real Geist font-stack variable — every page was
-  rendering in the browser's serif fallback until this was found via computed-style inspection and
-  removed. `--primary` set to emerald (`#10b981`) in both themes; semantic status colors
-  (correct/wrong/no-pick) deliberately left alone as a separate concern from the primary action
-  color. `SubmitButton` migrated to shadcn's `Button` as the first proof-of-concept — verified
-  visually equivalent at rest in both themes via Playwright screenshots on `/auth/change-password`;
-  confirmed dark renders correctly on a true cold load (cleared `localStorage`, no stored theme
-  preference); `npm run typecheck` + `npm run test` pass. Remaining component migrations
-  (match/champion/top-scorer/admin/challenge cards, badges) not started.
-- **2026-07-25** — Phase 5 planned around adopting shadcn/ui. A throwaway-branch `init` dry run
-  confirmed no CSS variable collisions with the existing `globals.css`. Two decisions resolved:
-  **Base UI** over Radix as the primitive library, and a partial token rename (`--fg`/`--card-bg`
-  → shadcn's `--foreground`/`--card`; gradient and toast tokens stay app-specific, no shadcn
-  equivalent).
-- **2026-07-24** — Matches page "Upcoming" tab now shows "The tournament has finished..." instead of
-  "No upcoming matches found." once `now > Tournament.endDate`, fixing a confusing empty state once
-  the World Cup itself wrapped. First cut inferred this from `completed.length > 0`, but that's wrong
-  if a sync failure empties the upcoming list mid-tournament — switched to comparing against
-  `endDate` via a new `match.getActiveTournament` query instead. Small, standalone fix — not gated on
-  any other Phase 4 item.
-- **2026-07-22** — `TeamFlag` gained an `imageUrl` prop so the top-scorer UI reuses it instead of
-  duplicating flag-rendering logic. Committed `bfdbfa7`, pushed to `origin/develop`. Applied both
-  pending country-vocabulary migrations (`add_match_country_codes`, `add_topscorer_candidate_logo_url`)
-  to **prod Turso** — plain `ADD COLUMN`s, no fork-test required, zero data loss.
-- **2026-07-22** — Country-vocabulary design implemented end-to-end: `Match.homeCountryCode`/
-  `awayCountryCode` (from FIFA) and `TopScorerCandidate.logoUrl` (from vnexpress), replacing the
-  `FIFA_CODES` name-lookup chain for match and top-scorer flags. Applied to dev Turso.
+- **2026-07-25** — Fixed `tooltip.tsx` hydration bug: wrapper `div` → `span`, since a `div` isn't
+  valid inside `MatchCardFooter`'s `<p>`. The shadcn `Tooltip` replacement is still a separate,
+  not-started item below.
+- **2026-07-25** — Scanned `_components/` for further shadcn candidates; added as new, not-started
+  checklist items below (Dialog, DropdownMenu, more Card conversions, Tooltip, ToggleGroup, Badge,
+  Checkbox), with a guiding rule to replace hand-rolled components outright rather than wrap them.
+- **2026-07-25** — Fixed a `user-card.tsx` bug: shadcn `Card`'s `overflow-hidden` let it get
+  squeezed below its content height inside a scrollable flex list — needed `shrink-0`. Also decided
+  the champion/top-scorer "revisit card design" item needs no further change; see checklist.
+- **2026-07-25** — Migrated the rest of Phase 5's named components (match/champion/top-scorer/
+  admin/challenge cards) to shadcn `Card`/`Button`/`Badge`, keeping the app's translucent
+  `bg-foreground/5` surface instead of shadcn's opaque `bg-card` so the gradient background still
+  shows through.
+- **2026-07-25** — Phase 5 foundation: ran `shadcn init`, fixed the CLI's inverted light/dark
+  preset layout and a font regression it introduced, migrated `SubmitButton` as proof-of-concept.
+- **2026-07-25** — Phase 5 planned: Base UI chosen over Radix as the primitive library; partial
+  CSS token rename decided (`--fg`/`--card-bg` → shadcn's `--foreground`/`--card`).
+- **2026-07-24** — Matches "Upcoming" tab empty state now distinguishes tournament-finished from
+  no-matches-yet, comparing against `Tournament.endDate` instead of `completed.length`.
+- **2026-07-22** — `TeamFlag` gained an `imageUrl` prop; both country-vocab migrations applied to
+  prod Turso, zero data loss.
+- **2026-07-22** — Country-vocab implemented end-to-end: `Match.homeCountryCode`/`awayCountryCode`
+  (FIFA) and `TopScorerCandidate.logoUrl` (vnexpress) replace the old `FIFA_CODES` lookup chain.
 - **2026-07-22** — Country-vocabulary design decided (plan doc §2.1/2.2) — no ISO-3166 `Country`
   model; each adapter stores its own source's native identifier at ingestion instead.
 - **2026-07-21** — Phase 2 started: `AwardSourceAdapter` + `VnexpressTopScorerAdapter` extracted,
-  decoupling `sync-fifa-fixtures.ts` from vnexpress. Committed `ac827f9`, pushed to `origin/develop`.
-- **2026-07-21** — Phase 1 schema (`Tournament` model + FKs) fork-tested and applied to **prod
-  Turso** — zero data loss. `nightly-release.yml`'s daily develop→main auto-merge was a moot risk
-  once this landed same-day as the code.
-- **2026-07-21** — Phase 1 schema landed on **dev Turso**; `UserTournamentStats` follow-up and
-  prod migration explicitly deferred at this point (both closed out in the entries above).
-- **2026-07-21** — Progress tracker created from the plan doc. No implementation started yet.
+  decoupling fixture sync from vnexpress.
+- **2026-07-21** — Phase 1 schema (`Tournament` model + FKs) fork-tested and applied to prod Turso,
+  zero data loss.
+- **2026-07-21** — Phase 1 schema landed on dev Turso; `UserTournamentStats` and the prod migration
+  deferred.
+- **2026-07-21** — Progress tracker created from the plan doc.

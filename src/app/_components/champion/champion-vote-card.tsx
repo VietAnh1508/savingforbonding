@@ -5,6 +5,7 @@ import { useState } from "react";
 import { SignInPrompt } from "~/app/_components/sign-in-prompt";
 import { StarIcon } from "~/app/_components/icons/star-icon";
 import { CHAMPION_VOTE_BONUS, formatBeers, MIN_STAR_MULTIPLIER } from "~/lib/match";
+import { Card } from "~/components/ui/card";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { useToast } from "../toast";
 import { ChampionVoteItem } from "./champion-vote-item";
@@ -13,7 +14,7 @@ type VotingStatus = RouterOutputs["championVote"]["getVotingStatus"];
 
 function ChampionStakesBanner({ maxStarMultiplier }: { maxStarMultiplier: number }) {
   return (
-    <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 text-sm text-foreground/70">
+    <Card className="block rounded-xl border border-violet-500/20 bg-violet-500/5 px-4 py-4 text-sm text-foreground/70 ring-0">
       <h3 className="mb-2 font-semibold text-violet-700 dark:text-violet-300">
         🏆 Champion stakes
       </h3>
@@ -53,7 +54,7 @@ function ChampionStakesBanner({ maxStarMultiplier }: { maxStarMultiplier: number
           </p>
         </>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -113,10 +114,10 @@ export function ChampionVoteCard({
     return (
       <div className="space-y-4">
         <ChampionStakesBanner maxStarMultiplier={maxStarMultiplier} />
-        <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4 text-center text-sm text-foreground/50">
+        <Card className="block rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-4 text-center text-sm text-foreground/50 ring-0">
           Semi-Final teams haven&apos;t been confirmed yet — check back once
           the Quarter-Finals wrap up.
-        </div>
+        </Card>
       </div>
     );
   }
@@ -129,15 +130,15 @@ export function ChampionVoteCard({
     <div className="space-y-4">
       <ChampionStakesBanner maxStarMultiplier={maxStarMultiplier} />
       {votingOpen && pickWasEliminated && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-center text-red-700 dark:text-red-300">
+        <Card className="block rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-4 text-center text-base text-red-700 ring-0 dark:text-red-300">
           <p className="font-medium">Your pick was eliminated</p>
           <p className="mt-1 text-sm">
             Choose a new team below to stay in the running.
           </p>
-        </div>
+        </Card>
       )}
       {!votingOpen && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-center text-amber-700 dark:text-amber-300">
+        <Card className="block rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-center text-base text-amber-700 ring-0 dark:text-amber-300">
           <p className="font-medium">Voting is locked</p>
           <p className="mt-1 text-sm">
             {selectedCandidateId
@@ -147,7 +148,7 @@ export function ChampionVoteCard({
           <p className="mt-1 text-sm">
             The result will be resolved after the final match.
           </p>
-        </div>
+        </Card>
       )}
       <div className="flex items-center justify-end">
         <label className="flex cursor-pointer items-center gap-1.5 text-xs text-foreground/60">

@@ -5,6 +5,8 @@ import { KeyIcon } from "~/app/_components/icons/key-icon";
 import { TrashIcon } from "~/app/_components/icons/trash-icon";
 import { VoteIcon } from "~/app/_components/icons/vote-icon";
 import { Tooltip } from "~/app/_components/tooltip";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
 
 interface UserCardProps {
   user: {
@@ -23,7 +25,7 @@ interface UserCardProps {
 
 export function UserCard({ user, onDelete, onReset, isDeleting, isResetting, isSelf }: UserCardProps) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-3">
+    <Card className="shrink-0 flex-row items-center gap-4 rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-3 ring-0">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-3">
           <span className="font-semibold">
@@ -43,28 +45,32 @@ export function UserCard({ user, onDelete, onReset, isDeleting, isResetting, isS
 
       <div className="flex shrink-0 items-center gap-0.5">
         <Tooltip label="Reset password">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-sm"
             disabled={isResetting}
             onClick={onReset}
-            className="cursor-pointer rounded-md p-1.5 text-foreground/40 transition hover:bg-foreground/10 hover:text-foreground/80 disabled:cursor-not-allowed disabled:opacity-50"
+            className="text-foreground/40 hover:text-foreground/80"
           >
             <KeyIcon />
-          </button>
+          </Button>
         </Tooltip>
         {!isSelf && (
           <Tooltip label="Delete user">
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon-sm"
               disabled={isDeleting}
               onClick={onDelete}
-              className="cursor-pointer rounded-md p-1.5 text-red-500 transition hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+              className="text-red-500 hover:bg-red-500/10 hover:text-red-400"
             >
               <TrashIcon />
-            </button>
+            </Button>
           </Tooltip>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

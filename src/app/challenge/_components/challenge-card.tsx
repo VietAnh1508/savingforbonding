@@ -1,6 +1,9 @@
 "use client";
 
 import { UserAvatar } from "~/app/_components/user-avatar";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
 import {
   CHALLENGE_STATUS_BADGE_CLASSES,
   CHALLENGE_STATUS_LABELS,
@@ -55,8 +58,8 @@ export function ChallengeCard({
         : (challenge.opponent.name ?? "Anonymous");
 
   return (
-    <div
-      className={`rounded-xl border p-4 ${
+    <Card
+      className={`block rounded-xl border px-4 py-4 ring-0 ${
         isMine
           ? "border-emerald-500/30 bg-emerald-500/5"
           : "border-foreground/10 bg-foreground/5"
@@ -69,15 +72,13 @@ export function ChallengeCard({
         </span>
         <div className="flex items-center gap-1.5">
           {isMine && (
-            <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+            <Badge className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
               Yours
-            </span>
+            </Badge>
           )}
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs font-medium ${CHALLENGE_STATUS_BADGE_CLASSES[challenge.status]}`}
-          >
+          <Badge className={CHALLENGE_STATUS_BADGE_CLASSES[challenge.status]}>
             {CHALLENGE_STATUS_LABELS[challenge.status]}
-          </span>
+          </Badge>
         </div>
       </div>
 
@@ -108,41 +109,45 @@ export function ChallengeCard({
 
       {canRespond(challenge, currentUserId) && (
         <div className="flex gap-2">
-          <button
+          <Button
             type="button"
+            variant="destructive"
             disabled={isResponding}
             onClick={() => onRequestReject(challenge.id)}
-            className="cursor-pointer rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-auto rounded-lg px-4 py-2 text-sm font-medium"
           >
             Reject
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="default"
             disabled={isResponding}
             onClick={() => onAccept(challenge.id)}
-            className="cursor-pointer rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-auto rounded-lg px-4 py-2 text-sm font-medium"
           >
             Accept
-          </button>
+          </Button>
         </div>
       )}
 
       {canCancel(challenge, currentUserId) && (
         <div className="flex gap-2">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => onRequestEdit(challenge)}
-            className="cursor-pointer rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10 hover:text-foreground"
+            className="h-auto rounded-lg px-4 py-2 text-sm text-foreground/60"
           >
             Edit challenge
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => onRequestCancel(challenge.id)}
-            className="cursor-pointer rounded-lg px-4 py-2 text-sm text-foreground/60 transition hover:bg-foreground/10 hover:text-foreground"
+            className="h-auto rounded-lg px-4 py-2 text-sm text-foreground/60"
           >
             Cancel challenge
-          </button>
+          </Button>
         </div>
       )}
 
@@ -155,19 +160,20 @@ export function ChallengeCard({
           </p>
           <div className="flex gap-2">
             {[challenge.challenger, challenge.opponent].map((p) => (
-              <button
+              <Button
                 key={p.id}
                 type="button"
+                variant="ghost"
                 disabled={isSubmittingPick}
                 onClick={() => onSubmitPick(challenge.id, p.id)}
-                className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                className={`h-auto rounded-lg px-4 py-2 text-sm font-medium ${
                   myPick === p.id
                     ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
                     : "bg-foreground/10 text-foreground hover:bg-foreground/20"
                 }`}
               >
                 {nameFor(p.id)}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -215,6 +221,6 @@ export function ChallengeCard({
           You picked {myPick === currentUserId ? "yourself" : nameFor(myPick ?? "")} to win — waiting for the other player.
         </p>
       )}
-    </div>
+    </Card>
   );
 }

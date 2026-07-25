@@ -9,6 +9,7 @@ import {
   MIN_STAR_MULTIPLIER,
   TOP_SCORER_VOTE_BONUS,
 } from "~/lib/match";
+import { Card } from "~/components/ui/card";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { useToast } from "../toast";
 import { TopScorerVoteItem } from "./top-scorer-vote-item";
@@ -21,7 +22,7 @@ function TopScorerStakesBanner({
   maxStarMultiplier: number;
 }) {
   return (
-    <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 text-sm text-foreground/70">
+    <Card className="block rounded-xl border border-violet-500/20 bg-violet-500/5 px-4 py-4 text-sm text-foreground/70 ring-0">
       <h3 className="mb-2 font-semibold text-violet-700 dark:text-violet-300">
         ⚽ Top scorer stakes
       </h3>
@@ -60,7 +61,7 @@ function TopScorerStakesBanner({
           </p>
         </>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -118,9 +119,9 @@ export function TopScorerVoteCard({
     return (
       <div className="space-y-4">
         <TopScorerStakesBanner maxStarMultiplier={maxStarMultiplier} />
-        <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4 text-center text-sm text-foreground/50">
+        <Card className="block rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-4 text-center text-sm text-foreground/50 ring-0">
           Top scorer candidates haven&apos;t synced yet — check back soon.
-        </div>
+        </Card>
       </div>
     );
   }
@@ -129,7 +130,7 @@ export function TopScorerVoteCard({
     <div className="space-y-4">
       <TopScorerStakesBanner maxStarMultiplier={maxStarMultiplier} />
       {!votingOpen && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-center text-amber-700 dark:text-amber-300">
+        <Card className="block rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-center text-base text-amber-700 ring-0 dark:text-amber-300">
           <p className="font-medium">Voting is locked</p>
           <p className="mt-1 text-sm">
             {selectedCandidateId
@@ -139,7 +140,7 @@ export function TopScorerVoteCard({
           <p className="mt-1 text-sm">
             The result will be resolved after the final match.
           </p>
-        </div>
+        </Card>
       )}
       <div
         className={`divide-y divide-foreground/10 overflow-hidden rounded-xl border border-foreground/10 ${

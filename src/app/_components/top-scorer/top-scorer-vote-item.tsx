@@ -5,6 +5,8 @@ import { SpinnerIcon } from "~/app/_components/icons/spinner-icon";
 import { TeamFlag } from "~/app/_components/match/team-flag";
 import { StarBadge, StarPicker } from "~/app/_components/star-picker";
 import { Tooltip } from "~/app/_components/tooltip";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
 import { voterLabel } from "~/lib/match";
 import { type RouterOutputs } from "~/trpc/react";
 
@@ -68,9 +70,9 @@ export function TopScorerVoteItem({
         />
         <span className="flex-1">{candidate.playerName}</span>
         <span className="flex flex-col items-end gap-0.5">
-          <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+          <Badge className="bg-emerald-500/15 font-semibold text-emerald-700 dark:text-emerald-300">
             {candidate.goals} goal{candidate.goals > 1 ? "s" : ""}
-          </span>
+          </Badge>
           <span className="flex items-center gap-1">
             <span className="text-xs text-foreground/50">
               {candidate.assists} assist{candidate.assists > 1 ? "s" : ""}
@@ -98,23 +100,24 @@ export function TopScorerVoteItem({
           />
         </svg>
         {isSignedIn && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
             disabled={!votingOpen || isCastPending || selected}
             onClick={(e) => {
               e.stopPropagation();
               onVote();
             }}
             aria-label={`Pick ${candidate.playerName} as top scorer`}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 ${
+            className={`h-auto gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm ${
               selected
-                ? "border border-emerald-500/50 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/30"
+                ? "border border-emerald-500/50 bg-emerald-500/20 text-emerald-700 hover:bg-emerald-500/30 dark:text-emerald-300"
                 : "bg-foreground/10 hover:bg-foreground/20"
             }`}
           >
             {isVotingForThis && <SpinnerIcon className="h-3 w-3" />}
             {selected ? "Picked" : "Pick"}
-          </button>
+          </Button>
         )}
         {isSignedIn && selected && (
           <StarPicker
