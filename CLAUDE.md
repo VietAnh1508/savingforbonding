@@ -50,7 +50,7 @@ If you spin up a second dev server to test a worktree's changes without disturbi
 
 ### Database setup
 
-**Both local dev and production use Turso** (there is no local SQLite workflow for the app itself — see below for the local file used only to author migrations). Dev and prod are separate Turso databases under the `givemeakiss` org: `savingforbonding` (dev) and `savingforbonding-prod` (production).
+**Both local dev and production use Turso** (there is no local SQLite workflow for the app itself — see below for the local file used only to author migrations). Dev and prod are separate Turso databases under the `vietanh1508` account: `savingforbonding` (dev) and `savingforbonding-prod` (production).
 
 Schema changes go through **reviewed Prisma migrations**, not `prisma db push` — a `db push` of a `NOT NULL` column addition to `User` previously forced SQLite's table-rebuild path and silently cascade-deleted every row in `Vote`, `ChampionVote`, `Challenge`, and `UserFollow` (see `docs/POST-MORTEM.md`). Migrations generate reviewable SQL before anything touches Turso.
 
