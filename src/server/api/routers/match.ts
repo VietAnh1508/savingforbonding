@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { isKnownCountry } from "~/lib/country-flag";
+import { isPlaceholderTeam } from "~/lib/fifa-sync";
 import {
   isVotingOpen,
   noVotePenaltyForStage,
@@ -40,7 +40,8 @@ export const matchRouter = createTRPCRouter({
           include: { stage: { include: { penalty: true } }, tournament: true },
         })
       ).filter(
-        (m) => isKnownCountry(m.homeCountry) && isKnownCountry(m.awayCountry),
+        (m) =>
+          !isPlaceholderTeam(m.homeCountry) && !isPlaceholderTeam(m.awayCountry),
       );
 
       const matchIds = matches.map((match) => match.id);

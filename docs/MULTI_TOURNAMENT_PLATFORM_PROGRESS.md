@@ -10,7 +10,7 @@ from reality.
 | Phase | Description | Status |
 |---|---|---|
 | 1 | Schema plumbing | In progress — Tournament model + FKs done (dev + prod Turso); `UserTournamentStats`/`totalPoints` migration deferred as a separate task |
-| 2 | Adapter extraction | In progress — `AwardSourceAdapter` + `VnexpressTopScorerAdapter` done; country/flag vocabulary done (dev + prod Turso); fixture-side adapter, factory, `isKnownCountry()` removal still pending |
+| 2 | Adapter extraction | Done — `FixtureSourceAdapter`/`FifaWorldCupAdapter`, `AwardSourceAdapter`/`VnexpressTopScorerAdapter`, `dataSourceKey` factory, country/flag vocabulary, and `isKnownCountry()` removal all landed; only the validation milestone (onboard a second tournament) remains, tracked separately below |
 | 3 | Stage-name delookup | Not started (partial stopgap landed — see Phase 1 notes) |
 | 4 | UI: tournament awareness | Not started |
 | 5 | Visual modernization (optional, parallel) | In progress — shadcn/ui initialized (Base UI), CSS tokens reconciled, `--primary` set to emerald; `SubmitButton` plus all card/button/badge components in Phase 5's list migrated to shadcn primitives (`Card`, `Button`, `Badge`); all seven hand-rolled modals migrated to shadcn `Dialog`, `useModalDismiss` deleted |
@@ -55,18 +55,27 @@ field — tournament is now automatic).
 Same data, cleaner seams. Validates the Phase 1 schema before UI work builds on it.
 
 - [x] `NormalizedAwardCandidate` type — `adapters/types.ts`
-- [ ] Fixture-side normalized types: `NormalizedMatch`, `NormalizedStage`, `NormalizedTeam`
-- [ ] `FixtureSourceAdapter` interface: `fetchStages()`, `fetchFixtures()`, `fetchQualifiedTeams()`
+- [x] Fixture-side normalized types: `NormalizedMatch`, `NormalizedStage`, `NormalizedTeam` —
+      `adapters/types.ts`, alongside the award-side types
+- [x] `FixtureSourceAdapter` interface: `fetchStages()`, `fetchFixtures()`, `fetchQualifiedTeams()`
 - [x] `AwardSourceAdapter` interface: `fetchCandidates(awardKey)` — `adapters/types.ts`. `AwardKey`
       is just `"topScorer"` for now; champion candidates are still 100% FIFA-sourced, no adapter
       needed yet.
-- [ ] `FifaWorldCupAdapter` wrapping `fifa-api.ts` — **deferred**, fixture-side work
+- [x] `FifaWorldCupAdapter` wrapping `fifa-api.ts` (`fifa-world-cup-adapter.ts`) — all FIFA-shape
+      resolution (placeholder names, `"TBD"` fallback, two-level score fallback, status mapping,
+      kickoff parsing) now lives here; `sync-fifa-fixtures.ts` and `seed-stage.ts` no longer import
+      `fifa-api.ts` at all. Takes `seasonId` as a constructor param (defaulted to the existing
+      constant) so a second FIFA-sourced tournament won't need a second refactor. Tested
+      (`fifa-world-cup-adapter.test.ts`, 6 cases).
 - [x] `VnexpressTopScorerAdapter` wrapping `vnexpress-api.ts` — decouples `sync-fifa-fixtures.ts`
       from vnexpress entirely (it now only reaches into `fifa-api.ts` for fixture-side data).
       Golden Boot tiebreak logic lives in its own `adapters/golden-boot.ts` (the award's rule, not
       vnexpress-specific). Tested (`vnexpress-top-scorer-adapter.test.ts`, 6 cases).
-- [ ] `Tournament.dataSourceKey` selects the adapter via a small factory/switch (2-3 entries, not a
-      plugin system)
+- [x] `Tournament.dataSourceKey` selects the adapter via a small factory/switch (2-3 entries, not a
+      plugin system) — `createFixtureSourceAdapter()` in `adapters/fixture-source-factory.ts`, one
+      entry (`"fifa-world-cup"`) today. `active-tournament.ts` gained `getActiveTournament()`
+      (full row) alongside the existing `getActiveTournamentId()`, since the factory needs
+      `dataSourceKey`, not just the id.
 - [ ] Move country/flag vocabulary (`FIFA_CODES`, FIFA flag CDN URL in `country-flag.ts`) into the
       adapter's responsibility. **Design decided 2026-07-22** (plan doc §2.1/2.2): no separate
       `Country`/ISO-3166 model — FIFA associations (England, Scotland, Kosovo, ...) don't map onto
@@ -84,10 +93,19 @@ Same data, cleaner seams. Validates the Phase 1 schema before UI work builds on 
         display, it's `syncTopScorerCandidates`'s eligibility bridge against FIFA's qualified-team
         list (vnexpress never emits its own code, so this cross-source matching need is separate
         from the codes/logo work above).
-- [ ] Remove the silent `isKnownCountry()` filter gate in `match.ts` (`listMatches`) and
-      `leaderboard.ts` (`bottomThreePicks`); unrecognized teams should surface a visible sync
-      warning instead of vanishing
-- [ ] Verify: same data as before, no behavior change
+- [x] Removed the silent `isKnownCountry()` filter gate — it was doing double duty as both a
+      country-name allowlist (`FIFA_CODES` only has ~50 entries; teams like Italy, Denmark, Poland,
+      Nigeria, Serbia, Chile, Peru were wrongly hidden everywhere it gated) and an
+      undecided-bracket-slot filter. Replaced at all three call sites — `match.ts` (`listMatches`),
+      `leaderboard.ts` (`bottomThreePicks`), and `challenge.ts` (`getCreateContext`, not previously
+      listed here) — with `!isPlaceholderTeam(...)`, which keeps hiding undecided bracket fixtures
+      (e.g. "Winner Group A vs Runner-up Group B") without the country-allowlist side effect, and
+      without needing to backfill `homeCountryCode`/`awayCountryCode` on admin-created matches
+      (admin `createMatch`/`updateMatch` still don't set those fields — this swap doesn't depend on
+      them, since it's name-based, not code-based). No visible "sync warning" UI built — out of
+      scope for this pass, would be Phase 4 territory; `isKnownCountry` is just deleted.
+- [x] Verify: `npm run typecheck` + `npm run test` pass. No schema change, no migration — see log
+      entry for the planned dev-Turso sync smoke test.
 
 ## Phase 3 — Stage-name delookup
 
@@ -345,6 +363,14 @@ and the one key decision/gotcha worth remembering, not the full reasoning chain 
 blow-by-blow. The checklist items above (and git history / commit messages) are the source of
 truth for detail; if an entry needs a third line, that detail probably belongs up there instead.
 
+- **2026-07-31** — Phase 2 completed: `FixtureSourceAdapter`/`FifaWorldCupAdapter` extracted
+  (mirrors the award-side adapter pattern), `Tournament.dataSourceKey` factory added,
+  `prisma/seed-stage.ts` migrated onto the same adapter, and `isKnownCountry()` deleted in favor of
+  a placeholder-only filter (`!isPlaceholderTeam(...)`) at all three call sites — fixes real teams
+  missing from `FIFA_CODES` (Italy, Denmark, Poland, ...) being wrongly hidden, without needing to
+  backfill country codes on admin-created matches. `fifa-api.ts`'s fetch functions gained a
+  `seasonId` param (defaulted to the existing constant) so the adapter is ready for a second
+  FIFA-sourced tournament later. No schema change.
 - **2026-07-25** — Migrated all seven hand-rolled modals to shadcn `Dialog`, deleted
   `useModalDismiss`. `day-predict-modal.tsx` bypasses `DialogContent` (bottom-sheet layout
   fights its centered-dialog defaults); `dialog.tsx` repointed to `bg-card` and a darker overlay
