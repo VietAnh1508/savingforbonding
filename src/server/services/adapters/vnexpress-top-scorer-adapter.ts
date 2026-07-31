@@ -1,4 +1,4 @@
-import { getFifaCountryCode } from "~/lib/country-flag";
+import { getFifaCountryCode } from "~/server/services/fifa/country-codes";
 import {
   compareGoldenBoot,
   fetchTopScorers,

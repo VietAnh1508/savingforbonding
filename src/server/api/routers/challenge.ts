@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { isChallengeableMatch, maxStakeBeers } from "~/lib/challenge";
-import { isKnownCountry } from "~/lib/country-flag";
+import { isPlaceholderTeam } from "~/lib/fifa-sync";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -73,7 +73,8 @@ export const challengeRouter = createTRPCRouter({
       myTotalPoints: me.totalPoints,
       others,
       matches: matches.filter(
-        (m) => isKnownCountry(m.homeCountry) && isKnownCountry(m.awayCountry),
+        (m) =>
+          !isPlaceholderTeam(m.homeCountry) && !isPlaceholderTeam(m.awayCountry),
       ),
     };
   }),

@@ -1,5 +1,5 @@
 import { computeBeerPoolAmount } from "~/lib/beer-amount-spin";
-import { isKnownCountry } from "~/lib/country-flag";
+import { isPlaceholderTeam } from "~/lib/fifa-sync";
 import { vnTodayTomorrowRangeUTC } from "~/lib/datetime";
 import { beersSavedByStarring, MIN_STAR_MULTIPLIER } from "~/lib/match";
 import { assignRanks, compareLeaderboardEntries } from "~/lib/rank-history";
@@ -157,7 +157,8 @@ export const leaderboardRouter = createTRPCRouter({
       },
     });
     const matches = rawMatches.filter(
-      (m) => isKnownCountry(m.homeCountry) && isKnownCountry(m.awayCountry),
+      (m) =>
+        !isPlaceholderTeam(m.homeCountry) && !isPlaceholderTeam(m.awayCountry),
     );
     const matchIds = matches.map((m) => m.id);
 
