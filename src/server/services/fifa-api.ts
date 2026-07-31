@@ -1,5 +1,6 @@
 const FIFA_API_BASE = "https://api.fifa.com/api/v3";
-const FIFA_WORLD_CUP_SEASON_ID = "285023";
+/** Only consumed via `FifaWorldCupAdapter`'s constructor default — not re-declared elsewhere. */
+export const FIFA_WORLD_CUP_SEASON_ID = "285023";
 
 /**
  * FIFA `Date` is ISO-8601 UTC (e.g. `2026-06-11T19:00:00Z` = 12/06 02:00 in Vietnam).
@@ -120,11 +121,13 @@ async function fetchFifaMatchesPage(
   return data.Results ?? [];
 }
 
-export async function fetchWorldCupFixtures(): Promise<FifaMatch[]> {
+export async function fetchWorldCupFixtures(
+  seasonId: string,
+): Promise<FifaMatch[]> {
   const params = new URLSearchParams({
     language: "en",
     count: "500",
-    idSeason: FIFA_WORLD_CUP_SEASON_ID,
+    idSeason: seasonId,
   });
 
   const matches = await fetchFifaMatchesPage(params);
@@ -148,8 +151,8 @@ type FifaStagesResponse = {
   Results: FifaStage[];
 };
 
-export async function fetchStages(): Promise<FifaStage[]> {
-  const url = `${FIFA_API_BASE}/stages?idSeason=${FIFA_WORLD_CUP_SEASON_ID}&language=en`;
+export async function fetchStages(seasonId: string): Promise<FifaStage[]> {
+  const url = `${FIFA_API_BASE}/stages?idSeason=${seasonId}&language=en`;
   const response = await fetch(url, {
     headers: { Accept: "application/json" },
     next: { revalidate: 0 },
@@ -178,8 +181,9 @@ type FifaQualifiedTeamsResponse = {
 
 export async function fetchQualifiedTeams(
   stageId: string,
+  seasonId: string,
 ): Promise<FifaQualifiedTeam[]> {
-  const url = `${FIFA_API_BASE}/teamsqualified/season/${FIFA_WORLD_CUP_SEASON_ID}/stage/${stageId}`;
+  const url = `${FIFA_API_BASE}/teamsqualified/season/${seasonId}/stage/${stageId}`;
   const response = await fetch(url, {
     headers: { Accept: "application/json" },
     next: { revalidate: 0 },

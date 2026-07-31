@@ -2,23 +2,16 @@ import { buildFifaMatchPatch } from "~/lib/fifa-sync";
 import { deriveResult } from "~/lib/match";
 import {
   type AwardSourceAdapter,
+  type FixtureSourceAdapter,
   type NormalizedAwardCandidate,
+  type NormalizedMatch,
 } from "~/server/services/adapters/types";
 import { isTiedForGoldenBoot } from "~/server/services/adapters/golden-boot";
+import { createFixtureSourceAdapter } from "~/server/services/adapters/fixture-source-factory";
 import { VnexpressTopScorerAdapter } from "~/server/services/adapters/vnexpress-top-scorer-adapter";
-import { getActiveTournamentId } from "~/server/services/active-tournament";
+import { getActiveTournament } from "~/server/services/active-tournament";
 import { resolveChampionVotes } from "~/server/services/champion-vote";
 import { resolveTopScorerVotes } from "~/server/services/top-scorer-vote";
-import {
-  fetchQualifiedTeams,
-  fetchWorldCupFixtures,
-  fifaTeamCountryCode,
-  fifaTeamName,
-  localizedDescription,
-  mapFifaMatchStatus,
-  parseFifaKickoffToUtc,
-  type FifaMatch,
-} from "~/server/services/fifa-api";
 import { resolveMatchVotes } from "~/server/services/resolve-votes";
 import { type PrismaClient } from "../../../generated/prisma";
 
@@ -78,10 +71,12 @@ async function upsertTopScorerCandidate(
  */
 async function isFixtureCompletedFinal(
   db: PrismaClient,
-  fixture: FifaMatch,
+  fixture: NormalizedMatch,
 ): Promise<boolean> {
-  if (mapFifaMatchStatus(fixture) !== "COMPLETED") return false;
-  const stage = await db.stage.findUnique({ where: { id: fixture.IdStage } });
+  if (fixture.status !== "COMPLETED") return false;
+  const stage = await db.stage.findUnique({
+    where: { id: fixture.stageExternalId },
+  });
   return stage?.name === "Final";
 }
 
@@ -94,20 +89,23 @@ async function isFixtureCompletedFinal(
  */
 async function resolveChampionIfFinal(
   db: PrismaClient,
-  fixture: FifaMatch,
+  fixture: NormalizedMatch,
   isFinal: boolean,
   tournamentId: string,
 ): Promise<number> {
-  if (!isFinal || !fixture.Winner) return 0;
+  if (!isFinal || !fixture.winnerExternalTeamId) return 0;
 
   const winner = await db.championCandidate.findUnique({
     where: {
-      fifaTeamId_tournamentId: { fifaTeamId: fixture.Winner, tournamentId },
+      fifaTeamId_tournamentId: {
+        fifaTeamId: fixture.winnerExternalTeamId,
+        tournamentId,
+      },
     },
   });
   if (!winner) {
     console.warn(
-      `Final winner ${fixture.Winner} has no matching ChampionCandidate`,
+      `Final winner ${fixture.winnerExternalTeamId} has no matching ChampionCandidate`,
     );
     return 0;
   }
@@ -137,7 +135,7 @@ async function resolveChampionIfFinal(
  */
 async function resolveTopScorerIfFinal(
   db: PrismaClient,
-  fixture: FifaMatch,
+  fixture: NormalizedMatch,
   isFinal: boolean,
   awardAdapter: AwardSourceAdapter,
   tournamentId: string,
@@ -176,6 +174,7 @@ async function resolveTopScorerIfFinal(
  */
 async function syncTopScorerCandidates(
   db: PrismaClient,
+  fixtureAdapter: FixtureSourceAdapter,
   awardAdapter: AwardSourceAdapter,
   tournamentId: string,
 ): Promise<number> {
@@ -185,11 +184,11 @@ async function syncTopScorerCandidates(
   if (!semiFinalStage) return 0;
 
   const [qualifiedTeams, scorers] = await Promise.all([
-    fetchQualifiedTeams(semiFinalStage.id),
+    fixtureAdapter.fetchQualifiedTeams(semiFinalStage.id),
     awardAdapter.fetchCandidates("topScorer"),
   ]);
   const eligibleCountryCodes = new Set(
-    qualifiedTeams.map((team) => team.IdCountry),
+    qualifiedTeams.map((team) => team.countryCode),
   );
 
   const topScorers = scorers
@@ -211,6 +210,7 @@ async function syncTopScorerCandidates(
 
 async function syncChampionCandidates(
   db: PrismaClient,
+  fixtureAdapter: FixtureSourceAdapter,
   tournamentId: string,
 ): Promise<number> {
   const semiFinalStage = await db.stage.findFirst({
@@ -218,23 +218,28 @@ async function syncChampionCandidates(
   });
   if (!semiFinalStage) return 0;
 
-  const qualifiedTeams = await fetchQualifiedTeams(semiFinalStage.id);
+  const qualifiedTeams = await fixtureAdapter.fetchQualifiedTeams(
+    semiFinalStage.id,
+  );
 
   await Promise.all(
     qualifiedTeams.map((team) =>
       db.championCandidate.upsert({
         where: {
-          fifaTeamId_tournamentId: { fifaTeamId: team.IdTeam, tournamentId },
+          fifaTeamId_tournamentId: {
+            fifaTeamId: team.externalId,
+            tournamentId,
+          },
         },
         create: {
-          fifaTeamId: team.IdTeam,
+          fifaTeamId: team.externalId,
           tournamentId,
-          teamName: localizedDescription(team.TeamName) ?? "TBD",
-          countryCode: team.IdCountry,
+          teamName: team.name,
+          countryCode: team.countryCode,
         },
         update: {
-          teamName: localizedDescription(team.TeamName) ?? "TBD",
-          countryCode: team.IdCountry,
+          teamName: team.name,
+          countryCode: team.countryCode,
         },
       }),
     ),
@@ -246,10 +251,12 @@ async function syncChampionCandidates(
 export async function syncFifaFixtures(
   db: PrismaClient,
 ): Promise<SyncFifaFixturesResult> {
-  const [fixtures, tournamentId] = await Promise.all([
-    fetchWorldCupFixtures(),
-    getActiveTournamentId(db),
-  ]);
+  const tournament = await getActiveTournament(db);
+  const tournamentId = tournament.id;
+  const fixtureAdapter: FixtureSourceAdapter = createFixtureSourceAdapter(
+    tournament.dataSourceKey,
+  );
+  const fixtures = await fixtureAdapter.fetchFixtures();
 
   // One instance shared across resolveTopScorerIfFinal (per-fixture) and
   // syncTopScorerCandidates (post-loop) — it caches its own vnexpress fetch,
@@ -265,19 +272,8 @@ export async function syncFifaFixtures(
   let topScorerVotesResolved = 0;
 
   for (const fixture of fixtures) {
-    const externalId = fixture.IdMatch;
-    const fifaStatus = mapFifaMatchStatus(fixture);
-    const fifaHome = fifaTeamName(fixture.Home, fixture.PlaceHolderA);
-    const fifaAway = fifaTeamName(fixture.Away, fixture.PlaceHolderB);
-    const fifaHomeCode = fifaTeamCountryCode(fixture.Home);
-    const fifaAwayCode = fifaTeamCountryCode(fixture.Away);
-    const fifaKickoff = parseFifaKickoffToUtc(fixture.Date);
-    const stageId = fixture.IdStage;
-
-    const fifaHomeScore = fixture.HomeTeamScore ?? fixture.Home?.Score ?? null;
-    const fifaAwayScore = fixture.AwayTeamScore ?? fixture.Away?.Score ?? null;
-    const fifaHomePenaltyScore = fixture.HomeTeamPenaltyScore ?? null;
-    const fifaAwayPenaltyScore = fixture.AwayTeamPenaltyScore ?? null;
+    const externalId = fixture.externalId;
+    const stageId = fixture.stageExternalId;
 
     const isFinal = await isFixtureCompletedFinal(db, fixture);
     championVotesResolved += await resolveChampionIfFinal(
@@ -299,9 +295,7 @@ export async function syncFifaFixtures(
     });
 
     if (!existing) {
-      const status = fifaStatus;
-      const homeScore = fifaHomeScore;
-      const awayScore = fifaAwayScore;
+      const { status, homeScore, awayScore } = fixture;
       const result =
         status === "COMPLETED" && homeScore !== null && awayScore !== null
           ? deriveResult(homeScore, awayScore)
@@ -311,16 +305,16 @@ export async function syncFifaFixtures(
         data: {
           externalId,
           tournamentId,
-          homeCountry: fifaHome,
-          awayCountry: fifaAway,
-          homeCountryCode: fifaHomeCode,
-          awayCountryCode: fifaAwayCode,
-          kickoffAt: fifaKickoff,
+          homeCountry: fixture.homeName,
+          awayCountry: fixture.awayName,
+          homeCountryCode: fixture.homeCountryCode,
+          awayCountryCode: fixture.awayCountryCode,
+          kickoffAt: fixture.kickoffAt,
           status,
           homeScore,
           awayScore,
-          homePenaltyScore: fifaHomePenaltyScore,
-          awayPenaltyScore: fifaAwayPenaltyScore,
+          homePenaltyScore: fixture.homePenaltyScore,
+          awayPenaltyScore: fixture.awayPenaltyScore,
           result,
           homeRatio: 0,
           awayRatio: 0,
@@ -349,16 +343,16 @@ export async function syncFifaFixtures(
     } = buildFifaMatchPatch(
       existing,
       {
-        homeCountry: fifaHome,
-        awayCountry: fifaAway,
-        homeCountryCode: fifaHomeCode,
-        awayCountryCode: fifaAwayCode,
-        kickoffAt: fifaKickoff,
-        status: fifaStatus,
-        homeScore: fifaHomeScore,
-        awayScore: fifaAwayScore,
-        homePenaltyScore: fifaHomePenaltyScore,
-        awayPenaltyScore: fifaAwayPenaltyScore,
+        homeCountry: fixture.homeName,
+        awayCountry: fixture.awayName,
+        homeCountryCode: fixture.homeCountryCode,
+        awayCountryCode: fixture.awayCountryCode,
+        kickoffAt: fixture.kickoffAt,
+        status: fixture.status,
+        homeScore: fixture.homeScore,
+        awayScore: fixture.awayScore,
+        homePenaltyScore: fixture.homePenaltyScore,
+        awayPenaltyScore: fixture.awayPenaltyScore,
         stageId,
       },
       deriveResult,
@@ -416,10 +410,12 @@ export async function syncFifaFixtures(
 
   const championCandidatesSynced = await syncChampionCandidates(
     db,
+    fixtureAdapter,
     tournamentId,
   );
   const topScorerCandidatesSynced = await syncTopScorerCandidates(
     db,
+    fixtureAdapter,
     topScorerAdapter,
     tournamentId,
   );

@@ -65,10 +65,6 @@ const FIFA_CODES: Record<string, string> = {
 
 const FIFA_FLAG_BASE = "https://api.fifa.com/api/v3/picture/flags-sq-1";
 
-export function isKnownCountry(countryName: string): boolean {
-  return countryName.trim().toLowerCase() in FIFA_CODES;
-}
-
 /** FIFA's 3-letter country code (matches `IdCountry` from the FIFA API), or null if unrecognized. */
 export function getFifaCountryCode(countryName: string): string | null {
   return FIFA_CODES[countryName.trim().toLowerCase()] ?? null;

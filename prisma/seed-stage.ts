@@ -1,7 +1,7 @@
 import { BEER_LOSE, BEER_NO_VOTE } from "../src/lib/match";
 import { createPrismaClient } from "../src/server/create-prisma-client";
-import { getActiveTournamentId } from "../src/server/services/active-tournament";
-import { fetchStages } from "../src/server/services/fifa-api";
+import { getActiveTournament } from "../src/server/services/active-tournament";
+import { createFixtureSourceAdapter } from "../src/server/services/adapters/fixture-source-factory";
 
 const db = createPrismaClient();
 
@@ -16,45 +16,44 @@ const STARS_BY_STAGE: Record<string, number> = {
 };
 
 async function main() {
-  const [stages, tournamentId] = await Promise.all([
-    fetchStages(),
-    getActiveTournamentId(db),
-  ]);
+  const tournament = await getActiveTournament(db);
+  const fixtureAdapter = createFixtureSourceAdapter(tournament.dataSourceKey);
+  const stages = await fixtureAdapter.fetchStages();
+  const tournamentId = tournament.id;
 
   for (const stage of stages) {
-    const name = stage.Name.find((n) => n.Locale === "en-GB")?.Description ?? stage.Name[0]!.Description;
+    const { externalId: id, name, startDate, endDate, sequenceOrder, isKnockout } = stage;
     await db.stage.upsert({
-      where: { id: stage.IdStage },
+      where: { id },
       update: {
         name,
-        startDate: new Date(stage.StartDate),
-        endDate: new Date(stage.EndDate),
-        sequenceOrder: stage.SequenceOrder,
+        startDate,
+        endDate,
+        sequenceOrder,
         tournamentId,
-        isKnockout: stage.Type === 0,
+        isKnockout,
       },
       create: {
-        id: stage.IdStage,
+        id,
         name,
-        startDate: new Date(stage.StartDate),
-        endDate: new Date(stage.EndDate),
-        sequenceOrder: stage.SequenceOrder,
+        startDate,
+        endDate,
+        sequenceOrder,
         tournamentId,
-        isKnockout: stage.Type === 0,
+        isKnockout,
         starsAllocated: STARS_BY_STAGE[name] ?? 0,
       },
     });
 
-    const isKnockout = stage.Type === 0;
     const wrongPenalty = isKnockout
-      ? BEER_LOSE + (stage.SequenceOrder - 1) * 3
+      ? BEER_LOSE + (sequenceOrder - 1) * 3
       : BEER_LOSE;
     const noVotePenalty = isKnockout ? wrongPenalty + 2 : BEER_NO_VOTE;
 
     await db.stagePenalty.upsert({
-      where: { stageId: stage.IdStage },
+      where: { stageId: id },
       update: {}, // never clobber an admin's edited values on re-seed
-      create: { stageId: stage.IdStage, wrongPenalty, noVotePenalty },
+      create: { stageId: id, wrongPenalty, noVotePenalty },
     });
 
     console.log(`Upserted stage: ${name} (knockout: ${isKnockout})`);
