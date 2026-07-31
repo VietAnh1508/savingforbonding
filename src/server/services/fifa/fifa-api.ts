@@ -1,3 +1,14 @@
+import {
+  type FifaLocalizedText,
+  type FifaMatch,
+  type FifaMatchesResponse,
+  type FifaQualifiedTeam,
+  type FifaQualifiedTeamsResponse,
+  type FifaStage,
+  type FifaStagesResponse,
+  type FifaTeam,
+} from "./types";
+
 const FIFA_API_BASE = "https://api.fifa.com/api/v3";
 /** Only consumed via `FifaWorldCupAdapter`'s constructor default — not re-declared elsewhere. */
 export const FIFA_WORLD_CUP_SEASON_ID = "285023";
@@ -14,51 +25,6 @@ export function parseFifaKickoffToUtc(iso: string): Date {
 
   return kickoffAt;
 }
-
-type FifaLocalizedText = {
-  Locale: string;
-  Description: string;
-};
-
-type FifaTeam = {
-  TeamName: FifaLocalizedText[] | null;
-  Score: number | null;
-  IdCountry: string | null;
-};
-
-export type FifaMatch = {
-  IdMatch: string;
-  IdCompetition: string;
-  IdStage: string;
-  MatchNumber: number | null;
-  Date: string;
-  LocalDate: string;
-  MatchStatus: number;
-  MatchTime: string | null;
-  Home: FifaTeam | null;
-  Away: FifaTeam | null;
-  HomeTeamScore: number | null;
-  AwayTeamScore: number | null;
-  HomeTeamPenaltyScore: number | null;
-  AwayTeamPenaltyScore: number | null;
-  /** FIFA-computed winning team's `IdTeam` (accounts for extra time/penalties); null if undecided. */
-  Winner: string | null;
-  PlaceHolderA: string | null;
-  PlaceHolderB: string | null;
-  CompetitionName: FifaLocalizedText[];
-  SeasonName: FifaLocalizedText[];
-  StageName: FifaLocalizedText[];
-  GroupName: FifaLocalizedText[];
-  Stadium: {
-    Name: FifaLocalizedText[];
-    CityName: FifaLocalizedText[];
-  } | null;
-};
-
-type FifaMatchesResponse = {
-  Results: FifaMatch[];
-  ContinuationToken?: string;
-};
 
 export function localizedDescription(
   items: FifaLocalizedText[] | null | undefined,
@@ -137,20 +103,6 @@ export async function fetchWorldCupFixtures(
   );
 }
 
-export type FifaStage = {
-  IdStage: string;
-  Name: FifaLocalizedText[];
-  IdSeason: string;
-  StartDate: string;
-  EndDate: string;
-  Type: number;
-  SequenceOrder: number;
-};
-
-type FifaStagesResponse = {
-  Results: FifaStage[];
-};
-
 export async function fetchStages(seasonId: string): Promise<FifaStage[]> {
   const url = `${FIFA_API_BASE}/stages?idSeason=${seasonId}&language=en`;
   const response = await fetch(url, {
@@ -167,17 +119,6 @@ export async function fetchStages(seasonId: string): Promise<FifaStage[]> {
   const data = (await response.json()) as FifaStagesResponse;
   return data.Results ?? [];
 }
-
-export type FifaQualifiedTeam = {
-  IdTeam: string;
-  IdCountry: string;
-  TeamName: FifaLocalizedText[];
-};
-
-type FifaQualifiedTeamsResponse = {
-  Results: FifaQualifiedTeam[];
-  ContinuationToken?: string | null;
-};
 
 export async function fetchQualifiedTeams(
   stageId: string,

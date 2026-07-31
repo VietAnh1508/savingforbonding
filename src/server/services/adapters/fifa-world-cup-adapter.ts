@@ -8,10 +8,12 @@ import {
   localizedDescription,
   mapFifaMatchStatus,
   parseFifaKickoffToUtc,
+} from "~/server/services/fifa/fifa-api";
+import {
   type FifaMatch,
   type FifaQualifiedTeam,
   type FifaStage,
-} from "~/server/services/fifa-api";
+} from "~/server/services/fifa/types";
 import {
   type FixtureSourceAdapter,
   type NormalizedMatch,

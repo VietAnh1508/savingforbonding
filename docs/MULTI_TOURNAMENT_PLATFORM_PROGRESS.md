@@ -76,7 +76,7 @@ Same data, cleaner seams. Validates the Phase 1 schema before UI work builds on 
       entry (`"fifa-world-cup"`) today. `active-tournament.ts` gained `getActiveTournament()`
       (full row) alongside the existing `getActiveTournamentId()`, since the factory needs
       `dataSourceKey`, not just the id.
-- [ ] Move country/flag vocabulary (`FIFA_CODES`, FIFA flag CDN URL in `country-flag.ts`) into the
+- [x] Move country/flag vocabulary (`FIFA_CODES`, FIFA flag CDN URL in `country-flag.ts`) into the
       adapter's responsibility. **Design decided 2026-07-22** (plan doc §2.1/2.2): no separate
       `Country`/ISO-3166 model — FIFA associations (England, Scotland, Kosovo, ...) don't map onto
       ISO-3166 countries. Instead each adapter stores its own source's native identifier at
@@ -93,6 +93,14 @@ Same data, cleaner seams. Validates the Phase 1 schema before UI work builds on 
         display, it's `syncTopScorerCandidates`'s eligibility bridge against FIFA's qualified-team
         list (vnexpress never emits its own code, so this cross-source matching need is separate
         from the codes/logo work above).
+  - [x] `FIFA_CODES`, `getFifaCountryCode()`, and the `FIFA_FLAG_BASE` CDN URL moved from
+        `country-flag.ts` into `fifa-api.ts` — they're FIFA wire vocabulary (a name → `IdCountry`
+        guess table plus FIFA's own flag CDN template), not generic app infrastructure, and now
+        live alongside the rest of FIFA's shape knowledge. `vnexpress-top-scorer-adapter.ts` (the
+        only server-side consumer of `getFifaCountryCode`) imports it from there. `country-flag.ts`
+        keeps `getFifaFlagUrl()`/`getFlagUrlForCode()` — the client-safe code/name → CDN-URL
+        builders `TeamFlag` renders with — importing `FIFA_FLAG_BASE`/`getFifaCountryCode` from
+        `fifa-api.ts`.
 - [x] Removed the silent `isKnownCountry()` filter gate — it was doing double duty as both a
       country-name allowlist (`FIFA_CODES` only has ~50 entries; teams like Italy, Denmark, Poland,
       Nigeria, Serbia, Chile, Peru were wrongly hidden everywhere it gated) and an

@@ -3,7 +3,7 @@ import {
   type FifaMatch,
   type FifaQualifiedTeam,
   type FifaStage,
-} from "~/server/services/fifa-api";
+} from "~/server/services/fifa/types";
 import { FifaWorldCupAdapter } from "./fifa-world-cup-adapter";
 
 function fixture(overrides: Partial<FifaMatch> = {}): FifaMatch {
